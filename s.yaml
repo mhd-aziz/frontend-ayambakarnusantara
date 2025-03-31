@@ -14,7 +14,7 @@ services:
         runtime: custom
         codeUri: ./
         handler: index.handler
-        timeout: 60
+        timeout: 30
         memorySize: 256
         customRuntimeConfig:
           command:
@@ -27,4 +27,4 @@ services:
           type: http
           config:
             authType: anonymous
-            methods: [GET, POST, PUT, DELETE]
+            methods: [GET, POST]
