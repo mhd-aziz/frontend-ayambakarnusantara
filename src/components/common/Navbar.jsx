@@ -14,12 +14,13 @@ import {
 import { FaShoppingCart, FaUser, FaSearch, FaSignOutAlt } from "react-icons/fa";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
+import LogoAyamBakarNusantara from "../../assets/images/logo-ayambakarnusantara.svg";
 
 const NavigationBar = () => {
   const { isAuthenticated, user, logout } = useContext(AuthContext);
   const { cartItems } = useContext(CartContext);
   const navigate = useNavigate();
-  
+
   const location = useLocation();
 
   // State dan ref untuk dropdown profil
@@ -46,7 +47,7 @@ const NavigationBar = () => {
       <Container>
         <Navbar.Brand as={Link} to="/">
           <img
-            src="/assets/images/logo.png"
+            src={LogoAyamBakarNusantara}
             width="30"
             height="30"
             className="d-inline-block align-top me-2"

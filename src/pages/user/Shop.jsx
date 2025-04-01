@@ -367,7 +367,7 @@ const ShopPage = () => {
             src={shop.photoShop}
             alt={shop.name}
             className="product-image rounded-top"
-            style={{ height: "180px", objectFit: "cover" }}
+            style={{ height: "180px", objectFit: "contain", width: "100%" }}
             onError={(e) => {
               e.target.src =
                 "https://via.placeholder.com/300x180?text=No+Image";

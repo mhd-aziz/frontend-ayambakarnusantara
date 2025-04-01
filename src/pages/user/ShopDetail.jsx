@@ -203,6 +203,7 @@ const ShopDetailPage = () => {
             src={product.photoProduct}
             alt={product.name}
             className="product-image"
+            style={{ height: "180px", objectFit: "cover", width: "100%" }}
             onError={(e) => {
               e.target.src =
                 "https://via.placeholder.com/300x200?text=No+Image";

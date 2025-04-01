@@ -13,6 +13,9 @@ import {
   Tooltip,
   Toast,
   ToastContainer,
+  ProgressBar,
+  Form,
+  Modal,
 } from "react-bootstrap";
 import {
   FaShoppingCart,
@@ -24,9 +27,8 @@ import {
   FaUtensils,
   FaStar,
   FaStarHalfAlt,
+  FaRegStar,
   FaUser,
-  FaComment,
-  FaCalendarAlt,
 } from "react-icons/fa";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useContext } from "react";
@@ -51,9 +53,18 @@ const ProductDetailPage = () => {
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  // Rating state
-  const [userRating, setUserRating] = useState(null);
-  const [loadingRating, setLoadingRating] = useState(false);
+  // Ratings state
+  const [ratings, setRatings] = useState([]);
+  const [ratingStats, setRatingStats] = useState(null);
+  const [ratingPage, setRatingPage] = useState(1);
+  const [loadingRatings, setLoadingRatings] = useState(false);
+
+  // Rating submission state
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [userRatingHover, setUserRatingHover] = useState(0);
 
   // UI state untuk menghandle proses menambahkan ke keranjang
   const [addingToCart, setAddingToCart] = useState(false);
@@ -75,22 +86,6 @@ const ProductDetailPage = () => {
         const stockData = await apiService.getProductStock(productId);
         setStockInfo(stockData);
 
-        // Fetch user rating if authenticated
-        if (isAuthenticated) {
-          try {
-            setLoadingRating(true);
-            const ratingData = await apiService.getUserProductRating(productId);
-            setUserRating(ratingData);
-          } catch (err) {
-            console.log(
-              `No rating found or error fetching rating for product ${productId}`
-            );
-            setUserRating(null);
-          } finally {
-            setLoadingRating(false);
-          }
-        }
-
         setError(null);
       } catch (err) {
         console.error("Error fetching product details:", err);
@@ -108,9 +103,33 @@ const ProductDetailPage = () => {
       setAddedToCart(false);
       setQuantity(1);
       setSelectedImage(0);
-      setUserRating(null);
     }
   }, [productId, isAuthenticated]);
+
+  // Fetch product ratings
+  useEffect(() => {
+    const fetchProductRatings = async () => {
+      if (!productId) return;
+
+      setLoadingRatings(true);
+      try {
+        const ratingData = await apiService.getProductRatings(productId, {
+          page: ratingPage,
+          limit: 10,
+          sort: "newest",
+        });
+
+        setRatings(ratingData.ratings);
+        setRatingStats(ratingData.statistics);
+      } catch (err) {
+        console.error("Error fetching product ratings:", err);
+      } finally {
+        setLoadingRatings(false);
+      }
+    };
+
+    fetchProductRatings();
+  }, [productId, ratingPage]);
 
   // Handle add to cart
   const handleAddToCart = async () => {
@@ -179,18 +198,6 @@ const ProductDetailPage = () => {
     return new Date(dateString).toLocaleDateString("id-ID", options);
   };
 
-  // Format datetime
-  const formatDateTime = (dateString) => {
-    const options = {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    };
-    return new Date(dateString).toLocaleDateString("id-ID", options);
-  };
-
   // Handle quantity change
   const handleQuantityChange = (newQuantity) => {
     if (product && stockInfo) {
@@ -206,92 +213,126 @@ const ProductDetailPage = () => {
     if (!product) return [];
 
     // Main product image plus some generated variations for demo
-    return [
-      product.photoProduct,
-      product.photoProduct, // In real app, these would be different angles/views
-      product.photoProduct,
-    ];
+    return [product.photoProduct];
   };
 
-  // Render star rating component
-  const renderStarRating = (ratingValue) => {
-    // Convert rating to number
-    const rating = parseFloat(ratingValue);
+  // Render star rating
+  const renderStarRating = (value, size = "1em") => {
+    const stars = [];
+    const fullStars = Math.floor(value);
+    const hasHalfStar = value - fullStars >= 0.5;
 
-    return (
-      <div className="user-rating-stars">
-        {[1, 2, 3, 4, 5].map((star) => {
-          // Full star
-          if (star <= Math.floor(rating)) {
-            return <FaStar key={star} className="text-warning" />;
-          }
-          // Half star
-          else if (star === Math.ceil(rating) && !Number.isInteger(rating)) {
-            return <FaStarHalfAlt key={star} className="text-warning" />;
-          }
-          // Empty star
-          else {
-            return <FaStar key={star} className="text-muted" />;
-          }
-        })}
-        <span className="ms-1 rating-value">{rating.toFixed(1)}</span>
-      </div>
-    );
-  };
-
-  // Render user rating details
-  const renderUserRating = () => {
-    if (loadingRating) {
-      return (
-        <div className="user-rating-loading">
-          <Spinner animation="border" size="sm" variant="warning" />
-          <span className="ms-2">Memuat rating...</span>
-        </div>
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <FaStar
+          key={`full-${i}`}
+          style={{ color: "#FFD700", fontSize: size }}
+        />
       );
     }
 
-    if (!userRating) {
-      return (
-        <div className="user-rating-empty">
-          <p className="text-muted">
-            Anda belum memberikan rating untuk produk ini
-          </p>
-        </div>
+    // Half star
+    if (hasHalfStar) {
+      stars.push(
+        <FaStarHalfAlt
+          key="half"
+          style={{ color: "#FFD700", fontSize: size }}
+        />
       );
     }
 
-    return (
-      <div className="user-rating-details">
-        <div className="user-rating-header">
-          <h5>Rating Anda</h5>
-          {renderStarRating(userRating.value)}
-        </div>
+    // Empty stars
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <FaRegStar
+          key={`empty-${i}`}
+          style={{ color: "#FFD700", fontSize: size }}
+        />
+      );
+    }
 
-        <div className="user-rating-body">
-          <div className="user-rating-comment">
-            <FaComment className="me-2 text-secondary" />
-            <p>"{userRating.comment}"</p>
-          </div>
+    return stars;
+  };
 
-          <div className="user-rating-meta">
-            <div className="user-rating-meta-item">
-              <FaUser className="me-1 text-secondary" />
-              <span>User ID: {userRating.userId}</span>
-            </div>
-            <div className="user-rating-meta-item">
-              <FaCalendarAlt className="me-1 text-secondary" />
-              <span>Dibuat: {formatDateTime(userRating.createdAt)}</span>
-            </div>
-            {userRating.createdAt !== userRating.updatedAt && (
-              <div className="user-rating-meta-item">
-                <FaClock className="me-1 text-secondary" />
-                <span>Diperbarui: {formatDateTime(userRating.updatedAt)}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
+  // Load more ratings
+  const handleLoadMoreRatings = () => {
+    if (ratingStats && ratingPage < ratingStats.pagination?.totalPages) {
+      setRatingPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  // Handle rating submission
+  const handleRatingSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: `/product/${productId}` } });
+      return;
+    }
+
+    if (userRating === 0) {
+      setToastVariant("warning");
+      setToastMessage("Silakan pilih rating terlebih dahulu.");
+      setShowToast(true);
+      return;
+    }
+
+    setSubmittingRating(true);
+
+    try {
+      await apiService.createOrUpdateRating(
+        productId,
+        userRating,
+        ratingComment
+      );
+
+      // Reset form
+      setUserRating(0);
+      setRatingComment("");
+
+      // Close modal
+      setShowRatingModal(false);
+
+      // Show success message
+      setToastVariant("success");
+      setToastMessage("Ulasan berhasil dikirim. Terima kasih!");
+      setShowToast(true);
+
+      // Refresh ratings
+      const ratingData = await apiService.getProductRatings(productId, {
+        page: 1,
+        limit: 10,
+        sort: "newest",
+      });
+
+      setRatings(ratingData.ratings);
+      setRatingStats(ratingData.statistics);
+      setRatingPage(1);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      setToastVariant("danger");
+      setToastMessage("Anda belum membeli produk ini");
+      setShowToast(true);
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
+  // Handle rating star click
+  const handleStarClick = (rating) => {
+    setUserRating(rating);
+  };
+
+  // Handle rating hover
+  const handleStarHover = (rating) => {
+    setUserRatingHover(rating);
+  };
+
+  // Reset rating hover
+  const handleStarHoverLeave = () => {
+    setUserRatingHover(0);
   };
 
   return (
@@ -402,6 +443,23 @@ const ProductDetailPage = () => {
               <div className="product-info-container">
                 <div className="product-header">
                   <h1 className="product-title">{product.name}</h1>
+
+                  {/* Product Rating Summary */}
+                  {ratingStats && (
+                    <div className="product-rating-summary">
+                      <div className="rating-number">
+                        <span className="average-rating">
+                          {ratingStats.averageRating?.toFixed(1)}
+                        </span>
+                        <span className="total-ratings">
+                          ({ratingStats.totalRatings} ulasan)
+                        </span>
+                      </div>
+                      <div className="star-rating">
+                        {renderStarRating(ratingStats.averageRating)}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Shop Information */}
@@ -465,16 +523,6 @@ const ProductDetailPage = () => {
                       "Ayam bakar dengan bumbu rahasia khas Indonesia yang dimasak dengan sempurna untuk menghasilkan cita rasa yang autentik dan lezat."}
                   </p>
                 </div>
-
-                {/* User Rating Details */}
-                {isAuthenticated && (
-                  <div className="user-rating-container">
-                    <h5>Rating Pengguna</h5>
-                    <Card className="user-rating-card">
-                      <Card.Body>{renderUserRating()}</Card.Body>
-                    </Card>
-                  </div>
-                )}
 
                 {/* Add to Cart Section */}
                 {stockInfo && stockInfo.isAvailable && (
@@ -561,6 +609,253 @@ const ProductDetailPage = () => {
               </div>
             </Col>
           </Row>
+
+          {/* Product Ratings Section */}
+          <Row className="mt-5">
+            <Col xs={12}>
+              <div className="ratings-section">
+                <div className="section-header">
+                  <h3 className="section-title">Ulasan Produk</h3>
+                  {isAuthenticated && (
+                    <Button
+                      variant="warning"
+                      className="add-rating-btn"
+                      onClick={() => setShowRatingModal(true)}
+                    >
+                      Tulis Ulasan
+                    </Button>
+                  )}
+                </div>
+
+                {ratingStats && (
+                  <div className="rating-summary-container">
+                    <Row className="align-items-center">
+                      <Col md={4} className="text-center">
+                        <div className="overall-rating">
+                          <div className="rating-value">
+                            {ratingStats.averageRating?.toFixed(1)}
+                          </div>
+                          <div className="rating-stars">
+                            {renderStarRating(
+                              ratingStats.averageRating,
+                              "1.5em"
+                            )}
+                          </div>
+                          <div className="rating-count">
+                            {ratingStats.totalRatings} ulasan
+                          </div>
+                        </div>
+                      </Col>
+
+                      <Col md={8}>
+                        <div className="rating-distribution">
+                          {[5, 4, 3, 2, 1].map((star) => {
+                            const distribution = ratingStats.distribution?.find(
+                              (d) => d.value === star
+                            );
+                            const count = distribution?.count || 0;
+                            const percentage =
+                              ratingStats.totalRatings > 0
+                                ? (count / ratingStats.totalRatings) * 100
+                                : 0;
+
+                            return (
+                              <div key={star} className="rating-bar">
+                                <div className="star-label">
+                                  {star} <FaStar style={{ color: "#FFD700" }} />
+                                </div>
+                                <ProgressBar
+                                  now={percentage}
+                                  className="rating-progress"
+                                  variant="warning"
+                                />
+                                <div className="rating-count-label">
+                                  {count}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                )}
+
+                {/* Individual Ratings */}
+                <div className="individual-ratings mt-4">
+                  {loadingRatings && (
+                    <div className="text-center py-3">
+                      <Spinner animation="border" variant="warning" size="sm" />
+                      <span className="ms-2">Memuat ulasan...</span>
+                    </div>
+                  )}
+
+                  {!loadingRatings && ratings.length === 0 && (
+                    <div className="text-center py-4">
+                      <p className="text-muted">
+                        Belum ada ulasan untuk produk ini.
+                      </p>
+                    </div>
+                  )}
+
+                  {ratings.map((rating) => (
+                    <Card key={rating.id} className="rating-card mb-3">
+                      <Card.Body>
+                        <div className="rating-header">
+                          <div className="user-info">
+                            <div className="user-avatar">
+                              {rating.user.photoUser ? (
+                                <Image
+                                  src={rating.user.photoUser}
+                                  roundedCircle
+                                  alt={rating.user.username}
+                                  onError={(e) => {
+                                    e.target.src =
+                                      "https://via.placeholder.com/40x40?text=U";
+                                  }}
+                                />
+                              ) : (
+                                <div className="avatar-placeholder">
+                                  <FaUser />
+                                </div>
+                              )}
+                            </div>
+                            <div className="user-details">
+                              <div className="username">
+                                {rating.user.username}
+                              </div>
+                              <div className="rating-date">
+                                {formatDate(rating.createdAt)}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="rating-stars">
+                            {renderStarRating(rating.value)}
+                          </div>
+                        </div>
+                        <div className="rating-comment mt-3">
+                          {rating.comment ||
+                            "Pengguna tidak meninggalkan komentar."}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  ))}
+
+                  {/* Load More Button */}
+                  {ratingStats &&
+                    ratingPage < ratingStats.pagination?.totalPages && (
+                      <div className="text-center mt-3">
+                        <Button
+                          variant="outline-warning"
+                          onClick={handleLoadMoreRatings}
+                          disabled={loadingRatings}
+                        >
+                          {loadingRatings ? (
+                            <>
+                              <Spinner
+                                animation="border"
+                                size="sm"
+                                className="me-2"
+                              />
+                              Memuat...
+                            </>
+                          ) : (
+                            "Lihat Lebih Banyak Ulasan"
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Rating Submission Modal */}
+          <Modal
+            show={showRatingModal}
+            onHide={() => setShowRatingModal(false)}
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Tulis Ulasan</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form onSubmit={handleRatingSubmit}>
+                <Form.Group className="mb-4 text-center">
+                  <Form.Label>Berikan rating untuk "{product.name}"</Form.Label>
+                  <div
+                    className="rating-stars-input"
+                    onMouseLeave={handleStarHoverLeave}
+                  >
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span
+                        key={star}
+                        onClick={() => handleStarClick(star)}
+                        onMouseEnter={() => handleStarHover(star)}
+                        className="star-input-icon"
+                      >
+                        {star <= (userRatingHover || userRating) ? (
+                          <FaStar className="star-filled" />
+                        ) : (
+                          <FaRegStar className="star-empty" />
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="rating-label mt-2">
+                    {userRatingHover === 1 && "Sangat Buruk"}
+                    {userRatingHover === 2 && "Buruk"}
+                    {userRatingHover === 3 && "Biasa Saja"}
+                    {userRatingHover === 4 && "Bagus"}
+                    {userRatingHover === 5 && "Sangat Bagus"}
+                    {userRatingHover === 0 &&
+                      userRating === 1 &&
+                      "Sangat Buruk"}
+                    {userRatingHover === 0 && userRating === 2 && "Buruk"}
+                    {userRatingHover === 0 && userRating === 3 && "Biasa Saja"}
+                    {userRatingHover === 0 && userRating === 4 && "Bagus"}
+                    {userRatingHover === 0 &&
+                      userRating === 5 &&
+                      "Sangat Bagus"}
+                    {userRatingHover === 0 &&
+                      userRating === 0 &&
+                      "Pilih rating"}
+                  </div>
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Komentar (Opsional)</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={4}
+                    placeholder="Bagikan pengalaman Anda dengan produk ini..."
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value)}
+                  />
+                </Form.Group>
+
+                <div className="d-grid gap-2">
+                  <Button
+                    variant="warning"
+                    type="submit"
+                    disabled={submittingRating}
+                  >
+                    {submittingRating ? (
+                      <>
+                        <Spinner
+                          animation="border"
+                          size="sm"
+                          className="me-2"
+                        />
+                        Mengirim...
+                      </>
+                    ) : (
+                      "Kirim Ulasan"
+                    )}
+                  </Button>
+                </div>
+              </Form>
+            </Modal.Body>
+          </Modal>
         </div>
       )}
 
