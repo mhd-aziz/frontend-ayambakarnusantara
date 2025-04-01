@@ -1,5 +1,0 @@
-customRuntimeConfig:
-  command:
-    - bash
-    - -c
-    - "npm start"
