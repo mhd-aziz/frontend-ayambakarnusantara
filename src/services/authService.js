@@ -1,4 +1,3 @@
-// src/services/authService.js
 import axios from "axios";
 import { API_URL } from "../utils/constants";
 
@@ -74,6 +73,19 @@ export const updateUserProfile = async (profileData) => {
       `${API_URL}/api/user/profile`,
       profileData
     );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Update user password
+export const updateUserPassword = async (passwordData) => {
+  try {
+    const response = await axios.put(`${API_URL}/api/user/password`, {
+      oldPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+    });
     return response.data;
   } catch (error) {
     throw error;

@@ -12,6 +12,7 @@ import {
   Alert,
   Toast,
   ToastContainer,
+  Modal,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -28,6 +29,7 @@ import {
   FaTimesCircle,
   FaClock,
   FaSearchDollar,
+  FaBan,
 } from "react-icons/fa";
 import apiService from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -47,6 +49,11 @@ const OrdersPage = () => {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentStatusDetails, setPaymentStatusDetails] = useState({});
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+
+  // State for cancel order modal
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   // Fetch orders data
   const fetchOrders = async () => {
@@ -112,6 +119,48 @@ const OrdersPage = () => {
     } finally {
       setCheckingPayment(false);
     }
+  };
+
+  // Cancel order function
+  const handleCancelOrder = async () => {
+    if (!orderToCancel) return;
+
+    setCancellingOrder(true);
+    try {
+      const response = await apiService.cancelOrder(orderToCancel.id);
+      console.log("Cancel order response:", response);
+
+      // Update the order in the state with the new status
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === response.id
+            ? { ...order, status: response.status }
+            : order
+        )
+      );
+
+      // Show success message
+      setToastVariant("success");
+      setToastMessage("Pesanan telah berhasil dibatalkan.");
+      setShowToast(true);
+
+      // Close modal
+      setShowCancelModal(false);
+      setOrderToCancel(null);
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      setToastVariant("danger");
+      setToastMessage("Gagal membatalkan pesanan. Silakan coba lagi.");
+      setShowToast(true);
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
+  // Open cancel confirmation modal
+  const openCancelModal = (order) => {
+    setOrderToCancel(order);
+    setShowCancelModal(true);
   };
 
   // Load orders data on component mount
@@ -240,6 +289,8 @@ const OrdersPage = () => {
     switch (status.toLowerCase()) {
       case "completed":
         return "success";
+      case "paid":
+        return "success";
       case "pending":
         return "warning";
       case "cancelled":
@@ -255,6 +306,8 @@ const OrdersPage = () => {
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case "completed":
+        return <FaCheckCircle />;
+      case "paid":
         return <FaCheckCircle />;
       case "pending":
         return <FaClock />;
@@ -272,6 +325,8 @@ const OrdersPage = () => {
     switch (status.toLowerCase()) {
       case "pending":
         return "Menunggu Pembayaran";
+      case "paid":
+        return "Telah Dibayar";
       case "completed":
         return "Selesai";
       case "processing":
@@ -307,6 +362,59 @@ const OrdersPage = () => {
           <Toast.Body>{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+      {/* Cancel Order Confirmation Modal */}
+      <Modal
+        show={showCancelModal}
+        onHide={() => setShowCancelModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Konfirmasi Pembatalan</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Apakah Anda yakin ingin membatalkan pesanan ini?</p>
+          <p className="text-danger">
+            <FaExclamationTriangle className="me-2" />
+            Tindakan ini tidak dapat dibatalkan.
+          </p>
+          {orderToCancel && (
+            <div className="order-summary p-3 bg-light rounded mt-3">
+              <p className="mb-1">
+                <strong>Pesanan #:</strong> {orderToCancel.id}
+              </p>
+              <p className="mb-1">
+                <strong>Tanggal:</strong> {formatDate(orderToCancel.createdAt)}
+              </p>
+              <p className="mb-1">
+                <strong>Total:</strong> {formatPrice(orderToCancel.totalAmount)}
+              </p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCancelModal(false)}>
+            Batal
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleCancelOrder}
+            disabled={cancellingOrder}
+          >
+            {cancellingOrder ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Membatalkan...
+              </>
+            ) : (
+              <>
+                <FaBan className="me-2" />
+                Ya, Batalkan Pesanan
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 className="page-title">
@@ -381,7 +489,7 @@ const OrdersPage = () => {
                 </div>
                 <Badge
                   bg={getStatusBadgeVariant(order.status)}
-                  className="status-badge"
+                  className={`status-badge status-${order.status.toLowerCase()}`}
                   pill
                 >
                   {getStatusIcon(order.status)}{" "}
@@ -450,11 +558,12 @@ const OrdersPage = () => {
                             <span className="text-muted">Status: </span>
                             <Badge
                               bg={getStatusBadgeVariant(order.payment.status)}
+                              className={`status-${order.payment.status.toLowerCase()}`}
                               pill
                             >
                               {getStatusIcon(order.payment.status)}{" "}
                               <span className="ms-1">
-                                {order.payment.status}
+                                {getStatusText(order.payment.status)}
                               </span>
                             </Badge>
                           </p>
@@ -565,43 +674,53 @@ const OrdersPage = () => {
                               {formatPrice(order.totalAmount)}
                             </span>
                           </p>
-                          {order.payment &&
-                            order.payment.status === "pending" && (
-                              <div className="d-flex flex-column mt-2">
-                                <Button
-                                  variant="warning"
-                                  onClick={() => handleContinuePayment(order)}
-                                  className="pay-button mb-2"
-                                >
-                                  <FaCreditCard className="me-2" />
-                                  Lanjutkan Pembayaran
-                                </Button>
+                          {order.status.toLowerCase() === "pending" && (
+                            <div className="d-flex flex-column mt-2">
+                              <Button
+                                variant="warning"
+                                onClick={() => handleContinuePayment(order)}
+                                className="pay-button mb-2"
+                              >
+                                <FaCreditCard className="me-2" />
+                                Lanjutkan Pembayaran
+                              </Button>
 
-                                <Button
-                                  variant="outline-info"
-                                  size="sm"
-                                  onClick={() => checkPaymentStatus(order.id)}
-                                  disabled={checkingPayment}
-                                  className="check-status-button"
-                                >
-                                  {checkingPayment ? (
-                                    <>
-                                      <Spinner
-                                        animation="border"
-                                        size="sm"
-                                        className="me-2"
-                                      />
-                                      Memeriksa...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FaSearchDollar className="me-2" />
-                                      Cek Status Pembayaran
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            )}
+                              <Button
+                                variant="outline-info"
+                                size="sm"
+                                onClick={() => checkPaymentStatus(order.id)}
+                                disabled={checkingPayment}
+                                className="check-status-button mb-2"
+                              >
+                                {checkingPayment ? (
+                                  <>
+                                    <Spinner
+                                      animation="border"
+                                      size="sm"
+                                      className="me-2"
+                                    />
+                                    Memeriksa...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaSearchDollar className="me-2" />
+                                    Cek Status Pembayaran
+                                  </>
+                                )}
+                              </Button>
+
+                              {/* Cancel Order Button - only shown for pending orders */}
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => openCancelModal(order)}
+                                className="cancel-button"
+                              >
+                                <FaBan className="me-2" />
+                                Batalkan Pesanan
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Col>

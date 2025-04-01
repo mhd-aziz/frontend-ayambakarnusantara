@@ -361,11 +361,7 @@ const CartPage = () => {
     0
   );
 
-  // Calculate tax (10%)
-  const tax = subtotal * 0.1;
-
-  // Calculate total
-  const total = subtotal + tax;
+  const total = subtotal;
 
   return (
     <Container className="py-5 mt-5 cart-container">
@@ -609,10 +605,6 @@ const CartPage = () => {
                 <div className="summary-item d-flex justify-content-between mb-2">
                   <span>Subtotal</span>
                   <span>{formatPrice(subtotal)}</span>
-                </div>
-                <div className="summary-item d-flex justify-content-between mb-2">
-                  <span>Pajak (10%)</span>
-                  <span>{formatPrice(tax)}</span>
                 </div>
                 <hr />
                 <div className="summary-item d-flex justify-content-between fw-bold mb-3">
