@@ -157,8 +157,6 @@ function AppContent() {
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
-        <Route path="/shop" element={<ShopPage />} />
-        <Route path="/shop/:id" element={<ShopDetail />} />
 
         {/* Updated Product Detail Route - using productId parameter */}
         <Route path="/product/:productId" element={<ProductDetailPage />} />
@@ -208,6 +206,9 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route path="/shop/:id" element={<ShopDetail />} />
+
+        <Route path="/shop" element={<ShopPage />} />
 
         {/* Order Routes */}
         <Route

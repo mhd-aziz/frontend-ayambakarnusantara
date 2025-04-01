@@ -25,11 +25,12 @@ import {
 } from "react-icons/fa";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiService from "../../services/api";
 import "../../assets/styles/shop.css";
 
 const ShopPage = () => {
+  const navigate = useNavigate();
   const { isAuthenticated } = useContext(AuthContext);
 
   // State for shops and loading
@@ -57,6 +58,10 @@ const ShopPage = () => {
 
   // Fetch shops
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
     const fetchShops = async () => {
       setLoading(true);
       try {
@@ -129,7 +134,7 @@ const ShopPage = () => {
     };
 
     fetchShops();
-  }, [page, limit, searchTerm, sortBy, minRating, isAuthenticated]);
+  }, [page, limit, searchTerm, sortBy, minRating, isAuthenticated, navigate]);
 
   // Handle search
   const handleSearch = (e) => {

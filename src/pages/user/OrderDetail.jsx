@@ -32,6 +32,9 @@ import {
   FaExclamationTriangle,
   FaStar,
   FaBan,
+  FaTruck,
+  FaHourglass,
+  FaUtensils,
 } from "react-icons/fa";
 import apiService from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -230,15 +233,21 @@ const OrderDetail = () => {
   const getStatusBadgeVariant = (status) => {
     switch (status.toLowerCase()) {
       case "completed":
+      case "delivered":
         return "success";
       case "paid":
+      case "settlement":
         return "success";
       case "pending":
         return "warning";
       case "cancelled":
+      case "cancel":
         return "danger";
       case "processing":
+      case "proses":
         return "info";
+      case "ready":
+        return "primary";
       default:
         return "secondary";
     }
@@ -248,15 +257,21 @@ const OrderDetail = () => {
   const getStatusIcon = (status) => {
     switch (status.toLowerCase()) {
       case "completed":
-        return <FaCheckCircle className="me-2" />;
+      case "settlement":
       case "paid":
         return <FaCheckCircle className="me-2" />;
       case "pending":
         return <FaClock className="me-2" />;
       case "cancelled":
+      case "cancel":
         return <FaTimesCircle className="me-2" />;
       case "processing":
-        return <FaBox className="me-2" />;
+      case "proses":
+        return <FaHourglass className="me-2" />;
+      case "ready":
+        return <FaUtensils className="me-2" />;
+      case "delivered":
+        return <FaTruck className="me-2" />;
       default:
         return <FaExclamationTriangle className="me-2" />;
     }
@@ -268,16 +283,29 @@ const OrderDetail = () => {
       case "pending":
         return "Menunggu Pembayaran";
       case "paid":
+      case "settlement":
         return "Telah Dibayar";
       case "completed":
         return "Selesai";
       case "processing":
-        return "Diproses";
+      case "proses":
+        return "Sedang Diproses";
       case "cancelled":
+      case "cancel":
         return "Dibatalkan";
+      case "ready":
+        return "Siap Diambil";
+      case "delivered":
+        return "Telah Diambil";
       default:
         return status;
     }
+  };
+
+  // Get serving status from payment.statusOrder
+  const getServingStatus = () => {
+    if (!order || !order.payment) return "pending";
+    return order.payment.statusOrder || "pending";
   };
 
   return (
@@ -458,28 +486,14 @@ const OrderDetail = () => {
                     </ListGroup.Item>
                     <ListGroup.Item>
                       <div className="d-flex justify-content-between">
-                        <span className="text-muted">Status Pengiriman:</span>
+                        <span className="text-muted">Status Penyajian:</span>
                         <Badge
-                          bg={getStatusBadgeVariant(
-                            order.status === "paid"
-                              ? "processing"
-                              : order.status
-                          )}
-                          className={`status-${
-                            order.status === "paid"
-                              ? "processing"
-                              : order.status.toLowerCase()
-                          }`}
+                          bg={getStatusBadgeVariant(getServingStatus())}
+                          className={`status-${getServingStatus().toLowerCase()}`}
                           pill
                         >
-                          {getStatusIcon(
-                            order.status === "paid"
-                              ? "processing"
-                              : order.status
-                          )}
-                          {order.status === "paid"
-                            ? "Diproses"
-                            : getStatusText(order.status)}
+                          {getStatusIcon(getServingStatus())}
+                          {getStatusText(getServingStatus())}
                         </Badge>
                       </div>
                     </ListGroup.Item>
@@ -627,8 +641,8 @@ const OrderDetail = () => {
                           {formatPrice(item.price * item.quantity)}
                         </td>
                         <td>
-                          {/* Rating Button */}
-                          {(order.status === "paid" ||
+                          {/* Rating Button - Show for delivered or any paid status */}
+                          {(order.payment?.statusOrder === "delivered" ||
                             order.status === "completed") && (
                             <Button
                               variant="outline-primary"
