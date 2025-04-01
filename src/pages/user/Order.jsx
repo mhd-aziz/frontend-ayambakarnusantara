@@ -15,7 +15,6 @@ import {
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FaArrowLeft,
   FaCreditCard,
   FaClipboardList,
   FaSync,
@@ -29,160 +28,12 @@ import {
   FaTimesCircle,
   FaClock,
   FaSearchDollar,
+  FaStar,
 } from "react-icons/fa";
 import apiService from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import "../../assets/styles/order.css";
-
-// Tambahkan CSS inline untuk mempercantik tampilan
-const styles = {
-  pageTitle: {
-    fontSize: "2rem",
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: "1.5rem",
-    borderBottom: "3px solid #FFC107",
-    paddingBottom: "0.5rem",
-    display: "inline-block",
-  },
-  orderCard: {
-    borderRadius: "12px",
-    overflow: "hidden",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
-    transition: "transform 0.3s, box-shadow 0.3s",
-    border: "none",
-    marginBottom: "1.5rem",
-  },
-  orderHeader: {
-    background: "linear-gradient(to right, #f8f9fa, #ffffff)",
-    borderBottom: "1px solid #eee",
-    padding: "1rem 1.25rem",
-  },
-  orderNumber: {
-    fontSize: "1.25rem",
-    fontWeight: "600",
-    margin: 0,
-    color: "#495057",
-  },
-  orderDate: {
-    fontSize: "0.85rem",
-    color: "#6c757d",
-  },
-  statusBadge: {
-    fontWeight: "500",
-    padding: "0.5rem 0.75rem",
-    borderRadius: "50px",
-    fontSize: "0.8rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  tableHeader: {
-    background: "#f8f9fa",
-    color: "#495057",
-    fontWeight: "600",
-    borderBottomWidth: "2px",
-  },
-  productImage: {
-    width: "60px",
-    height: "60px",
-    objectFit: "cover",
-    borderRadius: "8px",
-    border: "1px solid #eee",
-  },
-  productName: {
-    fontSize: "1rem",
-    fontWeight: "600",
-    marginBottom: "0.2rem",
-    color: "#212529",
-  },
-  paymentInfoSection: {
-    background: "#f8f9fa",
-    padding: "1rem",
-    borderRadius: "8px",
-    marginTop: "1rem",
-  },
-  paymentInfoTitle: {
-    fontSize: "1rem",
-    fontWeight: "600",
-    marginBottom: "0.75rem",
-    color: "#495057",
-  },
-  totalPrice: {
-    fontSize: "1.2rem",
-    fontWeight: "700",
-    color: "#212529",
-  },
-  emptyState: {
-    background: "#f8f9fa",
-    padding: "3rem",
-    borderRadius: "12px",
-    textAlign: "center",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.05)",
-  },
-  emptyStateIcon: {
-    fontSize: "4rem",
-    color: "#FFC107",
-    marginBottom: "1.5rem",
-  },
-  emptyStateTitle: {
-    fontSize: "1.75rem",
-    fontWeight: "600",
-    marginBottom: "1rem",
-    color: "#343a40",
-  },
-  emptyStateText: {
-    fontSize: "1.1rem",
-    color: "#6c757d",
-    marginBottom: "1.5rem",
-  },
-  actionButton: {
-    borderRadius: "50px",
-    padding: "0.5rem 1.5rem",
-    fontWeight: "500",
-    transition: "all 0.3s",
-  },
-  payButton: {
-    background: "#FFC107",
-    borderColor: "#FFC107",
-    color: "#212529",
-    fontWeight: "600",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    padding: "0.5rem 1.25rem",
-    borderRadius: "50px",
-    transition: "all 0.3s ease",
-  },
-  checkStatusButton: {
-    borderRadius: "50px",
-    fontSize: "0.85rem",
-    transition: "all 0.3s ease",
-  },
-  paymentDetailsModal: {
-    background: "#f8f9fa",
-    borderRadius: "8px",
-    padding: "1rem",
-    marginTop: "1rem",
-    border: "1px solid #dee2e6",
-  },
-  detailButton: {
-    borderRadius: "50px",
-    padding: "0.4rem 1rem",
-    fontWeight: "500",
-    borderColor: "#6c757d",
-    color: "#6c757d",
-    transition: "all 0.3s ease",
-  },
-  backButton: {
-    borderRadius: "50px",
-    padding: "0.5rem 1.5rem",
-    fontWeight: "500",
-    margin: "1.5rem 0",
-  },
-  loadingSpinner: {
-    color: "#FFC107",
-    width: "3rem",
-    height: "3rem",
-  },
-};
+import RatingModal from "./RatingModal";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -198,6 +49,11 @@ const OrdersPage = () => {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentStatusDetails, setPaymentStatusDetails] = useState({});
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+
+  // Rating states - moved minimal state needed for coordination
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingProductId, setRatingProductId] = useState(null);
+  const [ratingProductName, setRatingProductName] = useState("");
 
   // Fetch orders data
   const fetchOrders = async () => {
@@ -263,6 +119,31 @@ const OrdersPage = () => {
     } finally {
       setCheckingPayment(false);
     }
+  };
+
+  // Open rating modal for a product
+  const openRatingModal = (productId, productName) => {
+    console.log("Opening rating modal for:", { productId, productName });
+    setRatingProductId(productId);
+    setRatingProductName(productName);
+    setShowRatingModal(true);
+  };
+
+  // Handle successful rating submission
+  const handleRatingSuccess = () => {
+    setToastVariant("success");
+    setToastMessage(
+      "Ulasan berhasil disimpan. Terima kasih atas masukan Anda!"
+    );
+    setShowToast(true);
+    setShowRatingModal(false);
+  };
+
+  // Handle rating error
+  const handleRatingError = () => {
+    setToastVariant("danger");
+    setToastMessage("Gagal menyimpan ulasan. Silakan coba lagi.");
+    setShowToast(true);
   };
 
   // Load orders data on component mount
@@ -460,17 +341,16 @@ const OrdersPage = () => {
       </ToastContainer>
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={styles.pageTitle}>
+        <h1 className="page-title">
           <FaClipboardList className="me-2" />
           Daftar Pesanan Saya
         </h1>
 
         <Button
           variant="outline-secondary"
-          className="refresh-btn"
+          className="refresh-btn action-button"
           onClick={fetchOrders}
           disabled={loading}
-          style={styles.actionButton}
         >
           <FaSync className={loading ? "spinning" : ""} />
           <span className="ms-2 d-none d-md-inline">Refresh</span>
@@ -493,7 +373,7 @@ const OrdersPage = () => {
           <Spinner
             animation="border"
             variant="warning"
-            style={styles.loadingSpinner}
+            className="loading-spinner"
           />
           <p className="mt-3 text-muted">Memuat daftar pesanan Anda...</p>
         </div>
@@ -501,20 +381,16 @@ const OrdersPage = () => {
 
       {/* Empty orders */}
       {!loading && orders.length === 0 && (
-        <div style={styles.emptyState}>
+        <div className="empty-state">
           <div className="empty-orders-icon mb-4">
-            <FaShoppingBag style={styles.emptyStateIcon} />
+            <FaShoppingBag className="empty-state-icon" />
           </div>
-          <h3 style={styles.emptyStateTitle}>Belum Ada Pesanan</h3>
-          <p style={styles.emptyStateText}>
+          <h3 className="empty-state-title">Belum Ada Pesanan</h3>
+          <p className="empty-state-text">
             Anda belum melakukan pemesanan. Yuk, mulai berbelanja dan nikmati
             produk terbaik kami!
           </p>
-          <Link
-            to="/menu"
-            className="btn btn-warning btn-lg"
-            style={styles.actionButton}
-          >
+          <Link to="/menu" className="btn btn-warning btn-lg action-button">
             Mulai Berbelanja
           </Link>
         </div>
@@ -524,27 +400,20 @@ const OrdersPage = () => {
       {!loading && orders.length > 0 && (
         <div className="orders-list">
           {orders.map((order) => (
-            <Card
-              key={order.id}
-              className="mb-4 order-card"
-              style={styles.orderCard}
-            >
-              <Card.Header
-                className="d-flex justify-content-between align-items-center"
-                style={styles.orderHeader}
-              >
+            <Card key={order.id} className="mb-4 order-card">
+              <Card.Header className="d-flex justify-content-between align-items-center order-header">
                 <div>
-                  <h5 style={styles.orderNumber}>
+                  <h5 className="order-number">
                     <FaClipboardList className="me-2" /> Pesanan #{order.id}
                   </h5>
-                  <small style={styles.orderDate}>
+                  <small className="order-date">
                     <FaCalendarAlt className="me-1" />{" "}
                     {formatDate(order.createdAt)}
                   </small>
                 </div>
                 <Badge
                   bg={getStatusBadgeVariant(order.status)}
-                  style={styles.statusBadge}
+                  className="status-badge"
                   pill
                 >
                   {getStatusIcon(order.status)}{" "}
@@ -562,14 +431,13 @@ const OrdersPage = () => {
                   <Table hover className="mb-0">
                     <thead>
                       <tr>
-                        <th style={styles.tableHeader} className="ps-3">
-                          Produk
-                        </th>
-                        <th style={styles.tableHeader}>Harga</th>
-                        <th style={styles.tableHeader}>Jumlah</th>
-                        <th style={styles.tableHeader} className="pe-3">
-                          Subtotal
-                        </th>
+                        <th className="table-header ps-3">Produk</th>
+                        <th className="table-header">Harga</th>
+                        <th className="table-header">Jumlah</th>
+                        <th className="table-header pe-3">Subtotal</th>
+                        {order.status.toLowerCase() === "completed" && (
+                          <th className="table-header pe-3">Aksi</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -580,14 +448,14 @@ const OrdersPage = () => {
                               <Image
                                 src={item.product?.photoProduct}
                                 alt={item.product?.name}
-                                style={styles.productImage}
+                                className="product-image"
                                 onError={(e) => {
                                   e.target.src =
                                     "https://via.placeholder.com/80x80?text=No+Image";
                                 }}
                               />
                               <div className="ms-3">
-                                <h6 style={styles.productName}>
+                                <h6 className="product-name">
                                   {item.product?.name}
                                 </h6>
                               </div>
@@ -595,9 +463,43 @@ const OrdersPage = () => {
                           </td>
                           <td>{formatPrice(item.price)}</td>
                           <td>{item.quantity}</td>
-                          <td className="fw-bold pe-3">
+                          <td className="fw-bold">
                             {formatPrice(item.price * item.quantity)}
                           </td>
+                          {order.status.toLowerCase() === "paid" && (
+                            <td>
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                onClick={() => {
+                                  console.log(
+                                    "Rating button clicked for product:",
+                                    item.product
+                                  );
+                                  if (item.product && item.product.id) {
+                                    openRatingModal(
+                                      item.product.id,
+                                      item.product.name || "Product"
+                                    );
+                                  } else {
+                                    console.error(
+                                      "Product ID is missing:",
+                                      item
+                                    );
+                                    setToastVariant("danger");
+                                    setToastMessage(
+                                      "Tidak dapat memberikan penilaian: ID produk tidak ditemukan"
+                                    );
+                                    setShowToast(true);
+                                  }
+                                }}
+                                className="rate-button"
+                              >
+                                <FaStar className="me-1" />
+                                Nilai
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -608,8 +510,8 @@ const OrdersPage = () => {
                   <Row className="mt-3">
                     <Col md={6}>
                       {order.payment && (
-                        <div style={styles.paymentInfoSection}>
-                          <h6 style={styles.paymentInfoTitle}>
+                        <div className="payment-info-section">
+                          <h6 className="payment-info-title">
                             <FaMoneyBillWave className="me-2" /> Informasi
                             Pembayaran
                           </h6>
@@ -633,10 +535,7 @@ const OrdersPage = () => {
                             paymentStatusDetails.order_id.includes(
                               order.id.toString()
                             ) && (
-                              <div
-                                style={styles.paymentDetailsModal}
-                                className="mt-3 small"
-                              >
+                              <div className="payment-details-modal mt-3 small">
                                 <h6 className="border-bottom pb-2 mb-2">
                                   <FaInfoCircle className="me-2" />
                                   Detail Status Pembayaran
@@ -731,7 +630,7 @@ const OrdersPage = () => {
                             <span className="text-muted me-2">
                               Total Pembayaran:
                             </span>
-                            <span style={styles.totalPrice}>
+                            <span className="total-price">
                               {formatPrice(order.totalAmount)}
                             </span>
                           </p>
@@ -741,8 +640,7 @@ const OrdersPage = () => {
                                 <Button
                                   variant="warning"
                                   onClick={() => handleContinuePayment(order)}
-                                  style={styles.payButton}
-                                  className="mb-2"
+                                  className="pay-button mb-2"
                                 >
                                   <FaCreditCard className="me-2" />
                                   Lanjutkan Pembayaran
@@ -753,7 +651,7 @@ const OrdersPage = () => {
                                   size="sm"
                                   onClick={() => checkPaymentStatus(order.id)}
                                   disabled={checkingPayment}
-                                  style={styles.checkStatusButton}
+                                  className="check-status-button"
                                 >
                                   {checkingPayment ? (
                                     <>
@@ -786,7 +684,7 @@ const OrdersPage = () => {
                   size="sm"
                   as={Link}
                   to={`/order/${order.id}`}
-                  style={styles.detailButton}
+                  className="detail-button"
                 >
                   <FaInfoCircle className="me-1" />
                   Detail Pesanan
@@ -797,17 +695,17 @@ const OrdersPage = () => {
         </div>
       )}
 
-      <div className="text-center mt-4">
-        <Button
-          variant="outline-secondary"
-          className="back-btn"
-          onClick={() => navigate(-1)}
-          style={styles.backButton}
-        >
-          <FaArrowLeft className="me-2" />
-          Kembali
-        </Button>
-      </div>
+      {/* Rating Modal Component */}
+      {showRatingModal && (
+        <RatingModal
+          show={showRatingModal}
+          onHide={() => setShowRatingModal(false)}
+          productId={ratingProductId}
+          productName={ratingProductName}
+          onSuccess={handleRatingSuccess}
+          onError={handleRatingError}
+        />
+      )}
     </Container>
   );
 };

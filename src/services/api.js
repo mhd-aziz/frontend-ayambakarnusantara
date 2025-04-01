@@ -169,6 +169,7 @@ const apiService = {
       throw error;
     }
   },
+
   // Get Product Ratings API
   getProductRatings: async (productId) => {
     try {
@@ -177,6 +178,52 @@ const apiService = {
     } catch (error) {
       console.error(
         `Error fetching ratings for product with id ${productId}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  createOrUpdateRating: async (productId, value, comment) => {
+    try {
+      const response = await api.post("/api/user/rating", {
+        productId,
+        value,
+        comment,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error creating or updating rating:", error);
+      throw error;
+    }
+  },
+
+  getShops: async (params = {}) => {
+    try {
+      const response = await api.get("/api/user/shops", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching shops:", error);
+      throw error;
+    }
+  },
+
+  getShopById: async (id) => {
+    try {
+      const response = await api.get(`/api/user/shop/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching shop with id ${id}:`, error);
+      throw error;
+    }
+  },
+  getShopRatings: async (shopId) => {
+    try {
+      const response = await api.get(`/api/shop/${shopId}/ratings`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Error fetching ratings for shop with id ${shopId}:`,
         error
       );
       throw error;

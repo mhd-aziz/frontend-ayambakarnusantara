@@ -21,7 +21,6 @@ html {
 /* Navbar posisi adjustment */
 .navbar {
   position: fixed;
-  top: 41px; /* Harus sama dengan tinggi auth-header */
   left: 0;
   right: 0;
   z-index: 1030;
@@ -33,7 +32,6 @@ html {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 117px; /* 76px navbar + 41px auth-header */
 }
 
 /* Untuk homepage, remove padding karena hero menutupi navbar */
@@ -145,10 +143,6 @@ html {
 
   .navbar {
     top: 60px; /* Disesuaikan dengan tinggi auth-header pada mobile */
-  }
-
-  .App {
-    padding-top: 136px; /* 76px navbar + 60px auth-header */
   }
 
   .hero-section {

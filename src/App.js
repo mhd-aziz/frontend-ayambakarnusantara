@@ -17,8 +17,10 @@ import AuthHeader from "./components/common/AuthHeader";
 import HomePage from "./pages/user/Home";
 import MenuPage from "./pages/user/Menu";
 import ShopPage from "./pages/user/Shop";
+import ShopDetail from "./pages/user/ShopDetail";
 import OrderPage from "./pages/user/Order";
 import OrderDetailPage from "./pages/user/OrderDetail";
+import RatingPage from "./pages/user/Rating";
 import ProductDetailPage from "./pages/user/ProductDetail";
 import CartPage from "./pages/user/Cart";
 import CheckoutPage from "./pages/user/Checkout";
@@ -156,9 +158,12 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/shop/:id" element={<ShopDetail />} />
 
         {/* Updated Product Detail Route - using productId parameter */}
         <Route path="/product/:productId" element={<ProductDetailPage />} />
+
+        <Route path="/rating/:productId" element={<RatingPage />} />
 
         {/* Auth Routes */}
         <Route

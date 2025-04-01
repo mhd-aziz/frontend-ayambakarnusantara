@@ -423,6 +423,7 @@ const OrderDetail = () => {
                       <th style={{ width: "20%" }}>Harga</th>
                       <th style={{ width: "15%" }}>Jumlah</th>
                       <th style={{ width: "15%" }}>Subtotal</th>
+                      <th style={{ width: "10%" }}>Rating</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -451,6 +452,21 @@ const OrderDetail = () => {
                         <td>{item.quantity}</td>
                         <td className="fw-bold">
                           {formatPrice(item.price * item.quantity)}
+                        </td>
+                        <td>
+                          {/* Rating Button */}
+                          {order.status === "paid" && (
+                            <Button
+                              variant="primary"
+                              onClick={() =>
+                                navigate(`/rating/${item.product.id}`, {
+                                  state: { productId: item.product.id },
+                                })
+                              }
+                            >
+                              Rate Product
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}

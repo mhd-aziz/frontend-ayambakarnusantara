@@ -1,0 +1,48 @@
+/* assets/styles/rating-page.css */
+
+.star-rating-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.star {
+  cursor: pointer;
+  transition: color 200ms;
+  margin: 0 5px;
+}
+
+.product-rating-image {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.product-info {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.product-price {
+  font-weight: bold;
+  color: #ff6b00;
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+.rating-label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+/* Animation for stars */
+.star:hover {
+  transform: scale(1.2);
+}
