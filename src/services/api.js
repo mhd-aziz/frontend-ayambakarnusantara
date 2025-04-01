@@ -155,6 +155,15 @@ const apiService = {
       throw error;
     }
   },
+  cancelOrder: async (orderId) => {
+    try {
+      const response = await api.post(`/api/user/order/${orderId}/cancel`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error canceling order with id ${orderId}:`, error);
+      throw error;
+    }
+  },
   getPaymentStatus: async (orderId) => {
     try {
       const response = await api.get(

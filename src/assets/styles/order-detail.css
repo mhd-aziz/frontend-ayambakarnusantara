@@ -1,0 +1,261 @@
+/* order-detail.css - Enhanced styling for Order Detail page */
+
+/* Container styling */
+.order-detail-container {
+  max-width: 1200px;
+  min-height: 75vh;
+  margin-bottom: 3rem;
+}
+
+/* Page title and back button */
+.page-title-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.back-button:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 0;
+  margin-left: 1rem;
+}
+
+/* Card styling */
+.order-info-card,
+.customer-info-card,
+.order-items-card {
+  border: none;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.order-info-card:hover,
+.customer-info-card:hover,
+.order-items-card:hover {
+  transform: translateY(-5px);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.card-header h5 {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.card-header-icon {
+  margin-right: 0.75rem;
+  color: #666;
+}
+
+/* Badge styling for statuses */
+.status-badge {
+  padding: 0.5rem 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  border-radius: 50px;
+}
+
+.status-pending {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+.status-paid {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+.status-completed {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+.status-processing {
+  background-color: #17a2b8 !important;
+  color: white !important;
+}
+
+.status-cancelled {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+/* Customer info styling */
+.info-label {
+  color: #6c757d;
+  min-width: 150px;
+  display: inline-block;
+}
+
+.info-icon {
+  margin-right: 0.5rem;
+  color: #6c757d;
+}
+
+.info-value {
+  font-weight: 500;
+}
+
+/* Order items table */
+.order-items-table {
+  margin-bottom: 0;
+}
+
+.order-items-table thead {
+  background-color: #f8f9fa;
+}
+
+.order-items-table th {
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+  color: #555;
+}
+
+.order-items-table td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.order-item-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.product-info h6 {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+/* Price summary section */
+.price-summary {
+  padding: 1rem;
+}
+
+.price-summary hr {
+  margin: 0.75rem 0;
+  border-color: #dee2e6;
+}
+
+.total-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
+}
+
+/* Payment button */
+.payment-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.payment-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Rating button */
+.rating-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.rating-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* List group styling */
+.list-group-item {
+  border-left: 0;
+  border-right: 0;
+  padding: 1rem 0;
+}
+
+.list-group-item:first-child {
+  border-top: 0;
+}
+
+.list-group-item:last-child {
+  border-bottom: 0;
+}
+
+/* Cancel order button */
+.cancel-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .order-info-card,
+  .customer-info-card,
+  .order-items-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .info-label {
+    min-width: 130px;
+  }
+
+  .order-item-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .product-info h6 {
+    font-size: 0.9rem;
+  }
+
+  .total-price {
+    font-size: 1.1rem;
+  }
+}
