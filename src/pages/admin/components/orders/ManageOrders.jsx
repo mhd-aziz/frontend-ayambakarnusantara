@@ -5,7 +5,7 @@
  *
  * Fitur:
  * - Menampilkan daftar order dari API
- * - Filter order berdasarkan status (pending, proses, ready, delivered)
+ * - Filter order berdasarkan status (pending, proses, ready, delivered, cancelled)
  * - Mengupdate status order
  * - Melihat detail order
  * - Pagination
@@ -275,6 +275,14 @@ const ManageOrders = () => {
                 onClick={() => handleStatusChange("delivered")}
               >
                 Delivered
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link
+                active={currentStatus === "cancel"}
+                onClick={() => handleStatusChange("cancel")}
+              >
+                Cancel
               </Nav.Link>
             </Nav.Item>
           </Nav>

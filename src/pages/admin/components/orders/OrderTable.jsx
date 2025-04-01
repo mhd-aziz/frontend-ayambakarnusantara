@@ -42,6 +42,9 @@ const OrderTable = ({
       case "delivered":
         variant = "success";
         break;
+      case "cancel":
+        variant = "danger";
+        break;
       default:
         variant = "secondary";
     }
@@ -65,6 +68,9 @@ const OrderTable = ({
         variant = "danger";
         break;
       case "deny":
+        variant = "danger";
+        break;
+      case "cancelled":
         variant = "danger";
         break;
       default:

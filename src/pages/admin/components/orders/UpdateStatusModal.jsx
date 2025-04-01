@@ -40,6 +40,7 @@ const UpdateStatusModal = ({ show, onHide, order, onSubmit, loading }) => {
               <option value="proses">Proses</option>
               <option value="ready">Ready</option>
               <option value="delivered">Delivered</option>
+              <option value="cancel">Cancel</option>
             </Form.Select>
           </Form.Group>
           <div className="alert alert-info">
@@ -58,6 +59,9 @@ const UpdateStatusModal = ({ show, onHide, order, onSubmit, loading }) => {
               <li>
                 <strong>Delivered</strong>: Pesanan sudah dikirim/diambil
                 pelanggan
+              </li>
+              <li>
+                <strong>Cancel</strong>: Pesanan dibatalkan
               </li>
             </ul>
           </div>

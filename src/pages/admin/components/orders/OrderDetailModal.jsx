@@ -24,8 +24,10 @@ const OrderDetailModal = ({
         variant = "info";
         break;
       case "delivered":
-      case "settlement":
         variant = "success";
+        break;
+      case "cancel":
+        variant = "danger";
         break;
       default:
         variant = "secondary";
