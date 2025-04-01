@@ -171,9 +171,15 @@ const apiService = {
   },
 
   // Get Product Ratings API
-  getProductRatings: async (productId) => {
+  getProductRatings: async (productId, params = {}) => {
     try {
-      const response = await api.get(`/api/product/${productId}/ratings`);
+      const response = await api.get(`/api/product/${productId}/ratings`, {
+        params: {
+          page: params.page || 1,
+          limit: params.limit || 10,
+          sort: params.sort || "newest",
+        },
+      });
       return response.data;
     } catch (error) {
       console.error(

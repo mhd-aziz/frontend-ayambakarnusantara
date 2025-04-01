@@ -28,12 +28,10 @@ import {
   FaTimesCircle,
   FaClock,
   FaSearchDollar,
-  FaStar,
 } from "react-icons/fa";
 import apiService from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import "../../assets/styles/order.css";
-import RatingModal from "./RatingModal";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
@@ -49,11 +47,6 @@ const OrdersPage = () => {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentStatusDetails, setPaymentStatusDetails] = useState({});
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
-
-  // Rating states - moved minimal state needed for coordination
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [ratingProductId, setRatingProductId] = useState(null);
-  const [ratingProductName, setRatingProductName] = useState("");
 
   // Fetch orders data
   const fetchOrders = async () => {
@@ -119,31 +112,6 @@ const OrdersPage = () => {
     } finally {
       setCheckingPayment(false);
     }
-  };
-
-  // Open rating modal for a product
-  const openRatingModal = (productId, productName) => {
-    console.log("Opening rating modal for:", { productId, productName });
-    setRatingProductId(productId);
-    setRatingProductName(productName);
-    setShowRatingModal(true);
-  };
-
-  // Handle successful rating submission
-  const handleRatingSuccess = () => {
-    setToastVariant("success");
-    setToastMessage(
-      "Ulasan berhasil disimpan. Terima kasih atas masukan Anda!"
-    );
-    setShowToast(true);
-    setShowRatingModal(false);
-  };
-
-  // Handle rating error
-  const handleRatingError = () => {
-    setToastVariant("danger");
-    setToastMessage("Gagal menyimpan ulasan. Silakan coba lagi.");
-    setShowToast(true);
   };
 
   // Load orders data on component mount
@@ -435,9 +403,6 @@ const OrdersPage = () => {
                         <th className="table-header">Harga</th>
                         <th className="table-header">Jumlah</th>
                         <th className="table-header pe-3">Subtotal</th>
-                        {order.status.toLowerCase() === "completed" && (
-                          <th className="table-header pe-3">Aksi</th>
-                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -466,40 +431,6 @@ const OrdersPage = () => {
                           <td className="fw-bold">
                             {formatPrice(item.price * item.quantity)}
                           </td>
-                          {order.status.toLowerCase() === "paid" && (
-                            <td>
-                              <Button
-                                variant="warning"
-                                size="sm"
-                                onClick={() => {
-                                  console.log(
-                                    "Rating button clicked for product:",
-                                    item.product
-                                  );
-                                  if (item.product && item.product.id) {
-                                    openRatingModal(
-                                      item.product.id,
-                                      item.product.name || "Product"
-                                    );
-                                  } else {
-                                    console.error(
-                                      "Product ID is missing:",
-                                      item
-                                    );
-                                    setToastVariant("danger");
-                                    setToastMessage(
-                                      "Tidak dapat memberikan penilaian: ID produk tidak ditemukan"
-                                    );
-                                    setShowToast(true);
-                                  }
-                                }}
-                                className="rate-button"
-                              >
-                                <FaStar className="me-1" />
-                                Nilai
-                              </Button>
-                            </td>
-                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -693,18 +624,6 @@ const OrdersPage = () => {
             </Card>
           ))}
         </div>
-      )}
-
-      {/* Rating Modal Component */}
-      {showRatingModal && (
-        <RatingModal
-          show={showRatingModal}
-          onHide={() => setShowRatingModal(false)}
-          productId={ratingProductId}
-          productName={ratingProductName}
-          onSuccess={handleRatingSuccess}
-          onError={handleRatingError}
-        />
       )}
     </Container>
   );

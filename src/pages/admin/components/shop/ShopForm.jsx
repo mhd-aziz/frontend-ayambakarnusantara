@@ -17,7 +17,7 @@ import {
 } from "react-bootstrap";
 import { FaUpload, FaSave, FaTimes } from "react-icons/fa";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES = [
   "image/jpeg",
   "image/png",
