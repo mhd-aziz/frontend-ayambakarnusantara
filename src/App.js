@@ -7,6 +7,17 @@ import {
   useLocation,
 } from "react-router-dom";
 import "./App.css";
+import "../src/assets/styles/AdminDashboard.css"
+import "../src/assets/styles/cart.css"
+import "../src/assets/styles/global.css"
+import "../src/assets/styles/menu.css"
+import "../src/assets/styles/order-detail.css"
+import "../src/assets/styles/order.css"
+import "../src/assets/styles/productDetail.css"
+import "../src/assets/styles/rating-page.css"
+import "../src/assets/styles/shop-detail.css"
+import "../src/assets/styles/shop.css"
+import "../src/assets/styles/variables.css"
 import "bootstrap/dist/css/bootstrap.min.css";
 
 // Impor komponen Navbar dan AuthHeader
