@@ -33,7 +33,7 @@ function NavigationBar() {
 
   return (
     <Navbar
-      expand="xl" 
+      expand="xl"
       sticky="top"
       className={`main-navbar ${
         isNavbarSolid ? "navbar-solid" : "navbar-transparent-effect"
@@ -48,7 +48,7 @@ function NavigationBar() {
         <Navbar.Brand
           as={Link}
           to="/"
-          className="navbar-brand-desktop d-none d-xl-flex align-items-center" 
+          className="navbar-brand-desktop d-none d-xl-flex align-items-center"
         >
           <img
             src={logoImage}
@@ -72,7 +72,13 @@ function NavigationBar() {
               <ShopWindow size={22} />
             </Nav.Link>
           )}
-          <Nav.Link href="#cart" className="nav-link-icon-mobile p-1 me-1">
+          {/* Updated Mobile Cart Link */}
+          <Nav.Link
+            as={Link}
+            to="/keranjang"
+            className="nav-link-icon-mobile p-1 me-1"
+            title="Keranjang"
+          >
             <Cart size={22} />
           </Nav.Link>
           {isLoggedIn ? (
@@ -80,6 +86,7 @@ function NavigationBar() {
               as={Link}
               to="/profile"
               className="nav-link-icon-mobile p-1"
+              title={user ? user.displayName || user.email : "Profil"}
             >
               <PersonCircle size={22} />
             </Nav.Link>
@@ -88,6 +95,7 @@ function NavigationBar() {
               as={Link}
               to="/login"
               className="nav-link-icon-mobile p-1"
+              title="Login/Register"
             >
               <PersonCircle size={22} />
             </Nav.Link>
@@ -95,7 +103,7 @@ function NavigationBar() {
         </div>
         <Navbar.Collapse
           id="basic-navbar-nav"
-          className="justify-content-xl-end" 
+          className="justify-content-xl-end"
         >
           <Nav className="nav-links-desktop ms-xl-4 me-xl-auto">
             {" "}
@@ -134,15 +142,18 @@ function NavigationBar() {
               <Nav.Link
                 as={Link}
                 to="/toko-saya"
-                className="nav-link-icon-custom d-none d-xl-flex me-2" // BERUBAH: -lg- menjadi -xl-
+                className="nav-link-icon-custom d-none d-xl-flex me-2"
                 title="Toko Saya"
               >
                 <ShopWindow size={24} />
               </Nav.Link>
             )}
+            {/* Updated Desktop Cart Link */}
             <Nav.Link
-              href="#cart"
-              className="nav-link-icon-custom d-none d-xl-flex me-2" // BERUBAH: -lg- menjadi -xl-
+              as={Link}
+              to="/keranjang"
+              className="nav-link-icon-custom d-none d-xl-flex me-2"
+              title="Keranjang"
             >
               <Cart size={24} />
             </Nav.Link>
@@ -151,7 +162,7 @@ function NavigationBar() {
                 <Nav.Link
                   as={Link}
                   to="/profile"
-                  className="nav-link-icon-custom d-none d-xl-flex me-2" // BERUBAH: -lg- menjadi -xl-
+                  className="nav-link-icon-custom d-none d-xl-flex me-2"
                   title={user ? user.displayName || user.email : "Profil"}
                 >
                   <PersonCircle size={24} />
@@ -160,7 +171,7 @@ function NavigationBar() {
                   variant="outline-custom"
                   onClick={handleLogout}
                   size="sm"
-                  className="logout-button-custom d-none d-xl-block" // BERUBAH: -lg- menjadi -xl-
+                  className="logout-button-custom d-none d-xl-block"
                 >
                   Logout
                 </Button>
@@ -169,7 +180,7 @@ function NavigationBar() {
                   variant="danger"
                   onClick={handleLogout}
                   size="sm"
-                  className="w-100 mt-2 d-xl-none logout-button-mobile-dropdown" // BERUBAH: -lg- menjadi -xl-
+                  className="w-100 mt-2 d-xl-none logout-button-mobile-dropdown"
                 >
                   Logout
                 </Button>
@@ -179,7 +190,7 @@ function NavigationBar() {
                 <Nav.Link
                   as={Link}
                   to="/login"
-                  className="nav-link-custom login-link-custom d-none d-xl-block" // BERUBAH: -lg- menjadi -xl-
+                  className="nav-link-custom login-link-custom d-none d-xl-block"
                 >
                   Login
                 </Nav.Link>
@@ -188,7 +199,7 @@ function NavigationBar() {
                   to="/register"
                   variant="primary-custom"
                   size="sm"
-                  className="register-button-custom d-none d-xl-block" // BERUBAH: -lg- menjadi -xl-
+                  className="register-button-custom d-none d-xl-block"
                 >
                   Register
                 </Button>
@@ -196,14 +207,14 @@ function NavigationBar() {
                 <Nav.Link
                   as={Link}
                   to="/login"
-                  className="btn btn-outline-light btn-sm w-100 mb-2 mt-2 d-xl-none" // BERUBAH: -lg- menjadi -xl-
+                  className="btn btn-outline-light btn-sm w-100 mb-2 mt-2 d-xl-none"
                 >
                   Login
                 </Nav.Link>
                 <Nav.Link
                   as={Link}
                   to="/register"
-                  className="btn btn-light btn-sm w-100 d-xl-none" // BERUBAH: -lg- menjadi -xl-
+                  className="btn btn-light btn-sm w-100 d-xl-none"
                 >
                   Register
                 </Nav.Link>

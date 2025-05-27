@@ -12,8 +12,10 @@ import {
   Form,
   Badge,
 } from "react-bootstrap";
-import { Link } from "react-router-dom"; 
-import { getProducts } from "../services/MenuService"; 
+import { Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { getProducts } from "../services/MenuService";
+import { addItemToCart } from "../services/CartService"; // Import CartService
+import { useAuth } from "../context/AuthContext"; // Import useAuth
 import "../css/MenuPage.css";
 
 function MenuPage() {
@@ -25,6 +27,11 @@ function MenuPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cartLoadingProductId, setCartLoadingProductId] = useState(null);
+
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation(); // Use the hook here
 
   const [filterParams, setFilterParams] = useState({
     page: 1,
@@ -108,8 +115,38 @@ function MenuPage() {
     e.target.src = `https://via.placeholder.com/400x300.png?text=Ayam+Nusantara`;
   };
 
-  // Deskripsi tidak lagi dipotong di sini, CSS akan menanganinya
-  // const truncateDescription = (text, maxLength = 70) => { ... };
+  const handleAddToCart = async (product) => {
+    if (!isLoggedIn) {
+      alert(
+        "Anda harus login terlebih dahulu untuk menambahkan item ke keranjang."
+      );
+      // Use the location object from the hook
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+
+    if (product.stock === 0) {
+      alert("Maaf, stok produk ini habis.");
+      return;
+    }
+    setCartLoadingProductId(product._id);
+    try {
+      const itemData = {
+        productId: product._id,
+        quantity: 1,
+      };
+      const response = await addItemToCart(itemData);
+      if (response.status === "success" || response.success === true) {
+        alert(response.message || "Produk berhasil ditambahkan ke keranjang!");
+      } else {
+        alert(response.message || "Gagal menambahkan produk ke keranjang.");
+      }
+    } catch (err) {
+      alert(err.message || "Terjadi kesalahan saat menambahkan ke keranjang.");
+    } finally {
+      setCartLoadingProductId(null);
+    }
+  };
 
   let paginationItems = [];
   if (productsData.totalPages > 1) {
@@ -184,14 +221,11 @@ function MenuPage() {
     <Container fluid className="py-4 px-md-4 menu-page-container-fluid">
       <Container>
         <div className="filters-section-wrapper">
-          {" "}
-          {/* Menggunakan class CSS kustom */}
           <Row className="align-items-center">
             <Col md={12} lg={5} className="mb-3 mb-lg-0">
               <h1 className="h2 mb-1" style={{ color: "#c0392b" }}>
                 Menu Ayam Bakar Nusantara
-              </h1>{" "}
-              {/* Warna tema contoh */}
+              </h1>
               <p className="text-muted mb-0">
                 Temukan pilihan ayam bakar dan hidangan pelengkap favorit Anda.
               </p>
@@ -291,15 +325,9 @@ function MenuPage() {
         {!isLoading && !error && productsData.products.length > 0 && (
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {" "}
-              {/* g-4 untuk gap antar kartu */}
               {productsData.products.map((product) => (
                 <Col key={product._id} className="d-flex align-items-stretch">
-                  {" "}
-                  {/* align-items-stretch agar kartu sama tinggi */}
                   <Card className="w-100 product-card">
-                    {" "}
-                    {/* Menggunakan class CSS kustom */}
                     <Card.Img
                       variant="top"
                       src={
@@ -338,32 +366,24 @@ function MenuPage() {
                         )}
                       </div>
                       <Card.Title as="h3" className="h6 mb-1">
-                        {" "}
-                        {/* Mengubah h5 menjadi h6 atau h3 sesuai hirarki */}
                         {product.name}
                       </Card.Title>
                       {product.description && (
                         <Card.Text className="description-text mb-2 flex-grow-0">
-                          {" "}
-                          {/* Menggunakan class CSS kustom */}
                           {product.description}
                         </Card.Text>
                       )}
                       <div className="mt-auto pt-2">
-                        {" "}
-                        {/* mt-auto untuk mendorong harga dan tombol ke bawah */}
                         <p className="price mb-2">
                           Rp {product.price.toLocaleString("id-ID")}
                         </p>
                         <div className="button-group">
-                          {" "}
-                          {/* Grup untuk tombol */}
                           <Button
-                            variant="outline-secondary" // Tombol Detail
+                            variant="outline-secondary"
                             size="sm"
                             className="btn-detail"
-                            as={Link} // Gunakan Link dari react-router-dom
-                            to={`/menu/${product._id}`} // Path ke halaman detail
+                            as={Link}
+                            to={`/menu/${product._id}`}
                           >
                             <i className="bi bi-eye-fill me-1"></i>Detail
                           </Button>
@@ -373,19 +393,32 @@ function MenuPage() {
                             }
                             size="sm"
                             className="btn-add-to-cart"
-                            disabled={product.stock === 0}
-                            onClick={() =>
-                              alert(`Menambahkan ${product.name} ke keranjang!`)
+                            disabled={
+                              product.stock === 0 ||
+                              cartLoadingProductId === product._id
                             }
+                            onClick={() => handleAddToCart(product)}
                           >
-                            <i
-                              className={`bi ${
-                                product.stock > 0
-                                  ? "bi-cart-plus-fill"
-                                  : "bi-slash-circle"
-                              } me-1`}
-                            ></i>
-                            {product.stock > 0 ? "Keranjang" : "Habis"}
+                            {cartLoadingProductId === product._id ? (
+                              <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <>
+                                <i
+                                  className={`bi ${
+                                    product.stock > 0
+                                      ? "bi-cart-plus-fill"
+                                      : "bi-slash-circle"
+                                  } me-1`}
+                                ></i>
+                                {product.stock > 0 ? "Keranjang" : "Habis"}
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>

@@ -28,6 +28,7 @@ import SellerDashboardOverview from "./pages/Seller/SellerDashboardOverview";
 import SellerShopInfo from "./pages/Seller/SellerShopInfo";
 import SellerProductManagement from "./pages/Seller/SellerProductManagement";
 import SellerOrderManagement from "./pages/Seller/SellerOrderManagement";
+import CartPage from "./pages/CartPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
@@ -174,6 +175,16 @@ function App() {
             <Route path="produk" element={<SellerProductManagement />} />
             <Route path="pesanan" element={<SellerOrderManagement />} />
           </Route>
+          <Route
+            path="/keranjang"
+            element={
+              isLoggedIn ? (
+                <CartPage />
+              ) : (
+                <Navigate to="/login" state={{ from: "/keranjang" }} replace />
+              )
+            }
+          />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Container>
