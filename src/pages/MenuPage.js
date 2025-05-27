@@ -12,10 +12,11 @@ import {
   Form,
   Badge,
 } from "react-bootstrap";
-import { Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getProducts } from "../services/MenuService";
-import { addItemToCart } from "../services/CartService"; // Import CartService
-import { useAuth } from "../context/AuthContext"; // Import useAuth
+// import { addItemToCart } from "../services/CartService"; // Tidak lagi diimpor langsung
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext"; // Impor useCart
 import "../css/MenuPage.css";
 
 function MenuPage() {
@@ -25,13 +26,14 @@ function MenuPage() {
     totalPages: 1,
     totalProducts: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true); // Ubah nama state untuk loading produk
   const [error, setError] = useState(null);
-  const [cartLoadingProductId, setCartLoadingProductId] = useState(null);
+  // const [cartLoadingProductId, setCartLoadingProductId] = useState(null); // Akan diganti dengan isLoading dari CartContext
 
   const { isLoggedIn } = useAuth();
+  const { addItem: addItemToCartContext, isLoading: isCartLoading } = useCart(); // Ambil fungsi addItem dan isLoading dari CartContext
   const navigate = useNavigate();
-  const location = useLocation(); // Use the hook here
+  const location = useLocation();
 
   const [filterParams, setFilterParams] = useState({
     page: 1,
@@ -42,7 +44,7 @@ function MenuPage() {
   });
 
   const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoadingProducts(true); // Gunakan isLoadingProducts
     setError(null);
     try {
       const response = await getProducts(filterParams);
@@ -77,7 +79,7 @@ function MenuPage() {
         totalProducts: 0,
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingProducts(false); // Gunakan setIsLoadingProducts
     }
   }, [filterParams]);
 
@@ -120,7 +122,6 @@ function MenuPage() {
       alert(
         "Anda harus login terlebih dahulu untuk menambahkan item ke keranjang."
       );
-      // Use the location object from the hook
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
@@ -129,22 +130,24 @@ function MenuPage() {
       alert("Maaf, stok produk ini habis.");
       return;
     }
-    setCartLoadingProductId(product._id);
+
+    // Tidak perlu setCartLoadingProductId lagi, karena isLoading dari CartContext akan menangani ini
+    // Jika Anda ingin state loading per tombol, Anda masih bisa mempertahankannya
+    // atau menyesuaikan CartContext agar bisa menangani loading per item jika diperlukan.
+    // Untuk kesederhanaan, kita akan mengandalkan isCartLoading global dari context.
+
     try {
       const itemData = {
-        productId: product._id,
+        productId: product._id, // Pastikan product._id adalah ID yang benar
         quantity: 1,
       };
-      const response = await addItemToCart(itemData);
-      if (response.status === "success" || response.success === true) {
-        alert(response.message || "Produk berhasil ditambahkan ke keranjang!");
-      } else {
-        alert(response.message || "Gagal menambahkan produk ke keranjang.");
-      }
+      await addItemToCartContext(itemData); // Panggil fungsi dari context
+      // Pesan sukses sudah ditangani di dalam CartContext.addItem
     } catch (err) {
-      alert(err.message || "Terjadi kesalahan saat menambahkan ke keranjang.");
-    } finally {
-      setCartLoadingProductId(null);
+      // Pesan error juga sudah ditangani (atau dilempar) oleh CartContext.addItem
+      // Jika tidak ada alert di context, Anda bisa menambahkannya di sini:
+      // alert(err.message || "Terjadi kesalahan saat menambahkan ke keranjang.");
+      console.error("Error adding to cart from MenuPage:", err);
     }
   };
 
@@ -276,7 +279,7 @@ function MenuPage() {
           </Row>
         </div>
 
-        {isLoading && (
+        {isLoadingProducts && ( // Menggunakan isLoadingProducts
           <div className="text-center py-5 loading-spinner-container">
             <Spinner
               animation="border"
@@ -305,7 +308,7 @@ function MenuPage() {
           </Alert>
         )}
 
-        {!isLoading && !error && productsData.products.length === 0 && (
+        {!isLoadingProducts && !error && productsData.products.length === 0 && (
           <Alert
             variant="light"
             className="text-center lead py-5 shadow-sm border"
@@ -322,7 +325,7 @@ function MenuPage() {
           </Alert>
         )}
 
-        {!isLoading && !error && productsData.products.length > 0 && (
+        {!isLoadingProducts && !error && productsData.products.length > 0 && (
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
               {productsData.products.map((product) => (
@@ -394,12 +397,11 @@ function MenuPage() {
                             size="sm"
                             className="btn-add-to-cart"
                             disabled={
-                              product.stock === 0 ||
-                              cartLoadingProductId === product._id
+                              product.stock === 0 || isCartLoading // Menggunakan isCartLoading dari context
                             }
                             onClick={() => handleAddToCart(product)}
                           >
-                            {cartLoadingProductId === product._id ? (
+                            {isCartLoading ? ( // Tampilkan spinner jika CartContext sedang loading
                               <Spinner
                                 as="span"
                                 animation="border"

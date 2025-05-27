@@ -28,7 +28,7 @@ import {
 } from "../services/OrderService";
 import {
   createMidtransTransaction,
-  getMidtransTransactionStatus, // Import baru
+  getMidtransTransactionStatus,
 } from "../services/PaymentService";
 import {
   BoxSeam,
@@ -42,7 +42,8 @@ import {
   Shop,
   XCircleFill,
   ExclamationTriangleFill,
-  ArrowClockwise, // Untuk tombol refresh status
+  ArrowClockwise,
+  Receipt, // Tambahkan ikon untuk detail transaksi
 } from "react-bootstrap-icons";
 import "../css/OrderDetailPage.css";
 
@@ -64,52 +65,126 @@ function OrderDetailPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(""); // Untuk pesan status pembayaran
+  const [statusMessage, setStatusMessage] = useState("");
+  const [paymentTransactionDetails, setPaymentTransactionDetails] =
+    useState(null); // Untuk menyimpan detail transaksi Midtrans
 
-  const fetchOrderDetails = useCallback(async () => {
-    if (!isLoggedIn) {
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
-    if (!orderId) {
-      setError("ID Pesanan tidak ditemukan.");
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-    setPaymentError("");
-    setStatusMessage("");
-    try {
-      const response = await getCustomerOrderDetailById(orderId);
-      if (
-        response &&
-        response.success &&
-        response.data &&
-        response.data.order
-      ) {
-        setOrderDetails(response.data.order);
-        setShopDetails(response.data.shopDetails || {});
-      } else {
-        setError(
-          response?.message ||
-            "Gagal memuat detail pesanan. Pesanan tidak ditemukan."
-        );
-        setOrderDetails(null);
-        setShopDetails(null);
+  const fetchOrderDetails = useCallback(
+    async (shouldFetchPaymentStatus = false) => {
+      if (!isLoggedIn) {
+        navigate("/login", { state: { from: location.pathname } });
+        return;
       }
-    } catch (err) {
-      setError(
-        err.message || "Terjadi kesalahan saat mengambil detail pesanan."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orderId, isLoggedIn, navigate, location.pathname]);
+      if (!orderId) {
+        setError("ID Pesanan tidak ditemukan.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      if (shouldFetchPaymentStatus) {
+        setPaymentError("");
+        setStatusMessage("");
+        setPaymentTransactionDetails(null);
+      }
+
+      try {
+        const response = await getCustomerOrderDetailById(orderId);
+        if (
+          response &&
+          response.success &&
+          response.data &&
+          response.data.order
+        ) {
+          const fetchedOrderDetails = response.data.order;
+          setOrderDetails(fetchedOrderDetails);
+          setShopDetails(response.data.shopDetails || {});
+
+          if (shouldFetchPaymentStatus) {
+            const isOnlinePayment =
+              fetchedOrderDetails.paymentDetails?.method === "ONLINE_PAYMENT";
+            const isOrderStatusRelevantForCheck = ![
+              "COMPLETED",
+              "CANCELLED",
+              "PAYMENT_FAILED",
+            ].includes(fetchedOrderDetails.orderStatus);
+
+            if (isOnlinePayment && isOrderStatusRelevantForCheck) {
+              setIsCheckingStatus(true);
+              setStatusMessage("Memeriksa status pembayaran terbaru...");
+              try {
+                const statusResponse = await getMidtransTransactionStatus(
+                  fetchedOrderDetails.orderId
+                );
+                if (
+                  statusResponse &&
+                  statusResponse.success &&
+                  statusResponse.data
+                ) {
+                  setPaymentTransactionDetails(statusResponse.data); // Simpan seluruh objek 'data'
+                  setStatusMessage(
+                    statusResponse.message ||
+                      "Status pembayaran berhasil dimuat."
+                  );
+                  if (
+                    fetchedOrderDetails.orderStatus !==
+                      statusResponse.data.internalOrderStatus ||
+                    fetchedOrderDetails.paymentDetails?.status !==
+                      statusResponse.data.internalPaymentStatus
+                  ) {
+                    setOrderDetails((prevOrder) => ({
+                      ...prevOrder,
+                      orderStatus: statusResponse.data.internalOrderStatus,
+                      paymentDetails: {
+                        ...prevOrder.paymentDetails,
+                        status: statusResponse.data.internalPaymentStatus,
+                        transactionId:
+                          statusResponse.data.paymentGatewayStatus
+                            ?.transaction_id || // Koreksi di sini juga
+                          prevOrder.paymentDetails?.transactionId,
+                      },
+                    }));
+                  }
+                } else {
+                  setPaymentError(
+                    statusResponse?.message || "Gagal memuat status pembayaran."
+                  );
+                  setStatusMessage("");
+                }
+              } catch (statusErr) {
+                setPaymentError(
+                  statusErr.message ||
+                    "Terjadi kesalahan saat memeriksa status pembayaran."
+                );
+                setStatusMessage("");
+              } finally {
+                setIsCheckingStatus(false);
+              }
+            } else {
+              setStatusMessage("");
+            }
+          }
+        } else {
+          setError(
+            response?.message ||
+              "Gagal memuat detail pesanan. Pesanan tidak ditemukan."
+          );
+          setOrderDetails(null);
+          setShopDetails(null);
+        }
+      } catch (err) {
+        setError(
+          err.message || "Terjadi kesalahan saat mengambil detail pesanan."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [orderId, isLoggedIn, navigate, location.pathname]
+  );
 
   useEffect(() => {
-    fetchOrderDetails();
+    fetchOrderDetails(true);
   }, [fetchOrderDetails]);
 
   const handleImageError = (e, itemName = "Produk") => {
@@ -133,15 +208,16 @@ function OrderDetailPage() {
       const response = await cancelOrderAsCustomer(orderDetails.orderId);
       if (
         response &&
-        response.orderId &&
-        response.orderStatus === "CANCELLED"
+        (response.success ||
+          (response.orderId && response.orderStatus === "CANCELLED"))
       ) {
         alert("Pesanan berhasil dibatalkan.");
-        setOrderDetails(response);
-        handleCloseCancelModal();
-      } else if (response && response.orderStatus === "CANCELLED") {
-        alert("Pesanan berhasil dibatalkan.");
-        setOrderDetails(response);
+        setOrderDetails((prevDetails) => ({
+          ...prevDetails,
+          ...response,
+          orderStatus: "CANCELLED",
+        }));
+        setPaymentTransactionDetails(null);
         handleCloseCancelModal();
       } else {
         setCancelError(response?.message || "Gagal membatalkan pesanan.");
@@ -174,6 +250,9 @@ function OrderDetailPage() {
           "_blank",
           "noopener,noreferrer"
         );
+        setStatusMessage(
+          "Anda akan diarahkan ke halaman pembayaran Midtrans. Setelah pembayaran, cek status di halaman ini."
+        );
       } else {
         setPaymentError(
           paymentResponse?.message ||
@@ -189,40 +268,49 @@ function OrderDetailPage() {
     }
   };
 
-  const handleCheckPaymentStatus = async () => {
+  const handleCheckPaymentStatusManual = async () => {
     if (!orderDetails || !orderDetails.orderId) return;
     setIsCheckingStatus(true);
     setPaymentError("");
-    setStatusMessage("");
+    setStatusMessage("Sedang memperbarui status pembayaran...");
     try {
       const statusResponse = await getMidtransTransactionStatus(
         orderDetails.orderId
       );
       if (statusResponse && statusResponse.success && statusResponse.data) {
-        const midtransStatus = statusResponse.data.midtransStatus;
-        const internalStatus = statusResponse.data.internalOrderStatus;
-
+        setPaymentTransactionDetails(statusResponse.data); // Simpan seluruh objek 'data'
         setStatusMessage(
-          `Status Midtrans: ${
-            midtransStatus?.transaction_status || "N/A"
-          }. Status Pesanan Internal: ${internalStatus || "N/A"}. ${
-            statusResponse.message
-          }`
+          statusResponse.message || "Status pembayaran berhasil diperbarui."
         );
-
-        // Jika status internal berubah, fetch ulang detail pesanan untuk update UI
-        if (orderDetails.orderStatus !== internalStatus) {
-          fetchOrderDetails();
+        if (
+          orderDetails.orderStatus !==
+            statusResponse.data.internalOrderStatus ||
+          orderDetails.paymentDetails?.status !==
+            statusResponse.data.internalPaymentStatus
+        ) {
+          setOrderDetails((prevOrder) => ({
+            ...prevOrder,
+            orderStatus: statusResponse.data.internalOrderStatus,
+            paymentDetails: {
+              ...prevOrder.paymentDetails,
+              status: statusResponse.data.internalPaymentStatus,
+              transactionId:
+                statusResponse.data.paymentGatewayStatus?.transaction_id || // Koreksi di sini juga
+                prevOrder.paymentDetails?.transactionId,
+            },
+          }));
         }
       } else {
         setPaymentError(
           statusResponse?.message || "Gagal memeriksa status pembayaran."
         );
+        setStatusMessage("");
       }
     } catch (err) {
       setPaymentError(
         err.message || "Terjadi kesalahan saat memeriksa status pembayaran."
       );
+      setStatusMessage("");
     } finally {
       setIsCheckingStatus(false);
     }
@@ -242,11 +330,10 @@ function OrderDetailPage() {
       case "COMPLETED":
         return "success";
       case "CANCELLED":
+      case "PAYMENT_FAILED":
         return "danger";
       case "PAYMENT_PENDING":
         return "secondary";
-      case "PAYMENT_FAILED":
-        return "danger";
       default:
         return "light";
     }
@@ -256,7 +343,7 @@ function OrderDetailPage() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (isLoading) {
+  if (isLoading && !orderDetails) {
     return (
       <Container className="text-center py-5">
         <Spinner
@@ -283,10 +370,12 @@ function OrderDetailPage() {
     );
   }
 
-  if (!orderDetails) {
+  if (!orderDetails && !isLoading) {
     return (
       <Container className="text-center py-5">
-        <Alert variant="warning">Pesanan tidak ditemukan.</Alert>
+        <Alert variant="warning">
+          Pesanan tidak ditemukan atau gagal dimuat.
+        </Alert>
         <Button as={Link} to="/pesanan" variant="primary">
           Kembali ke Daftar Pesanan
         </Button>
@@ -294,23 +383,26 @@ function OrderDetailPage() {
     );
   }
 
+  const isActionInProgress =
+    isCancelling || isProcessingPayment || isCheckingStatus;
+
   const cancellableStatusesFromBackend = [
     "AWAITING_PAYMENT",
     "PENDING_CONFIRMATION",
   ];
-  const canCancelOrder = cancellableStatusesFromBackend.includes(
-    orderDetails.orderStatus
-  );
+  const canCancelOrder =
+    orderDetails &&
+    cancellableStatusesFromBackend.includes(orderDetails.orderStatus);
 
   const showPayNowButton =
+    orderDetails &&
     orderDetails.paymentDetails?.method === "ONLINE_PAYMENT" &&
     orderDetails.orderStatus === "AWAITING_PAYMENT";
 
   const showCheckStatusButton =
+    orderDetails &&
     orderDetails.paymentDetails?.method === "ONLINE_PAYMENT" &&
-    (orderDetails.orderStatus === "AWAITING_PAYMENT" ||
-      orderDetails.paymentDetails?.status === "pending_online_payment" ||
-      orderDetails.paymentDetails?.status === "PAYMENT_PENDING");
+    !["COMPLETED", "CANCELLED"].includes(orderDetails.orderStatus);
 
   return (
     <Container className="my-4 order-detail-page">
@@ -332,12 +424,22 @@ function OrderDetailPage() {
       </Breadcrumb>
 
       {paymentError && (
-        <Alert variant="danger" onClose={() => setPaymentError("")} dismissible>
+        <Alert
+          variant="danger"
+          onClose={() => setPaymentError("")}
+          dismissible
+          className="mt-3"
+        >
           {paymentError}
         </Alert>
       )}
       {statusMessage && (
-        <Alert variant="info" onClose={() => setStatusMessage("")} dismissible>
+        <Alert
+          variant="info"
+          onClose={() => setStatusMessage("")}
+          dismissible
+          className="mt-3"
+        >
           {statusMessage}
         </Alert>
       )}
@@ -350,8 +452,15 @@ function OrderDetailPage() {
               className="d-flex justify-content-between align-items-center"
             >
               Detail Pesanan
-              <Badge bg={getStatusBadgeVariant(orderDetails.orderStatus)} pill>
-                {orderDetails.orderStatus
+              <Badge
+                bg={
+                  orderDetails
+                    ? getStatusBadgeVariant(orderDetails.orderStatus)
+                    : "light"
+                }
+                pill
+              >
+                {orderDetails?.orderStatus
                   ? orderDetails.orderStatus.replace(/_/g, " ")
                   : "N/A"}
               </Badge>
@@ -367,7 +476,7 @@ function OrderDetailPage() {
                       </strong>
                     </Col>
                     <Col sm={8} style={{ wordBreak: "break-all" }}>
-                      {orderDetails.orderId}
+                      {orderDetails?.orderId}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -380,10 +489,12 @@ function OrderDetailPage() {
                       </strong>
                     </Col>
                     <Col sm={8}>
-                      {new Date(orderDetails.createdAt).toLocaleString(
-                        "id-ID",
-                        { dateStyle: "long", timeStyle: "short" }
-                      )}
+                      {orderDetails?.createdAt
+                        ? new Date(orderDetails.createdAt).toLocaleString(
+                            "id-ID",
+                            { dateStyle: "long", timeStyle: "short" }
+                          )
+                        : "N/A"}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -395,7 +506,9 @@ function OrderDetailPage() {
                         Nama Pemesan:
                       </strong>
                     </Col>
-                    <Col sm={8}>{user?.displayName || orderDetails.userId}</Col>
+                    <Col sm={8}>
+                      {user?.displayName || orderDetails?.userId}
+                    </Col>
                   </Row>
                 </ListGroup.Item>
                 <ListGroup.Item>
@@ -407,46 +520,148 @@ function OrderDetailPage() {
                       </strong>
                     </Col>
                     <Col sm={8}>
-                      {orderDetails.paymentDetails?.method
+                      {orderDetails?.paymentDetails?.method
                         ? orderDetails.paymentDetails.method.replace(/_/g, " ")
                         : "N/A"}
                       <Badge
                         bg={
-                          orderDetails.paymentDetails?.status === "paid" ||
-                          orderDetails.paymentDetails?.status ===
+                          orderDetails?.paymentDetails?.status === "paid" ||
+                          orderDetails?.paymentDetails?.status ===
                             "pay_on_pickup"
                             ? "success"
-                            : orderDetails.paymentDetails?.status ===
+                            : orderDetails?.paymentDetails?.status ===
                                 "pending_online_payment" ||
-                              orderDetails.paymentDetails?.status ===
-                                "AWAITING_PAYMENT"
+                              orderDetails?.orderStatus === "AWAITING_PAYMENT"
                             ? "warning"
                             : "secondary"
                         }
                         className="ms-2"
                       >
-                        {orderDetails.paymentDetails?.status
+                        {orderDetails?.paymentDetails?.status
                           ? orderDetails.paymentDetails.status.replace(
                               /_/g,
                               " "
                             )
+                          : orderDetails?.orderStatus === "AWAITING_PAYMENT"
+                          ? "AWAITING PAYMENT"
                           : "N/A"}
                       </Badge>
                     </Col>
                   </Row>
                 </ListGroup.Item>
-                {orderDetails.paymentDetails?.transactionId && (
-                  <ListGroup.Item>
-                    <Row>
-                      <Col sm={4}>
-                        <strong>ID Transaksi:</strong>
-                      </Col>
-                      <Col sm={8}>
-                        {orderDetails.paymentDetails.transactionId}
-                      </Col>
-                    </Row>
-                  </ListGroup.Item>
+
+                {/* AWAL KOREKSI: Menggunakan paymentGatewayStatus */}
+                {paymentTransactionDetails?.paymentGatewayStatus && (
+                  <>
+                    <ListGroup.Item>
+                      <Row>
+                        <Col>
+                          <strong className="text-muted">
+                            Detail Transaksi:
+                          </strong>
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <Row>
+                        <Col sm={4}>
+                          <strong>
+                            <Receipt color={ICON_COLOR} className="me-2" />
+                            ID Transaksi Midtrans:
+                          </strong>
+                        </Col>
+                        <Col sm={8} style={{ wordBreak: "break-all" }}>
+                          {paymentTransactionDetails.paymentGatewayStatus
+                            .transaction_id || "N/A"}
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <Row>
+                        <Col sm={4}>
+                          <strong>Status Transaksi:</strong>
+                        </Col>
+                        <Col sm={8}>
+                          {paymentTransactionDetails.paymentGatewayStatus.transaction_status
+                            ?.replace(/_/g, " ")
+                            .toUpperCase() || "N/A"}
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                    {paymentTransactionDetails.paymentGatewayStatus
+                      .payment_type && (
+                      <ListGroup.Item>
+                        <Row>
+                          <Col sm={4}>
+                            <strong>Tipe Pembayaran:</strong>
+                          </Col>
+                          <Col sm={8}>
+                            {paymentTransactionDetails.paymentGatewayStatus.payment_type
+                              .replace(/_/g, " ")
+                              .toUpperCase() || "N/A"}
+                          </Col>
+                        </Row>
+                      </ListGroup.Item>
+                    )}
+                    {paymentTransactionDetails.paymentGatewayStatus
+                      .va_numbers &&
+                      paymentTransactionDetails.paymentGatewayStatus.va_numbers
+                        .length > 0 && (
+                        <ListGroup.Item>
+                          <Row>
+                            <Col sm={4}>
+                              <strong>Nomor VA:</strong>
+                            </Col>
+                            <Col sm={8}>
+                              {paymentTransactionDetails.paymentGatewayStatus.va_numbers
+                                .map(
+                                  (va) =>
+                                    `${va.bank.toUpperCase()}: ${va.va_number}`
+                                )
+                                .join(", ")}
+                            </Col>
+                          </Row>
+                        </ListGroup.Item>
+                      )}
+                    {paymentTransactionDetails.paymentGatewayStatus
+                      .expiry_time && (
+                      <ListGroup.Item>
+                        <Row>
+                          <Col sm={4}>
+                            <strong>Waktu Kadaluarsa Pembayaran:</strong>
+                          </Col>
+                          <Col sm={8}>
+                            {new Date(
+                              paymentTransactionDetails.paymentGatewayStatus.expiry_time
+                            ).toLocaleString("id-ID", {
+                              dateStyle: "long",
+                              timeStyle: "short",
+                            })}
+                          </Col>
+                        </Row>
+                      </ListGroup.Item>
+                    )}
+                    {paymentTransactionDetails.paymentGatewayStatus
+                      .settlement_time && (
+                      <ListGroup.Item>
+                        <Row>
+                          <Col sm={4}>
+                            <strong>Waktu Penyelesaian:</strong>
+                          </Col>
+                          <Col sm={8}>
+                            {new Date(
+                              paymentTransactionDetails.paymentGatewayStatus.settlement_time
+                            ).toLocaleString("id-ID", {
+                              dateStyle: "long",
+                              timeStyle: "short",
+                            })}
+                          </Col>
+                        </Row>
+                      </ListGroup.Item>
+                    )}
+                  </>
                 )}
+
                 <ListGroup.Item>
                   <Row>
                     <Col sm={4}>
@@ -455,10 +670,10 @@ function OrderDetailPage() {
                         Jenis Pesanan:
                       </strong>
                     </Col>
-                    <Col sm={8}>{orderDetails.orderType}</Col>
+                    <Col sm={8}>{orderDetails?.orderType}</Col>
                   </Row>
                 </ListGroup.Item>
-                {orderDetails.notes && (
+                {orderDetails?.notes && (
                   <ListGroup.Item>
                     <Row>
                       <Col sm={4}>
@@ -484,7 +699,8 @@ function OrderDetailPage() {
                       <strong>Total Pembayaran:</strong>
                     </Col>
                     <Col sm={8} className="fw-bold fs-5 text-primary">
-                      Rp {orderDetails.totalPrice.toLocaleString("id-ID")}
+                      Rp{" "}
+                      {orderDetails?.totalPrice?.toLocaleString("id-ID") || "0"}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -495,9 +711,7 @@ function OrderDetailPage() {
                 <Button
                   variant="danger"
                   onClick={handleShowCancelModal}
-                  disabled={
-                    isCancelling || isProcessingPayment || isCheckingStatus
-                  }
+                  disabled={isActionInProgress}
                   className="mb-2 mb-md-0"
                 >
                   <XCircleFill className="me-2" /> Batalkan Pesanan
@@ -507,9 +721,7 @@ function OrderDetailPage() {
                 <Button
                   variant="success"
                   onClick={handlePayOnline}
-                  disabled={
-                    isProcessingPayment || isCancelling || isCheckingStatus
-                  }
+                  disabled={isActionInProgress}
                   className="mb-2 mb-md-0"
                 >
                   {isProcessingPayment ? (
@@ -528,10 +740,8 @@ function OrderDetailPage() {
               {showCheckStatusButton && (
                 <Button
                   variant="info"
-                  onClick={handleCheckPaymentStatus}
-                  disabled={
-                    isCheckingStatus || isProcessingPayment || isCancelling
-                  }
+                  onClick={handleCheckPaymentStatusManual}
+                  disabled={isActionInProgress}
                   className="mb-2 mb-md-0"
                 >
                   {isCheckingStatus ? (
@@ -556,7 +766,7 @@ function OrderDetailPage() {
               Item Pesanan
             </Card.Header>
             <ListGroup variant="flush">
-              {orderDetails.items.map((item) => (
+              {orderDetails?.items.map((item) => (
                 <ListGroup.Item
                   key={item.productId}
                   className="d-flex align-items-center"
@@ -646,7 +856,7 @@ function OrderDetailPage() {
                     {shopDetails.description}
                   </p>
                 )}
-                {orderDetails.items &&
+                {orderDetails?.items &&
                   orderDetails.items.length > 0 &&
                   orderDetails.items[0].shopId && (
                     <Button

@@ -16,7 +16,7 @@ import HomePage from "./pages/HomePage";
 import LoginForm from "./components/Auth/LoginForm";
 import RegisterForm from "./components/Auth/RegisterForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext"; 
 import MenuPage from "./pages/MenuPage";
 import DetailMenuPage from "./pages/DetailMenuPage";
 import ShopPage from "./pages/ShopPage";

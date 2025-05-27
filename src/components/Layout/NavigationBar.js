@@ -8,14 +8,17 @@ import {
   Form,
   InputGroup,
   Button,
+  Badge, // Impor Badge
 } from "react-bootstrap";
 import { Search, Cart, PersonCircle, ShopWindow } from "react-bootstrap-icons";
 import "../../css/Navbar.css";
 import logoImage from "../../assets/logo.jpg";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext"; // Impor useCart
 
 function NavigationBar() {
   const { isLoggedIn, user, logout: contextLogout } = useAuth();
+  const { cartItemCount } = useCart(); // Ambil cartItemCount dari CartContext
   const location = useLocation();
   const [isNavbarSolid, setIsNavbarSolid] = useState(false);
 
@@ -40,7 +43,6 @@ function NavigationBar() {
       }`}
     >
       <Container className="align-items-center navbar-content-wrapper d-flex justify-content-between justify-content-xl-start">
-        {" "}
         <Navbar.Toggle
           aria-controls="basic-navbar-nav"
           className="navbar-toggler-mobile"
@@ -59,9 +61,8 @@ function NavigationBar() {
           />
           <span className="navbar-brand-text">Ayam Bakar Nusantara</span>
         </Navbar.Brand>
-        {/* Mobile Icons Group */}
+
         <div className="mobile-icons-group d-flex align-items-center d-xl-none">
-          {" "}
           {isLoggedIn && (
             <Nav.Link
               as={Link}
@@ -72,14 +73,24 @@ function NavigationBar() {
               <ShopWindow size={22} />
             </Nav.Link>
           )}
-          {/* Updated Mobile Cart Link */}
           <Nav.Link
             as={Link}
             to="/keranjang"
-            className="nav-link-icon-mobile p-1 me-1"
+            className="nav-link-icon-mobile p-1 me-1 position-relative"
             title="Keranjang"
           >
             <Cart size={22} />
+            {isLoggedIn && cartItemCount > 0 && (
+              <Badge
+                pill
+                bg="danger"
+                className="position-absolute top-0 start-100 translate-middle-x"
+                style={{ fontSize: "0.6em", padding: "0.3em 0.5em" }}
+              >
+                {cartItemCount}
+                <span className="visually-hidden">item di keranjang</span>
+              </Badge>
+            )}
           </Nav.Link>
           {isLoggedIn ? (
             <Nav.Link
@@ -101,12 +112,12 @@ function NavigationBar() {
             </Nav.Link>
           )}
         </div>
+
         <Navbar.Collapse
           id="basic-navbar-nav"
           className="justify-content-xl-end"
         >
           <Nav className="nav-links-desktop ms-xl-4 me-xl-auto">
-            {" "}
             <Nav.Link as={Link} to="/" className="nav-link-custom">
               Beranda
             </Nav.Link>
@@ -148,14 +159,28 @@ function NavigationBar() {
                 <ShopWindow size={24} />
               </Nav.Link>
             )}
-            {/* Updated Desktop Cart Link */}
             <Nav.Link
               as={Link}
               to="/keranjang"
-              className="nav-link-icon-custom d-none d-xl-flex me-2"
+              className="nav-link-icon-custom d-none d-xl-flex me-2 position-relative"
               title="Keranjang"
             >
               <Cart size={24} />
+              {isLoggedIn && cartItemCount > 0 && (
+                <Badge
+                  pill
+                  bg="danger"
+                  className="position-absolute top-0 start-100 translate-middle-y"
+                  style={{
+                    fontSize: "0.65em",
+                    padding: "0.35em 0.6em",
+                    marginLeft: "-5px",
+                  }}
+                >
+                  {cartItemCount}
+                  <span className="visually-hidden">item di keranjang</span>
+                </Badge>
+              )}
             </Nav.Link>
             {isLoggedIn ? (
               <>
@@ -175,7 +200,6 @@ function NavigationBar() {
                 >
                   Logout
                 </Button>
-                {/* Tombol Logout untuk Mobile Dropdown */}
                 <Button
                   variant="danger"
                   onClick={handleLogout}
@@ -203,7 +227,6 @@ function NavigationBar() {
                 >
                   Register
                 </Button>
-                {/* Tombol Login/Register untuk Mobile Dropdown */}
                 <Nav.Link
                   as={Link}
                   to="/login"
