@@ -1,6 +1,6 @@
 // src/pages/Seller/SellerShopInfo.js
 import React, { useState, useEffect } from "react";
-import { useOutletContext } from "react-router-dom"; // useNavigate dihapus jika tidak dipakai lagi
+import { useOutletContext } from "react-router-dom";
 import {
   Container,
   Alert,
@@ -28,9 +28,8 @@ import {
 } from "react-bootstrap-icons";
 import CreateSellerForm from "../../components/Seller/CreateSellerForm";
 import { updateMyShop, deleteMyShop } from "../../services/ShopService";
-import "../../css/Seller.css"; // 👈 Impor Seller.css
-
-const ICON_COLOR = "#C07722"; // Warna ini bisa juga didefinisikan sebagai variabel CSS
+import "../../css/Seller.css";
+const ICON_COLOR = "#C07722";
 
 function SellerShopInfo() {
   const outletContext = useOutletContext();
@@ -410,7 +409,7 @@ function SellerShopInfo() {
                 variant="top"
                 src={initialShopData.bannerImageURL}
                 alt={`Banner ${initialShopData.shopName}`}
-                style={{ maxHeight: "300px", objectFit: "cover" }}
+                style={{ maxHeight: "300px", objectFit: "contain" }}
               />
             )}
             <Card.Body>

@@ -41,7 +41,7 @@
 
 .product-card .card-img-top {
   height: 220px; /* Tinggi gambar konsisten */
-  object-fit: cover; /* Gambar mengisi area tanpa distorsi */
+  object-fit: contain; /* Gambar mengisi area tanpa distorsi */
   /* Tidak perlu border bawah jika kartu sudah overflow:hidden dan ada padding di body */
 }
 

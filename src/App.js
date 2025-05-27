@@ -20,6 +20,7 @@ import { useAuth } from "./context/AuthContext";
 import MenuPage from "./pages/MenuPage";
 import DetailMenuPage from "./pages/DetailMenuPage";
 import ShopPage from "./pages/ShopPage";
+import ShopDetailPage from "./pages/ShopDetailPage";
 import OrderPage from "./pages/OrderPage";
 import ProfilePage from "./pages/ProfilePage";
 import SellerPage from "./pages/Seller/SellerPage";
@@ -27,6 +28,7 @@ import SellerDashboardOverview from "./pages/Seller/SellerDashboardOverview";
 import SellerShopInfo from "./pages/Seller/SellerShopInfo";
 import SellerProductManagement from "./pages/Seller/SellerProductManagement";
 import SellerOrderManagement from "./pages/Seller/SellerOrderManagement";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   const { isLoggedIn, isLoading } = useAuth();
@@ -81,8 +83,27 @@ function App() {
   };
 
   // Tentukan path di mana footer akan ditampilkan
-  const pathsWithFooter = ["/", "/menu", "/toko", "/pesanan"];
-  const shouldShowFooter = pathsWithFooter.includes(location.pathname);
+  const pathsWithFooter = [
+    "/",
+    "/menu",
+    "/menu/:productId",
+    "/toko",
+    "/toko/:shopId",
+    "/pesanan",
+  ];
+  const isDynamicPathMatch = (pathname, pattern) => {
+    const patternParts = pattern.split("/");
+    const pathParts = pathname.split("/");
+    if (patternParts.length !== pathParts.length) return false;
+    return patternParts.every(
+      (part, index) => part.startsWith(":") || part === pathParts[index]
+    );
+  };
+  const shouldShowFooter = pathsWithFooter.some((pattern) =>
+    pattern.includes(":")
+      ? isDynamicPathMatch(location.pathname, pattern)
+      : location.pathname === pattern
+  );
 
   if (isLoading) {
     return (
@@ -125,6 +146,7 @@ function App() {
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/menu/:productId" element={<DetailMenuPage />} />{" "}
           <Route path="/toko" element={<ShopPage />} />
+          <Route path="/toko/:shopId" element={<ShopDetailPage />} />
           <Route
             path="/pesanan"
             element={
@@ -152,6 +174,7 @@ function App() {
             <Route path="produk" element={<SellerProductManagement />} />
             <Route path="pesanan" element={<SellerOrderManagement />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Container>
 
