@@ -1,0 +1,100 @@
+/* src/css/DetailMenuPage.css */
+
+.detail-menu-page {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+  background-color: transparent; /* Background diatur transparan */
+}
+
+.detail-menu-card {
+  background-color: transparent; /* Kartu detail tetap putih untuk kontras konten */
+  border-radius: 0.75rem;
+  padding: 2rem;
+  color: #212529; /* Warna teks default untuk kartu menjadi hitam/gelap */
+}
+
+.detail-menu-image {
+  width: 100%;
+  max-height: 450px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.detail-menu-title {
+  font-weight: 700;
+  color: #212529; /* Warna judul diubah menjadi hitam/gelap */
+  margin-bottom: 0.75rem;
+}
+
+.detail-menu-category-badge {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: #e9ecef !important; /* Biarkan background badge terang */
+  color: #495057 !important; /* Teks badge tetap abu-abu gelap agar kontras dengan background badge */
+  padding: 0.4em 0.8em;
+}
+
+.detail-menu-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212529; /* Warna harga diubah menjadi hitam/gelap */
+  margin-bottom: 1rem;
+}
+
+.detail-menu-stock-info .badge {
+  font-size: 0.9rem;
+  padding: 0.5em 0.75em;
+  /* Warna teks di dalam badge stok (misal: success, danger) biasanya sudah diatur Bootstrap untuk kontras */
+}
+
+.detail-menu-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #212529; /* Warna deskripsi diubah menjadi hitam/gelap */
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.quantity-selector {
+  max-width: 120px;
+}
+.quantity-selector .form-control {
+  color: #212529; /* Pastikan angka kuantitas juga hitam */
+}
+
+.actions-row .btn {
+  font-size: 1rem;
+  padding: 0.65rem 1.25rem;
+  font-weight: 500;
+  /* Warna teks tombol akan tergantung variant Bootstrap (primary, outline-primary, dll) */
+  /* Jika ingin semua teks tombol hitam, perlu penyesuaian lebih lanjut per variant */
+}
+
+.breadcrumb-item a {
+  color: #495057; /* Warna link breadcrumb diubah menjadi abu-abu gelap */
+  text-decoration: none;
+}
+.breadcrumb-item a:hover {
+  color: #212529; /* Warna hover link breadcrumb menjadi hitam/gelap */
+  text-decoration: underline;
+}
+.breadcrumb-item.active {
+  color: #6c757d; /* Warna item aktif breadcrumb (biasanya abu-abu muted) */
+}
+
+@media (max-width: 767.98px) {
+  /* md breakpoint */
+  .detail-menu-card {
+    padding: 1.5rem;
+  }
+  .detail-menu-image-col {
+    margin-bottom: 1.5rem;
+  }
+  .detail-menu-title {
+    font-size: 1.75rem;
+  }
+  .detail-menu-price {
+    font-size: 1.75rem;
+  }
+}

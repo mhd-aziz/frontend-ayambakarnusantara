@@ -1,0 +1,68 @@
+/* src/css/Footer.css */
+.footer-container {
+  background-color: #212529; /* Warna gelap default, sesuaikan jika perlu */
+  color: #adb5bd; /* Warna teks yang lebih lembut */
+  font-size: 0.9rem;
+}
+
+.footer-brand-text {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.footer-heading {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.footer-link {
+  color: #adb5bd;
+  padding-left: 0;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.footer-link:hover,
+.footer-link:focus {
+  color: #ffffff;
+  text-decoration: none; /* Opsional: hapus underline pada hover */
+}
+
+.footer-contact-info li a {
+  text-decoration: none;
+}
+
+.footer-social-icon {
+  color: #adb5bd;
+  transition: color 0.2s ease-in-out;
+}
+
+.footer-social-icon:hover,
+.footer-social-icon:focus {
+  color: #ffffff;
+}
+
+.footer-hr {
+  border-top: 1px solid #495057; /* Warna garis pemisah */
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-copyright {
+  color: #6c757d; /* Warna copyright yang lebih lembut lagi */
+  font-size: 0.85rem;
+}
+
+.footer-description {
+  color: #ced4da;
+}
+
+/* Pastikan link di Nav.Link tidak memiliki padding default yang berlebih jika ada */
+.footer-nav .nav-link {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}

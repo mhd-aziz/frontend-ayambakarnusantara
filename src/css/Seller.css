@@ -1,0 +1,147 @@
+/* src/css/Seller.css */
+
+/* Wrapper utama untuk konten halaman seller (di dalam Outlet) */
+.seller-page-content {
+  padding-top: 1.5rem; /* Beri sedikit jarak dari atas jika tidak ada header halaman */
+  padding-bottom: 3rem; /* Jarak di bawah */
+}
+
+/* Judul utama halaman seller */
+.seller-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef; /* Garis bawah yang lembut */
+}
+
+.seller-page-title {
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: #343a40; /* Warna judul yang lebih gelap */
+  margin-bottom: 0; /* Hapus margin bawah default jika sudah ada di header */
+}
+
+/* Grup untuk tombol aksi di header halaman */
+.seller-header-actions {
+  display: flex;
+  gap: 0.75rem; /* Jarak antar tombol */
+}
+
+/* Styling untuk Card utama */
+.seller-card {
+  border: 1px solid #e9ecef; /* Border yang lebih lembut dari default */
+  border-radius: 0.5rem; /* Sudut yang lebih tumpul */
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.045); /* Bayangan yang sangat lembut */
+  margin-bottom: 1.5rem;
+  background-color: #fff;
+}
+
+.seller-card .card-header.section-header {
+  /* Untuk header bagian dalam card */
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #495057;
+  padding: 0.75rem 1.25rem;
+}
+
+.seller-card .card-title {
+  color: #c07722; /* Warna brand Anda */
+  font-weight: 500;
+  margin-bottom: 1rem; /* Jarak bawah judul card */
+}
+
+/* Styling untuk ListGroup */
+.seller-info-list .list-group-item {
+  border-left: none;
+  border-right: none;
+  padding: 1rem 0; /* Atur padding atas bawah, hilangkan padding kiri kanan jika tidak perlu */
+}
+.seller-info-list .list-group-item:first-child {
+  border-top: none;
+}
+.seller-info-list .list-group-item:last-child {
+  border-bottom: none;
+}
+.seller-info-list strong {
+  color: #343a40;
+  display: block; /* Jadikan strong sebagai block untuk baris baru */
+  margin-bottom: 0.25rem;
+}
+.seller-info-list span,
+.seller-info-list p {
+  /* Untuk nilai dari item list */
+  color: #495057;
+  word-break: break-word; /* Agar teks panjang tidak merusak layout */
+}
+
+/* Styling untuk Form */
+.seller-form {
+  background-color: #fff; /* Latar belakang form, bisa juga #f8f9fa atau transparan */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  /* box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.045); */ /* Opsional, jika form tidak di dalam card */
+}
+
+.seller-form .form-label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.seller-form .form-control:focus,
+.seller-form .form-select:focus {
+  border-color: #c07722; /* Warna brand untuk focus */
+  box-shadow: 0 0 0 0.2rem rgba(192, 119, 34, 0.25); /* Warna brand untuk shadow focus */
+}
+
+/* Styling untuk preview gambar di form */
+.image-upload-preview {
+  max-width: 200px; /* Batasi lebar preview */
+  max-height: 200px;
+  border-radius: 0.375rem; /* Bootstrap's default form control border-radius */
+  object-fit: cover;
+  border: 1px solid #dee2e6;
+}
+
+/* Tombol brand utama */
+.btn-brand {
+  background-color: #c07722;
+  border-color: #c07722;
+  color: white;
+}
+.btn-brand:hover,
+.btn-brand:focus,
+.btn-brand:active {
+  background-color: #a56317; /* Warna lebih gelap saat hover/focus */
+  border-color: #a56317;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(192, 119, 34, 0.35);
+}
+
+/* Tombol outline dengan warna brand */
+.btn-outline-brand {
+  color: #c07722;
+  border-color: #c07722;
+}
+.btn-outline-brand:hover,
+.btn-outline-brand:focus,
+.btn-outline-brand:active {
+  color: white;
+  background-color: #c07722;
+  border-color: #c07722;
+  box-shadow: 0 0 0 0.2rem rgba(192, 119, 34, 0.35);
+}
+
+/* Styling Modal Delete */
+.modal-header-danger {
+  background-color: #f8d7da; /* Latar belakang merah muda untuk header modal bahaya */
+  color: #721c24; /* Warna teks gelap untuk kontras */
+  border-bottom: 1px solid #f5c6cb;
+}
+.modal-header-danger .btn-close {
+  filter: invert(25%) sepia(15%) saturate(2000%) hue-rotate(320deg)
+    brightness(90%) contrast(100%); /* Agar ikon close terlihat */
+}

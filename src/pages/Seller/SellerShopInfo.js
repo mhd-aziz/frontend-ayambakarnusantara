@@ -1,0 +1,559 @@
+// src/pages/Seller/SellerShopInfo.js
+import React, { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom"; // useNavigate dihapus jika tidak dipakai lagi
+import {
+  Container,
+  Alert,
+  Card,
+  Button,
+  Row,
+  Col,
+  Image,
+  ListGroup,
+  Form,
+  Spinner,
+  Modal,
+} from "react-bootstrap";
+import {
+  InfoCircleFill,
+  PencilSquare,
+  Type as ShopNameIcon,
+  CardText as DescriptionIcon,
+  GeoAltFill as AddressIcon,
+  Image as BannerIcon,
+  TrashFill,
+  CheckCircleFill,
+  XCircleFill,
+  ExclamationTriangleFill,
+} from "react-bootstrap-icons";
+import CreateSellerForm from "../../components/Seller/CreateSellerForm";
+import { updateMyShop, deleteMyShop } from "../../services/ShopService";
+import "../../css/Seller.css"; // 👈 Impor Seller.css
+
+const ICON_COLOR = "#C07722"; // Warna ini bisa juga didefinisikan sebagai variabel CSS
+
+function SellerShopInfo() {
+  const outletContext = useOutletContext();
+  const {
+    currentUserProfile,
+    userRole,
+    shopData: initialShopData,
+    hasShop,
+    handleShopCreated,
+    loadInitialData,
+  } = outletContext || {};
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+
+  const [editShopName, setEditShopName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editShopAddress, setEditShopAddress] = useState("");
+  const [editBannerImageFile, setEditBannerImageFile] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
+  const [editRemoveBannerImage, setEditRemoveBannerImage] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
+  const [isDeletingShop, setIsDeletingShop] = useState(false);
+  const [deleteShopError, setDeleteShopError] = useState("");
+
+  useEffect(() => {
+    if (initialShopData && isEditing) {
+      setEditShopName(initialShopData.shopName || "");
+      setEditDescription(initialShopData.description || "");
+      setEditShopAddress(initialShopData.shopAddress || "");
+      setEditImagePreview(initialShopData.bannerImageURL || null);
+      setEditBannerImageFile(null);
+      setEditRemoveBannerImage(false);
+    }
+  }, [initialShopData, isEditing]);
+
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditBannerImageFile(file);
+      setEditImagePreview(URL.createObjectURL(file));
+      setEditRemoveBannerImage(false);
+    }
+  };
+
+  const handleRemoveBannerChange = (e) => {
+    setEditRemoveBannerImage(e.target.checked);
+    if (e.target.checked) {
+      setEditBannerImageFile(null);
+      setEditImagePreview(null);
+    } else if (!editBannerImageFile && initialShopData?.bannerImageURL) {
+      setEditImagePreview(initialShopData.bannerImageURL);
+    }
+  };
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoadingUpdate(true);
+    const dataToUpdate = {};
+    if (editShopName !== (initialShopData?.shopName || ""))
+      dataToUpdate.shopName = editShopName.trim();
+    if (editDescription !== (initialShopData?.description || ""))
+      dataToUpdate.description = editDescription.trim();
+    if (editShopAddress !== (initialShopData?.shopAddress || ""))
+      dataToUpdate.shopAddress = editShopAddress.trim();
+    if (editBannerImageFile) dataToUpdate.bannerImage = editBannerImageFile;
+    if (editRemoveBannerImage) dataToUpdate.removeBannerImage = true;
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      setSuccess("Tidak ada perubahan yang disimpan.");
+      setLoadingUpdate(false);
+      setIsEditing(false);
+      return;
+    }
+    try {
+      const response = await updateMyShop(dataToUpdate);
+      if (response && (response.success || response.status === "success")) {
+        setSuccess(response.message || "Informasi toko berhasil diperbarui!");
+        setIsEditing(false);
+        if (loadInitialData) await loadInitialData();
+      } else {
+        setError(response?.message || "Gagal memperbarui informasi toko.");
+      }
+    } catch (err) {
+      setError(err.message || "Terjadi kesalahan saat memperbarui toko.");
+    } finally {
+      setLoadingUpdate(false);
+    }
+  };
+
+  const openDeleteModal = () => {
+    setDeleteConfirmationInput("");
+    setDeleteShopError("");
+    setShowDeleteModal(true);
+  };
+  const closeDeleteModal = () => setShowDeleteModal(false);
+
+  const handleConfirmDeleteShop = async () => {
+    if (deleteConfirmationInput !== initialShopData?.shopName) {
+      setDeleteShopError(
+        `Nama toko yang Anda masukkan salah. Harap ketik "${initialShopData?.shopName}" dengan benar.`
+      );
+      return;
+    }
+    setDeleteShopError("");
+    setIsDeletingShop(true);
+    try {
+      const response = await deleteMyShop();
+      alert(response.message || "Toko berhasil dihapus."); // Ganti dengan notifikasi yang lebih baik jika perlu
+      closeDeleteModal();
+      if (loadInitialData) await loadInitialData();
+    } catch (err) {
+      setDeleteShopError(
+        err.message || "Gagal menghapus toko. Silakan coba lagi."
+      );
+    } finally {
+      setIsDeletingShop(false);
+    }
+  };
+
+  if (!outletContext) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+  }
+
+  if (
+    userRole === "customer" ||
+    (userRole === "seller" && !hasShop && !isEditing)
+  ) {
+    return (
+      <Container className="seller-page-content">
+        {" "}
+        {/* Tambahkan kelas wrapper */}
+        <Row className="justify-content-center">
+          <Col md={10} lg={8}>
+            {userRole === "customer" && (
+              <Alert variant="info" className="mb-4 text-center shadow-sm">
+                <InfoCircleFill size={20} className="me-2" />
+                Anda perlu mendaftar sebagai penjual dan membuat toko terlebih
+                dahulu.
+              </Alert>
+            )}
+            {userRole === "seller" && !hasShop && (
+              <Alert variant="warning" className="mb-4 text-center shadow-sm">
+                <InfoCircleFill size={20} className="me-2" />
+                Data toko tidak ditemukan. Silakan buat toko Anda.
+              </Alert>
+            )}
+            {/* CreateSellerForm mungkin juga bisa menggunakan kelas .seller-form dari Seller.css */}
+            <div className="seller-form">
+              <CreateSellerForm onShopCreated={handleShopCreated} />
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    );
+  }
+
+  // Tampilan Form Edit Toko
+  if (isEditing && userRole === "seller" && hasShop) {
+    return (
+      <div className="seller-page-content">
+        {" "}
+        {/* Tambahkan kelas wrapper */}
+        <h2 className="seller-page-title">Edit Informasi Toko</h2>
+        {error && (
+          <Alert
+            variant="danger"
+            onClose={() => setError("")}
+            dismissible
+            className="shadow-sm"
+          >
+            <XCircleFill className="me-2" /> {error}
+          </Alert>
+        )}
+        {success && (
+          <Alert
+            variant="success"
+            onClose={() => setSuccess("")}
+            dismissible
+            className="shadow-sm"
+          >
+            <CheckCircleFill className="me-2" /> {success}
+          </Alert>
+        )}
+        <Form onSubmit={handleUpdateSubmit} className="seller-form">
+          {" "}
+          {/* Terapkan kelas seller-form */}
+          <Form.Group
+            as={Row}
+            className="mb-3 align-items-center"
+            controlId="editShopName"
+          >
+            <Form.Label column sm={3} className="text-sm-end">
+              <ShopNameIcon className="me-2" style={{ color: ICON_COLOR }} />
+              Nama Toko
+            </Form.Label>
+            <Col sm={9}>
+              <Form.Control
+                type="text"
+                value={editShopName}
+                onChange={(e) => setEditShopName(e.target.value)}
+                placeholder="Nama Toko Anda"
+                disabled={loadingUpdate}
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3" controlId="editShopDescription">
+            <Form.Label column sm={3} className="text-sm-end">
+              <DescriptionIcon className="me-2" style={{ color: ICON_COLOR }} />
+              Deskripsi
+            </Form.Label>
+            <Col sm={9}>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Deskripsi singkat tentang toko Anda"
+                disabled={loadingUpdate}
+              />
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3" controlId="editShopAddress">
+            <Form.Label column sm={3} className="text-sm-end">
+              <AddressIcon className="me-2" style={{ color: ICON_COLOR }} />
+              Alamat Toko
+            </Form.Label>
+            <Col sm={9}>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editShopAddress}
+                onChange={(e) => setEditShopAddress(e.target.value)}
+                placeholder="Alamat lengkap toko"
+                disabled={loadingUpdate}
+              />
+              <Form.Text muted>
+                Jika dikosongkan, alamat dari profil Anda mungkin digunakan.
+              </Form.Text>
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row} className="mb-3" controlId="editBannerImage">
+            <Form.Label column sm={3} className="text-sm-end">
+              <BannerIcon className="me-2" style={{ color: ICON_COLOR }} />
+              Banner Toko
+            </Form.Label>
+            <Col sm={9}>
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={handleEditImageChange}
+                disabled={loadingUpdate || editRemoveBannerImage}
+                className="mb-2"
+              />
+              {editImagePreview && !editRemoveBannerImage && (
+                <Image
+                  src={editImagePreview}
+                  alt="Preview Banner Baru"
+                  className="image-upload-preview mb-2"
+                />
+              )}
+              {initialShopData?.bannerImageURL && (
+                <Form.Check
+                  type="checkbox"
+                  id="removeCurrentBanner"
+                  label={
+                    <>
+                      <TrashFill className="me-1" /> Hapus Banner Saat Ini
+                    </>
+                  }
+                  checked={editRemoveBannerImage}
+                  onChange={handleRemoveBannerChange}
+                  disabled={loadingUpdate || !!editBannerImageFile}
+                />
+              )}
+            </Col>
+          </Form.Group>
+          <Row className="mt-4">
+            <Col
+              sm={{ span: 9, offset: 3 }}
+              className="d-flex justify-content-start gap-2"
+            >
+              <Button
+                variant="outline-secondary"
+                onClick={() => {
+                  setIsEditing(false);
+                  setError("");
+                  setSuccess("");
+                }}
+                disabled={loadingUpdate}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={loadingUpdate}
+                className="btn-brand"
+              >
+                {loadingUpdate ? (
+                  <>
+                    <Spinner as="span" size="sm" className="me-2" />{" "}
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan Perubahan"
+                )}
+              </Button>
+            </Col>
+          </Row>
+        </Form>
+      </div>
+    );
+  }
+
+  // Tampilan Informasi Toko (Mode Baca)
+  if (userRole === "seller" && hasShop && initialShopData) {
+    return (
+      <>
+        <div className="seller-page-content">
+          {" "}
+          {/* Tambahkan kelas wrapper */}
+          <div className="seller-page-header">
+            <h2 className="seller-page-title">Informasi Toko</h2>
+            <div className="seller-header-actions">
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                disabled={isDeletingShop}
+              >
+                <PencilSquare className="me-2" /> Edit Info
+              </Button>
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={openDeleteModal}
+                disabled={isDeletingShop}
+              >
+                <TrashFill className="me-2" /> Hapus Toko
+              </Button>
+            </div>
+          </div>
+          {error && (
+            <Alert
+              variant="danger"
+              onClose={() => setError("")}
+              dismissible
+              className="shadow-sm mb-3"
+            >
+              <XCircleFill className="me-2" /> {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert
+              variant="success"
+              onClose={() => setSuccess("")}
+              dismissible
+              className="shadow-sm mb-3"
+            >
+              <CheckCircleFill className="me-2" /> {success}
+            </Alert>
+          )}
+          <Card className="seller-card">
+            {initialShopData?.bannerImageURL && (
+              <Card.Img
+                variant="top"
+                src={initialShopData.bannerImageURL}
+                alt={`Banner ${initialShopData.shopName}`}
+                style={{ maxHeight: "300px", objectFit: "cover" }}
+              />
+            )}
+            <Card.Body>
+              <Card.Title as="h4">
+                {initialShopData?.shopName || "Nama Toko Belum Ada"}
+              </Card.Title>
+              <hr />
+              <ListGroup variant="flush" className="seller-info-list">
+                <ListGroup.Item>
+                  <strong>Pemilik</strong>
+                  <span>
+                    {currentUserProfile?.displayName || "Tidak Diketahui"}
+                  </span>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Deskripsi</strong>
+                  <p className="mb-0">
+                    {initialShopData?.description || "Belum ada deskripsi."}
+                  </p>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Alamat Toko</strong>
+                  <span>{initialShopData?.shopAddress || "Belum diatur"}</span>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Bergabung Sejak</strong>
+                  <span>
+                    {initialShopData?.createdAt
+                      ? new Date(initialShopData.createdAt).toLocaleDateString(
+                          "id-ID",
+                          { day: "2-digit", month: "long", year: "numeric" }
+                        )
+                      : "-"}
+                  </span>
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Terakhir Diperbarui</strong>
+                  <span>
+                    {initialShopData?.updatedAt
+                      ? new Date(initialShopData.updatedAt).toLocaleDateString(
+                          "id-ID",
+                          { day: "2-digit", month: "long", year: "numeric" }
+                        )
+                      : "-"}
+                  </span>
+                </ListGroup.Item>
+              </ListGroup>
+            </Card.Body>
+          </Card>
+        </div>
+
+        <Modal
+          show={showDeleteModal}
+          onHide={closeDeleteModal}
+          centered
+          backdrop="static"
+        >
+          <Modal.Header
+            closeButton={!isDeletingShop}
+            className="modal-header-danger"
+          >
+            {" "}
+            {/* Kelas khusus untuk header modal bahaya */}
+            <Modal.Title>
+              <ExclamationTriangleFill className="me-2" /> Konfirmasi Hapus Toko
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {deleteShopError && (
+              <Alert variant="danger">{deleteShopError}</Alert>
+            )}
+            <p>
+              Tindakan ini bersifat permanen dan{" "}
+              <strong>tidak dapat diurungkan</strong>. Semua data produk dan
+              pesanan terkait toko ini akan dihapus. Status Anda akan diubah
+              kembali menjadi customer.
+            </p>
+            <p>
+              Untuk melanjutkan, ketik nama toko Anda:{" "}
+              <strong>{initialShopData?.shopName}</strong>
+            </p>
+            <Form.Group controlId="deleteConfirmationShopName">
+              <Form.Control
+                type="text"
+                value={deleteConfirmationInput}
+                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                placeholder="Ketik nama toko di sini"
+                isInvalid={
+                  !!deleteShopError &&
+                  deleteConfirmationInput !== initialShopData?.shopName
+                }
+                disabled={isDeletingShop}
+              />
+              <Form.Control.Feedback type="invalid">
+                Nama toko tidak sesuai.
+              </Form.Control.Feedback>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={closeDeleteModal}
+              disabled={isDeletingShop}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDeleteShop}
+              disabled={
+                isDeletingShop ||
+                deleteConfirmationInput !== initialShopData?.shopName
+              }
+            >
+              {isDeletingShop ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    className="me-2"
+                  />
+                  Menghapus...
+                </>
+              ) : (
+                "Ya, Hapus Toko Saya"
+              )}
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </>
+    );
+  }
+
+  return (
+    <Container className="text-center mt-4 seller-page-content">
+      {" "}
+      {/* Tambahkan kelas wrapper */}
+      <Alert variant="light" className="shadow-sm">
+        Memuat informasi toko atau tidak ada data untuk ditampilkan.
+      </Alert>
+    </Container>
+  );
+}
+
+export default SellerShopInfo;

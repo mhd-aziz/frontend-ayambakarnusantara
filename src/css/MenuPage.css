@@ -1,0 +1,156 @@
+/* src/pages/MenuPage.css */
+
+/* Impor font (opsional, contoh menggunakan Poppins) */
+/* Pastikan Anda sudah mengimpor font ini di public/index.html atau via CSS import */
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap'); */
+
+/* body {
+  font-family: 'Poppins', sans-serif; /* Terapkan font jika diimpor */
+/* } */
+
+.menu-page-container-fluid {
+  background-color: transparent; /* Latar belakang abu-abu muda untuk seluruh halaman */
+  min-height: 100vh;
+}
+
+.filters-section-wrapper {
+  background-color: transparent;
+  padding: 1.25rem; /* Sedikit padding lebih */
+  border-radius: 0.5rem; /* Radius sudut lebih lembut */
+  margin-bottom: 2rem; /* Jarak lebih ke bawah */
+}
+
+.filters-section-wrapper .form-select-sm {
+  font-size: 0.875rem; /* Ukuran font select lebih kecil */
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.product-card {
+  border: none; /* Hapus border default */
+  border-radius: 0.75rem; /* Radius sudut lebih besar untuk tampilan modern */
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+  overflow: hidden; /* Penting agar gambar tidak keluar dari border-radius */
+  background-color: #ffffff; /* Pastikan kartu berwarna putih */
+}
+
+.product-card:hover {
+  transform: translateY(-6px); /* Efek angkat lebih terlihat */
+  box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.12); /* Bayangan lebih jelas saat hover */
+}
+
+.product-card .card-img-top {
+  height: 220px; /* Tinggi gambar konsisten */
+  object-fit: cover; /* Gambar mengisi area tanpa distorsi */
+  /* Tidak perlu border bawah jika kartu sudah overflow:hidden dan ada padding di body */
+}
+
+.product-card .card-body {
+  padding: 1rem; /* Padding konsisten di body kartu */
+}
+
+.product-card .card-title {
+  font-weight: 600; /* Judul semi-bold */
+  color: #343a40; /* Warna judul lebih gelap */
+  font-size: 1.1rem; /* Ukuran font judul sedikit lebih besar */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Judul terpotong dengan elipsis jika terlalu panjang */
+}
+
+.product-card .badge-category {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+  background-color: #e9ecef !important; /* Warna badge kategori lebih netral */
+  color: #495057 !important;
+}
+
+.product-card .description-text {
+  font-size: 0.85rem; /* Ukuran font deskripsi */
+  color: #6c757d; /* Warna teks muted standar */
+  min-height: 4.2em; /* (sekitar 3 baris, sesuaikan jika perlu) */
+  line-height: 1.4em;
+  overflow: hidden;
+  /* Untuk pemotongan multiline dengan elipsis (membutuhkan beberapa properti): */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.product-card .price {
+  font-weight: 700; /* Harga tebal */
+  color: #c0392b; /* Warna harga (misalnya, merah tema ayam bakar) */
+  font-size: 1.25rem; /* Ukuran font harga */
+}
+
+.product-card .button-group {
+  display: flex;
+  gap: 0.5rem; /* Jarak antar tombol */
+  margin-top: 0.5rem; /* Jarak dari harga ke grup tombol */
+}
+
+.product-card .button-group .btn {
+  flex-grow: 1; /* Tombol mengambil lebar yang sama */
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.6rem 0.5rem; /* Padding tombol disesuaikan */
+  border-radius: 0.375rem; /* Radius sudut tombol */
+}
+
+.product-card .btn-add-to-cart {
+  background-color: #c0392b; /* Warna primer tombol tambah (sesuaikan dengan tema Anda) */
+  border-color: #c0392b;
+}
+.product-card .btn-add-to-cart:hover {
+  background-color: #a93226;
+  border-color: #a93226;
+}
+
+.product-card .btn-detail {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+  color: #495057;
+}
+.product-card .btn-detail:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+  color: #343a40;
+}
+
+.loading-spinner-container {
+  min-height: 50vh; /* Pastikan spinner terlihat di tengah meskipun konten sedikit */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Penyesuaian pagination agar lebih modern */
+.pagination .page-item .page-link {
+  border-radius: 0.25rem; /* Sudut lebih lembut */
+  margin: 0 0.2rem; /* Jarak antar item */
+  border: 1px solid #dee2e6;
+  color: #c0392b; /* Warna link pagination (sesuaikan tema) */
+}
+.pagination .page-item.active .page-link {
+  background-color: #c0392b;
+  border-color: #c0392b;
+  color: white;
+}
+.pagination .page-item.disabled .page-link {
+  color: #6c757d;
+}
+.pagination .page-item:hover:not(.active):not(.disabled) .page-link {
+  background-color: #f8f9fa;
+}
+
+/* Responsivitas untuk filter */
+@media (max-width: 991.98px) {
+  /* lg breakpoint */
+  .filters-section-wrapper .row > .col-sm-6 {
+    margin-bottom: 0.75rem;
+  }
+  .filters-section-wrapper .row > .col-sm-6:last-child {
+    margin-bottom: 0;
+  }
+}
