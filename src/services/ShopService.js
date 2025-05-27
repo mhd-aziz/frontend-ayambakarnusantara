@@ -1,13 +1,6 @@
 // src/services/ShopService.js
 import axios from "axios";
 
-/**
- * Membuat toko baru untuk pengguna yang sedang login.
- * @param {Object} shopData - Data untuk membuat toko.
- * @param {string} shopData.description - Deskripsi toko (required).
- * @param {File} [shopData.bannerImage] - File gambar untuk banner toko (opsional).
- * @returns {Promise<Object>} Data toko yang baru dibuat atau error.
- */
 const createShop = async (shopData) => {
   const formData = new FormData();
   formData.append("description", shopData.description);
@@ -35,10 +28,6 @@ const createShop = async (shopData) => {
   }
 };
 
-/**
- * Mendapatkan detail toko milik pengguna yang sedang login.
- * @returns {Promise<Object>} Data detail toko atau error.
- */
 const getMyShop = async () => {
   try {
     const response = await axios.get(`/api/shop/my-shop`, {
@@ -56,16 +45,6 @@ const getMyShop = async () => {
   }
 };
 
-/**
- * Memperbarui detail toko milik pengguna yang sedang login.
- * @param {Object} updateData - Data untuk memperbarui toko.
- * @param {string} [updateData.shopName] - Nama baru untuk toko.
- * @param {string} [updateData.description] - Deskripsi baru untuk toko.
- * @param {string} [updateData.shopAddress] - Alamat baru untuk toko.
- * @param {File} [updateData.bannerImage] - File gambar baru untuk banner toko.
- * @param {boolean} [updateData.removeBannerImage] - Jika true, hapus banner toko saat ini.
- * @returns {Promise<Object>} Data toko yang telah diperbarui atau error.
- */
 const updateMyShop = async (updateData) => {
   const formData = new FormData();
 
@@ -104,20 +83,13 @@ const updateMyShop = async (updateData) => {
   }
 };
 
-/**
- * Menghapus toko milik pengguna yang sedang login.
- * @returns {Promise<Object>} Pesan sukses atau error.
- */
 const deleteMyShop = async () => {
   try {
-    // Path untuk proxy, DELETE /api/shop/my-shop -> backend /shop/my-shop
     const response = await axios.delete(`/api/shop/my-shop`, {
-      withCredentials: true, // Sertakan jika API Anda memerlukan cookies untuk autentikasi
+      withCredentials: true,
     });
-    return response.data; // { message: "Toko berhasil dihapus..." }
+    return response.data;
   } catch (error) {
-    // Interceptor di AuthContext akan menangani 401 secara global.
-    // Re-throw error untuk penanganan lebih lanjut di komponen.
     throw (
       error.response?.data || {
         success: false,
@@ -128,4 +100,44 @@ const deleteMyShop = async () => {
   }
 };
 
-export { createShop, getMyShop, updateMyShop, deleteMyShop }; 
+const getAllShops = async () => {
+  try {
+    const response = await axios.get(`/api/shop`);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Terjadi kesalahan pada server saat mengambil daftar toko.",
+        statusCode: error.response?.status || 500,
+      }
+    );
+  }
+};
+
+const getShopDetailById = async (shopId) => {
+  if (!shopId) {
+    throw new Error("shopId tidak boleh kosong.");
+  }
+  try {
+    const response = await axios.get(`/api/shop/${shopId}/detail`);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Terjadi kesalahan pada server saat mengambil detail toko.",
+        statusCode: error.response?.status || 500,
+      }
+    );
+  }
+};
+
+export {
+  createShop,
+  getMyShop,
+  updateMyShop,
+  deleteMyShop,
+  getAllShops,
+  getShopDetailById,
+};
