@@ -2,10 +2,11 @@
 
 # dependencies
 /node_modules
+setupProxy.js
 /.pnp
 .pnp.js
 .env
-setupProxy.js
+
 
 # testing
 /coverage
