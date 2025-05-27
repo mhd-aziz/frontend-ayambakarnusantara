@@ -1,0 +1,74 @@
+/* src/css/OrderDetailPage.css */
+.order-detail-page {
+  background-color: #f8f9fa; /* Light background for the whole page */
+  padding-top: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.order-detail-page .card {
+  border: none;
+  border-radius: 0.5rem;
+}
+
+.order-detail-page .card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 500;
+}
+
+.order-detail-page .list-group-item {
+  border-left: none;
+  border-right: none;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.order-detail-page .list-group-item strong {
+  color: #343a40;
+}
+
+.order-detail-page .list-group-item .text-primary {
+  color: #c07722 !important; /* Brand color for total */
+}
+
+.order-detail-page .text-muted {
+  color: #6c757d !important;
+}
+
+.order-detail-page .fw-semibold {
+  font-weight: 600 !important;
+}
+
+.order-detail-page .badge {
+  font-size: 0.8em;
+  vertical-align: middle;
+}
+
+.order-detail-page .btn-brand {
+  background-color: #c07722;
+  border-color: #c07722;
+  color: white;
+}
+.order-detail-page .btn-brand:hover {
+  background-color: #a56317;
+  border-color: #a56317;
+}
+
+.modal-header-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-bottom: 1px solid #f5c6cb;
+}
+.modal-header-danger .btn-close {
+  filter: invert(25%) sepia(15%) saturate(2000%) hue-rotate(320deg)
+    brightness(90%) contrast(100%);
+}
+
+@media (max-width: 576px) {
+  .order-detail-page .breadcrumb {
+    font-size: 0.85rem;
+  }
+  .order-detail-page .card-header.h5 {
+    font-size: 1.1rem;
+  }
+}

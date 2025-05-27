@@ -22,19 +22,29 @@ import {
   removeCartItem,
   clearCart,
 } from "../services/CartService";
+import { createOrder } from "../services/OrderService"; // Import createOrder
 import { Trash, PlusLg, DashLg, CartX } from "react-bootstrap-icons";
 import "../css/CartPage.css"; // We will create this CSS file
 
 function CartPage() {
-  const { isLoggedIn } = useAuth(); // Removed 'user' as it was unused
+  const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingItemId, setUpdatingItemId] = useState(null);
+
+  // State for Clear Cart Modal
   const [showClearConfirmModal, setShowClearConfirmModal] = useState(false);
   const [isClearingCart, setIsClearingCart] = useState(false);
+
+  // State for Create Order Modal and Process
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("PAY_AT_STORE"); // Default payment method
+  const [orderNotes, setOrderNotes] = useState("");
+  const [orderError, setOrderError] = useState("");
 
   const fetchCartDetails = useCallback(async () => {
     if (!isLoggedIn) {
@@ -45,15 +55,11 @@ function CartPage() {
     setError("");
     try {
       const response = await getCart();
-      // Assuming the backend response for an empty cart or successful fetch
-      // will have a 'success: true' or 'status: "success"' field.
       if (response.status === "success" || response.success === true) {
         setCart(response.data);
       } else {
-        // This case handles scenarios where the API call itself was 'successful' (e.g., 200 OK)
-        // but the business logic indicates an issue (e.g., cart not found but not a 404 error from service)
         if (response.message === "Keranjang Anda kosong." && response.data) {
-          setCart(response.data); // Handles specific empty cart message
+          setCart(response.data);
         } else {
           setError(
             response.message || "Gagal memuat keranjang. Respons tidak sesuai."
@@ -61,9 +67,8 @@ function CartPage() {
         }
       }
     } catch (err) {
-      // This catch block now primarily handles network errors or errors thrown by CartService
       if (err.message === "Keranjang Anda kosong." && err.data) {
-        setCart(err.data); // Specific handling for empty cart from CartService's 404 adaptation
+        setCart(err.data);
       } else {
         setError(
           err.message ||
@@ -118,7 +123,7 @@ function CartPage() {
       const response = await removeCartItem(productId);
       if (response.status === "success" || response.success === true) {
         setCart(response.data);
-        alert(response.message || "Produk berhasil dihapus dari keranjang.");
+        // alert(response.message || "Produk berhasil dihapus dari keranjang.");
       } else {
         alert(response.message || "Gagal menghapus produk dari keranjang.");
         fetchCartDetails();
@@ -131,14 +136,17 @@ function CartPage() {
     }
   };
 
+  const handleShowClearConfirmModal = () => setShowClearConfirmModal(true);
+  const handleCloseClearConfirmModal = () => setShowClearConfirmModal(false);
+
   const handleClearCart = async () => {
-    setShowClearConfirmModal(false);
+    handleCloseClearConfirmModal();
     setIsClearingCart(true);
     try {
       const response = await clearCart();
       if (response.status === "success" || response.success === true) {
         setCart(response.data);
-        alert(response.message || "Keranjang berhasil dikosongkan.");
+        // alert(response.message || "Keranjang berhasil dikosongkan.");
       } else {
         alert(response.message || "Gagal mengosongkan keranjang.");
         fetchCartDetails();
@@ -151,9 +159,6 @@ function CartPage() {
     }
   };
 
-  const openClearConfirmModal = () => setShowClearConfirmModal(true);
-  const closeClearConfirmModal = () => setShowClearConfirmModal(false);
-
   const handleImageError = (e, itemName = "Produk") => {
     e.target.onerror = null;
     e.target.src = `https://placehold.co/100x100/EFEFEF/AAAAAA?text=${encodeURIComponent(
@@ -161,7 +166,54 @@ function CartPage() {
     )}`;
   };
 
-  if (!isLoggedIn) {
+  // --- Order Creation Logic ---
+  const handleOpenPaymentModal = () => {
+    if (!cart || cart.items.length === 0) {
+      alert("Keranjang Anda kosong. Silakan tambahkan produk terlebih dahulu.");
+      return;
+    }
+    setOrderError("");
+    setPaymentMethod("PAY_AT_STORE"); // Reset to default when opening
+    setOrderNotes(""); // Reset notes
+    setShowPaymentModal(true);
+  };
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+  };
+
+  const handleConfirmOrder = async () => {
+    setIsCreatingOrder(true);
+    setOrderError("");
+    try {
+      const orderData = {
+        paymentMethod,
+        notes: orderNotes.trim(),
+      };
+      const response = await createOrder(orderData);
+
+      if (response.orderId) {
+        alert("Pesanan berhasil dibuat! ID Pesanan: " + response.orderId);
+        await clearCart();
+        setCart(null); // Or refetch to get empty cart state
+        handleClosePaymentModal();
+        navigate(`/pesanan`); // Navigate to order history page
+      } else {
+        setOrderError(
+          response.message || "Gagal membuat pesanan. Respons tidak sesuai."
+        );
+      }
+    } catch (err) {
+      setOrderError(
+        err.message || "Terjadi kesalahan pada server saat membuat pesanan."
+      );
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  // --- Render Logic ---
+  if (!isLoggedIn && !isLoading) {
     return (
       <Container className="text-center py-5">
         <Alert variant="warning">
@@ -184,7 +236,7 @@ function CartPage() {
     );
   }
 
-  if (error) {
+  if (error && !orderError) {
     return (
       <Container className="text-center py-5">
         <Alert variant="danger" className="cart-error-alert">
@@ -203,8 +255,6 @@ function CartPage() {
   }
 
   if (!cart || !cart.items) {
-    // This can happen if the initial fetchCartDetails leads to an error that doesn't set cart,
-    // or if the "empty cart" response from the API doesn't correctly initialize cart.data
     return (
       <Container className="text-center py-5">
         <Alert variant="info" className="cart-empty-alert">
@@ -234,6 +284,8 @@ function CartPage() {
   return (
     <Container className="my-4 cart-page-container">
       <h1 className="mb-4 cart-title">Keranjang Belanja Anda</h1>
+      {/* General order error can be shown here if needed, or within the modal */}
+      {/* {orderError && <Alert variant="danger">{orderError}</Alert>} */}
       {cart.items.length === 0 ? (
         <Alert
           variant="light"
@@ -265,7 +317,7 @@ function CartPage() {
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={openClearConfirmModal}
+                onClick={handleShowClearConfirmModal}
                 disabled={isClearingCart || cart.items.length === 0}
                 className="btn-clear-cart"
               >
@@ -302,7 +354,7 @@ function CartPage() {
                       >
                         {item.name}
                       </Link>
-                      {item.shopId && ( // Conditionally render shop link if shopId exists
+                      {item.shopId && (
                         <div className="cart-item-shop">
                           <Link
                             to={`/toko/${item.shopId}`}
@@ -334,7 +386,7 @@ function CartPage() {
                           }
                           disabled={
                             updatingItemId === item.productId ||
-                            item.quantity <= 0 // Disable if 0, as it should be removed then
+                            item.quantity <= 0
                           }
                         >
                           <DashLg />
@@ -357,7 +409,6 @@ function CartPage() {
                             )
                           }
                           disabled={updatingItemId === item.productId}
-                          // Consider adding: || item.quantity >= item.maxStock (if maxStock is available from backend)
                         >
                           <PlusLg />
                         </Button>
@@ -421,8 +472,19 @@ function CartPage() {
                   variant="primary"
                   className="w-100 mt-4 btn-brand btn-checkout"
                   size="lg"
+                  onClick={handleOpenPaymentModal} // Opens the payment modal
+                  disabled={cart.items.length === 0 || isCreatingOrder}
                 >
-                  Pesan Sekarang
+                  {isCreatingOrder ? (
+                    <Spinner
+                      as="span"
+                      animation="border"
+                      size="sm"
+                      className="me-2"
+                    />
+                  ) : (
+                    "Pesan Sekarang"
+                  )}
                 </Button>
               </Card.Body>
             </Card>
@@ -430,9 +492,10 @@ function CartPage() {
         </Row>
       )}
 
+      {/* Clear Cart Confirmation Modal */}
       <Modal
         show={showClearConfirmModal}
-        onHide={closeClearConfirmModal}
+        onHide={handleCloseClearConfirmModal}
         centered
       >
         <Modal.Header closeButton className="modal-header-danger">
@@ -445,7 +508,7 @@ function CartPage() {
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={closeClearConfirmModal}
+            onClick={handleCloseClearConfirmModal}
             disabled={isClearingCart}
           >
             Batal
@@ -467,6 +530,69 @@ function CartPage() {
               </>
             ) : (
               "Ya, Kosongkan"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Payment Method and Order Notes Modal */}
+      <Modal show={showPaymentModal} onHide={handleClosePaymentModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Konfirmasi Pesanan & Pembayaran</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {orderError && <Alert variant="danger">{orderError}</Alert>}
+          <Form>
+            <Form.Group className="mb-3" controlId="paymentMethod">
+              <Form.Label>Metode Pembayaran</Form.Label>
+              <Form.Select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                disabled={isCreatingOrder}
+              >
+                <option value="PAY_AT_STORE">Bayar di Tempat</option>
+                <option value="ONLINE_PAYMENT">Pembayaran Online</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="orderNotes">
+              <Form.Label>Catatan Tambahan (Opsional)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Contoh: Tolong siapkan sebelum jam 5 sore."
+                value={orderNotes}
+                onChange={(e) => setOrderNotes(e.target.value)}
+                disabled={isCreatingOrder}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="outline-secondary"
+            onClick={handleClosePaymentModal}
+            disabled={isCreatingOrder}
+          >
+            Batal
+          </Button>
+          <Button
+            variant="primary"
+            className="btn-brand"
+            onClick={handleConfirmOrder} // Changed to handleConfirmOrder
+            disabled={isCreatingOrder}
+          >
+            {isCreatingOrder ? (
+              <>
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
+                Memproses Pesanan...
+              </>
+            ) : (
+              "Konfirmasi Pesanan"
             )}
           </Button>
         </Modal.Footer>

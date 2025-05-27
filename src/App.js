@@ -22,6 +22,7 @@ import DetailMenuPage from "./pages/DetailMenuPage";
 import ShopPage from "./pages/ShopPage";
 import ShopDetailPage from "./pages/ShopDetailPage";
 import OrderPage from "./pages/OrderPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 import SellerPage from "./pages/Seller/SellerPage";
 import SellerDashboardOverview from "./pages/Seller/SellerDashboardOverview";
@@ -152,6 +153,16 @@ function App() {
             path="/pesanan"
             element={
               isLoggedIn ? <OrderPage /> : <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/pesanan/:orderId"
+            element={
+              isLoggedIn ? (
+                <OrderDetailPage />
+              ) : (
+                <Navigate to="/login" replace />
+              )
             }
           />
           <Route
