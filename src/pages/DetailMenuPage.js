@@ -1,6 +1,6 @@
 // src/pages/DetailMenuPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
 import {
   Container,
   Row,
@@ -14,19 +14,22 @@ import {
   Form,
   InputGroup,
 } from "react-bootstrap";
-// INGAT: Service Anda bernama MenuService
-// Mengubah impor dari getMenuById menjadi getProductById sesuai error
 import { getProductById } from "../services/MenuService";
-import "../css/DetailMenuPage.css"; // Impor CSS kustom
+import { addItemToCart } from "../services/CartService"; // Import CartService
+import { useAuth } from "../context/AuthContext"; // Import useAuth
+import "../css/DetailMenuPage.css";
 
 function DetailMenuPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation(); // For redirecting to login
+  const { isLoggedIn } = useAuth(); // Get auth state
 
   const [menuItem, setMenuItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false); // Loading state for add to cart
 
   const fetchMenuItem = useCallback(async () => {
     if (!productId) {
@@ -37,7 +40,6 @@ function DetailMenuPage() {
     setIsLoading(true);
     setError(null);
     try {
-      // Menggunakan getProductById yang diimpor
       const response = await getProductById(productId);
       if (response && response.data) {
         setMenuItem(response.data);
@@ -52,7 +54,9 @@ function DetailMenuPage() {
             response.message || "Format data produk tidak sesuai dari server."
           );
         } else if (!response || !response.data) {
+          // This case might indicate product not found by ID, backend might return success false or specific message
           setMenuItem(null);
+          setError(response?.message || "Produk tidak ditemukan.");
         }
       }
     } catch (err) {
@@ -74,17 +78,63 @@ function DetailMenuPage() {
     setQuantity((prevQuantity) => {
       const newQuantity = prevQuantity + change;
       if (newQuantity < 1) return 1;
-      const currentProduct = menuItem?.data || menuItem;
-      if (currentProduct && newQuantity > currentProduct.stock)
+      const currentProduct = menuItem?.data || menuItem; // menuItem might directly be the product object
+      if (currentProduct && newQuantity > currentProduct.stock) {
         return currentProduct.stock;
+      }
       return newQuantity;
     });
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCartClick = async () => {
     const currentProduct = menuItem?.data || menuItem;
-    if (!currentProduct) return;
-    alert(`${quantity} x ${currentProduct.name} ditambahkan ke keranjang!`);
+    if (!currentProduct || !productId) {
+      alert("Detail produk tidak tersedia.");
+      return;
+    }
+
+    if (!isLoggedIn) {
+      alert(
+        "Anda harus login terlebih dahulu untuk menambahkan item ke keranjang."
+      );
+      navigate("/login", { state: { from: location.pathname } });
+      return;
+    }
+
+    if (currentProduct.stock === 0) {
+      alert("Maaf, stok produk ini habis.");
+      return;
+    }
+
+    if (quantity > currentProduct.stock) {
+      alert(
+        `Maaf, stok produk tidak mencukupi. Tersisa ${currentProduct.stock} item.`
+      );
+      setQuantity(currentProduct.stock); // Adjust quantity to max available stock
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      const itemData = {
+        productId: productId, // productId from useParams
+        quantity: quantity,
+      };
+      const response = await addItemToCart(itemData);
+      if (response.status === "success" || response.success === true) {
+        alert(
+          response.message ||
+            `${currentProduct.name} berhasil ditambahkan ke keranjang!`
+        );
+        // Optionally, update a global cart context or navigate to cart page
+      } else {
+        alert(response.message || "Gagal menambahkan produk ke keranjang.");
+      }
+    } catch (err) {
+      alert(err.message || "Terjadi kesalahan saat menambahkan ke keranjang.");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const handleImageError = (e) => {
@@ -128,7 +178,8 @@ function DetailMenuPage() {
     );
   }
 
-  const currentProduct = menuItem?.data || menuItem;
+  // Adjust to handle both direct object and nested within 'data' property
+  const currentProduct = menuItem && menuItem.data ? menuItem.data : menuItem;
 
   if (!currentProduct || Object.keys(currentProduct).length === 0) {
     return (
@@ -243,7 +294,9 @@ function DetailMenuPage() {
                   <Button
                     variant="outline-secondary"
                     onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= currentProduct.stock}
+                    disabled={
+                      quantity >= currentProduct.stock || isAddingToCart
+                    }
                   >
                     <i className="bi bi-plus-lg"></i>
                   </Button>
@@ -254,7 +307,11 @@ function DetailMenuPage() {
 
           <Row className="mt-3 actions-row">
             <Col xs={12} sm="auto" className="mb-2 mb-sm-0 d-grid">
-              <Button variant="outline-primary" onClick={() => navigate(-1)}>
+              <Button
+                variant="outline-primary"
+                onClick={() => navigate(-1)}
+                disabled={isAddingToCart}
+              >
                 <i className="bi bi-arrow-left me-2"></i>Kembali
               </Button>
             </Col>
@@ -262,13 +319,33 @@ function DetailMenuPage() {
               <Col xs={12} sm className="d-grid">
                 <Button
                   variant="primary"
-                  onClick={handleAddToCart}
-                  disabled={currentProduct.stock === 0}
+                  onClick={handleAddToCartClick}
+                  disabled={
+                    currentProduct.stock === 0 ||
+                    quantity === 0 ||
+                    isAddingToCart
+                  }
                   className="btn-add-to-cart"
                   style={{ backgroundColor: "#c0392b", borderColor: "#c0392b" }}
                 >
-                  <i className="bi bi-cart-plus-fill me-2"></i>Tambah ke
-                  Keranjang
+                  {isAddingToCart ? (
+                    <>
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        className="me-2"
+                      />
+                      Menambahkan...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-cart-plus-fill me-2"></i>Tambah ke
+                      Keranjang
+                    </>
+                  )}
                 </Button>
               </Col>
             )}
