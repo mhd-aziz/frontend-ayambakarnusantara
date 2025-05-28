@@ -1,6 +1,8 @@
 // src/services/ShopService.js
 import axios from "axios";
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
+
 const createShop = async (shopData) => {
   const formData = new FormData();
   formData.append("description", shopData.description);
@@ -10,7 +12,7 @@ const createShop = async (shopData) => {
   }
 
   try {
-    const response = await axios.post(`/api/shop`, formData, {
+    const response = await axios.post(`${BASE_URL}/shop`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -30,7 +32,7 @@ const createShop = async (shopData) => {
 
 const getMyShop = async () => {
   try {
-    const response = await axios.get(`/api/shop/my-shop`, {
+    const response = await axios.get(`${BASE_URL}/shop/my-shop`, {
       withCredentials: true,
     });
     return response.data;
@@ -65,7 +67,7 @@ const updateMyShop = async (updateData) => {
   }
 
   try {
-    const response = await axios.put(`/api/shop/my-shop`, formData, {
+    const response = await axios.put(`${BASE_URL}/shop/my-shop`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -85,7 +87,7 @@ const updateMyShop = async (updateData) => {
 
 const deleteMyShop = async () => {
   try {
-    const response = await axios.delete(`/api/shop/my-shop`, {
+    const response = await axios.delete(`${BASE_URL}/shop/my-shop`, {
       withCredentials: true,
     });
     return response.data;
@@ -102,7 +104,7 @@ const deleteMyShop = async () => {
 
 const getAllShops = async () => {
   try {
-    const response = await axios.get(`/api/shop`);
+    const response = await axios.get(`${BASE_URL}/shop`);
     return response.data;
   } catch (error) {
     throw (
@@ -120,7 +122,7 @@ const getShopDetailById = async (shopId) => {
     throw new Error("shopId tidak boleh kosong.");
   }
   try {
-    const response = await axios.get(`/api/shop/${shopId}/detail`);
+    const response = await axios.get(`${BASE_URL}/shop/${shopId}/detail`);
     return response.data;
   } catch (error) {
     throw (

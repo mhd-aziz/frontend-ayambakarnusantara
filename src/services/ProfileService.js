@@ -1,14 +1,11 @@
 // src/services/ProfileService.js
 import axios from "axios";
 
-/**
- * Mengambil data profil pengguna yang sedang login.
- * @returns {Promise<object>} Data respons dari API.
- * @throws {object} Objek error.
- */
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
+
 const getProfile = async () => {
   try {
-    const response = await axios.get(`/api/profile/`, {
+    const response = await axios.get(`${BASE_URL}/profile/`, {
       withCredentials: true,
     });
     return response.data;
@@ -23,16 +20,10 @@ const getProfile = async () => {
   }
 };
 
-/**
- * Memperbarui data profil pengguna yang sedang login.
- * @param {FormData} formData - Data profil untuk diperbarui.
- * @returns {Promise<object>} Data respons dari API.
- * @throws {object} Objek error.
- */
 const updateProfile = async (formData) => {
   try {
-    const response = await axios.put(`/api/profile/update`, formData, {
-      withCredentials: true, 
+    const response = await axios.put(`${BASE_URL}/profile/update`, formData, {
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
