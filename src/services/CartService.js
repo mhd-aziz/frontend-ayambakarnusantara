@@ -1,6 +1,9 @@
 // src/services/CartService.js
 import axios from "axios";
 
+// Membaca base URL dari environment variable, fallback ke /api jika tidak ada
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
+
 /**
  * Adds an item to the cart.
  * @param {object} itemData - Data for the item to add.
@@ -27,7 +30,7 @@ const addItemToCart = async (itemData) => {
     throw err;
   }
   try {
-    const response = await axios.post(`/api/cart/items`, itemData, {
+    const response = await axios.post(`${BASE_URL}/cart/items`, itemData, {
       withCredentials: true,
     });
     return response.data;
@@ -50,7 +53,7 @@ const addItemToCart = async (itemData) => {
  */
 const getCart = async () => {
   try {
-    const response = await axios.get(`/api/cart`, {
+    const response = await axios.get(`${BASE_URL}/cart`, {
       withCredentials: true,
     });
     return response.data;
@@ -102,7 +105,7 @@ const updateCartItemQuantity = async (productId, newQuantity) => {
   }
   try {
     const response = await axios.put(
-      `/api/cart/items/${productId}`,
+      `${BASE_URL}/cart/items/${productId}`,
       { newQuantity },
       {
         withCredentials: true,
@@ -138,7 +141,7 @@ const removeCartItem = async (productId) => {
     throw err;
   }
   try {
-    const response = await axios.delete(`/api/cart/items/${productId}`, {
+    const response = await axios.delete(`${BASE_URL}/cart/items/${productId}`, {
       withCredentials: true,
     });
     return response.data;
@@ -161,7 +164,7 @@ const removeCartItem = async (productId) => {
  */
 const clearCart = async () => {
   try {
-    const response = await axios.delete(`/api/cart`, {
+    const response = await axios.delete(`${BASE_URL}/cart`, {
       withCredentials: true,
     });
     return response.data;

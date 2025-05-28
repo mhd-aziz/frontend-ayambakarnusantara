@@ -1,9 +1,11 @@
 // src/services/AuthService.js
 import axios from "axios";
 
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
+
 const registerUser = async (userData) => {
   try {
-    const response = await axios.post(`/api/auth/register`, userData, {
+    const response = await axios.post(`${BASE_URL}/auth/register`, userData, {
       withCredentials: true,
     });
     return response.data;
@@ -19,7 +21,7 @@ const registerUser = async (userData) => {
 
 const loginUser = async (credentials) => {
   try {
-    const response = await axios.post(`/api/auth/login`, credentials, {
+    const response = await axios.post(`${BASE_URL}/auth/login`, credentials, {
       withCredentials: true,
     });
     return response.data;
@@ -35,9 +37,8 @@ const loginUser = async (credentials) => {
 
 const forgotPassword = async (emailData) => {
   try {
-    // Path untuk proxy, POST /api/auth/forgot-password -> backend /auth/forgot-password
     const response = await axios.post(
-      `/api/auth/forgot-password`,
+      `${BASE_URL}/auth/forgot-password`,
       emailData
     );
     return response.data;
@@ -54,12 +55,11 @@ const forgotPassword = async (emailData) => {
 
 const logoutUser = async () => {
   try {
-    // Path untuk proxy, POST /api/auth/logout -> backend /auth/logout
     const response = await axios.post(
-      `/api/auth/logout`,
-      {}, 
+      `${BASE_URL}/auth/logout`,
+      {},
       {
-        withCredentials: true, 
+        withCredentials: true,
       }
     );
     return response.data;
