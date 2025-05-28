@@ -1,6 +1,5 @@
-// src/pages/DetailMenuPage.js
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Row,
@@ -15,21 +14,24 @@ import {
   InputGroup,
 } from "react-bootstrap";
 import { getProductById } from "../services/MenuService";
-import { addItemToCart } from "../services/CartService"; // Import CartService
-import { useAuth } from "../context/AuthContext"; // Import useAuth
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { CheckCircleFill } from "react-bootstrap-icons";
 import "../css/DetailMenuPage.css";
 
 function DetailMenuPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation(); // For redirecting to login
-  const { isLoggedIn } = useAuth(); // Get auth state
+  const location = useLocation();
+  const { isLoggedIn } = useAuth();
+  const { addItem: addItemToCartContext, isLoading: isCartLoading } = useCart();
 
   const [menuItem, setMenuItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAddingToCart, setIsAddingToCart] = useState(false); // Loading state for add to cart
+  const [addToCartSuccessMessage, setAddToCartSuccessMessage] = useState("");
+  const [isProcessingCartAction, setIsProcessingCartAction] = useState(false);
 
   const fetchMenuItem = useCallback(async () => {
     if (!productId) {
@@ -54,7 +56,6 @@ function DetailMenuPage() {
             response.message || "Format data produk tidak sesuai dari server."
           );
         } else if (!response || !response.data) {
-          // This case might indicate product not found by ID, backend might return success false or specific message
           setMenuItem(null);
           setError(response?.message || "Produk tidak ditemukan.");
         }
@@ -78,7 +79,7 @@ function DetailMenuPage() {
     setQuantity((prevQuantity) => {
       const newQuantity = prevQuantity + change;
       if (newQuantity < 1) return 1;
-      const currentProduct = menuItem?.data || menuItem; // menuItem might directly be the product object
+      const currentProduct = menuItem?.data || menuItem;
       if (currentProduct && newQuantity > currentProduct.stock) {
         return currentProduct.stock;
       }
@@ -110,30 +111,38 @@ function DetailMenuPage() {
       alert(
         `Maaf, stok produk tidak mencukupi. Tersisa ${currentProduct.stock} item.`
       );
-      setQuantity(currentProduct.stock); // Adjust quantity to max available stock
+      setQuantity(currentProduct.stock);
       return;
     }
 
-    setIsAddingToCart(true);
+    setIsProcessingCartAction(true);
+    setError("");
+    setAddToCartSuccessMessage("");
+
     try {
       const itemData = {
-        productId: productId, // productId from useParams
+        productId: productId,
         quantity: quantity,
       };
-      const response = await addItemToCart(itemData);
+      const response = await addItemToCartContext(itemData);
       if (response.status === "success" || response.success === true) {
-        alert(
+        setAddToCartSuccessMessage(
           response.message ||
             `${currentProduct.name} berhasil ditambahkan ke keranjang!`
         );
-        // Optionally, update a global cart context or navigate to cart page
+        setTimeout(() => {
+          setAddToCartSuccessMessage("");
+        }, 3000);
       } else {
-        alert(response.message || "Gagal menambahkan produk ke keranjang.");
+        setError(response.message || "Gagal menambahkan produk ke keranjang.");
       }
     } catch (err) {
-      alert(err.message || "Terjadi kesalahan saat menambahkan ke keranjang.");
+      setError(
+        err.message || "Terjadi kesalahan saat menambahkan ke keranjang."
+      );
+      console.error("Error adding to cart from DetailMenuPage:", err);
     } finally {
-      setIsAddingToCart(false);
+      setIsProcessingCartAction(false);
     }
   };
 
@@ -156,7 +165,9 @@ function DetailMenuPage() {
     );
   }
 
-  if (error) {
+  const pageError = error && !addToCartSuccessMessage;
+
+  if (pageError) {
     return (
       <Container className="py-5">
         <Alert variant="danger" className="text-center lead py-4 shadow-sm">
@@ -178,7 +189,6 @@ function DetailMenuPage() {
     );
   }
 
-  // Adjust to handle both direct object and nested within 'data' property
   const currentProduct = menuItem && menuItem.data ? menuItem.data : menuItem;
 
   if (!currentProduct || Object.keys(currentProduct).length === 0) {
@@ -204,6 +214,29 @@ function DetailMenuPage() {
 
   return (
     <Container className="detail-menu-page">
+      {addToCartSuccessMessage && (
+        <Alert
+          variant="success"
+          onClose={() => setAddToCartSuccessMessage("")}
+          dismissible
+          className="position-fixed top-0 start-50 translate-middle-x mt-3 z-index-toast"
+          style={{ zIndex: 1055 }}
+        >
+          <CheckCircleFill className="me-2" />
+          {addToCartSuccessMessage}
+        </Alert>
+      )}
+      {error &&
+        !addToCartSuccessMessage && ( // Hanya tampilkan error umum jika tidak ada pesan sukses
+          <Alert
+            variant="danger"
+            onClose={() => setError(null)}
+            dismissible
+            className="mt-3"
+          >
+            {error}
+          </Alert>
+        )}
       <Breadcrumb
         listProps={{
           className: "bg-light px-3 py-2 rounded-pill shadow-sm border",
@@ -279,7 +312,9 @@ function DetailMenuPage() {
                   <Button
                     variant="outline-secondary"
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
+                    disabled={
+                      quantity <= 1 || isProcessingCartAction || isCartLoading
+                    }
                   >
                     <i className="bi bi-dash-lg"></i>
                   </Button>
@@ -295,7 +330,9 @@ function DetailMenuPage() {
                     variant="outline-secondary"
                     onClick={() => handleQuantityChange(1)}
                     disabled={
-                      quantity >= currentProduct.stock || isAddingToCart
+                      quantity >= currentProduct.stock ||
+                      isProcessingCartAction ||
+                      isCartLoading
                     }
                   >
                     <i className="bi bi-plus-lg"></i>
@@ -310,7 +347,7 @@ function DetailMenuPage() {
               <Button
                 variant="outline-primary"
                 onClick={() => navigate(-1)}
-                disabled={isAddingToCart}
+                disabled={isProcessingCartAction || isCartLoading}
               >
                 <i className="bi bi-arrow-left me-2"></i>Kembali
               </Button>
@@ -323,12 +360,13 @@ function DetailMenuPage() {
                   disabled={
                     currentProduct.stock === 0 ||
                     quantity === 0 ||
-                    isAddingToCart
+                    isProcessingCartAction ||
+                    isCartLoading
                   }
                   className="btn-add-to-cart"
                   style={{ backgroundColor: "#c0392b", borderColor: "#c0392b" }}
                 >
-                  {isAddingToCart ? (
+                  {isProcessingCartAction || isCartLoading ? (
                     <>
                       <Spinner
                         as="span"

@@ -1,4 +1,3 @@
-// src/pages/OrderDetailPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import {
   useParams,
@@ -43,7 +42,8 @@ import {
   XCircleFill,
   ExclamationTriangleFill,
   ArrowClockwise,
-  Receipt, // Tambahkan ikon untuk detail transaksi
+  Receipt,
+  CheckCircleFill,
 } from "react-bootstrap-icons";
 import "../css/OrderDetailPage.css";
 
@@ -62,12 +62,13 @@ function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [cancelSuccessMessage, setCancelSuccessMessage] = useState("");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [paymentTransactionDetails, setPaymentTransactionDetails] =
-    useState(null); // Untuk menyimpan detail transaksi Midtrans
+    useState(null);
 
   const fetchOrderDetails = useCallback(
     async (shouldFetchPaymentStatus = false) => {
@@ -76,12 +77,13 @@ function OrderDetailPage() {
         return;
       }
       if (!orderId) {
-        setError("ID Pesanan tidak ditemukan.");
+        setError("ID Pesanan tidak ditemukan di URL.");
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
+      setError("");
       if (shouldFetchPaymentStatus) {
         setPaymentError("");
         setStatusMessage("");
@@ -121,7 +123,7 @@ function OrderDetailPage() {
                   statusResponse.success &&
                   statusResponse.data
                 ) {
-                  setPaymentTransactionDetails(statusResponse.data); // Simpan seluruh objek 'data'
+                  setPaymentTransactionDetails(statusResponse.data);
                   setStatusMessage(
                     statusResponse.message ||
                       "Status pembayaran berhasil dimuat."
@@ -140,7 +142,7 @@ function OrderDetailPage() {
                         status: statusResponse.data.internalPaymentStatus,
                         transactionId:
                           statusResponse.data.paymentGatewayStatus
-                            ?.transaction_id || // Koreksi di sini juga
+                            ?.transaction_id ||
                           prevOrder.paymentDetails?.transactionId,
                       },
                     }));
@@ -167,14 +169,15 @@ function OrderDetailPage() {
         } else {
           setError(
             response?.message ||
-              "Gagal memuat detail pesanan. Pesanan tidak ditemukan."
+              "Gagal memuat detail pesanan. Pesanan tidak ditemukan atau Anda tidak memiliki akses."
           );
           setOrderDetails(null);
           setShopDetails(null);
         }
       } catch (err) {
         setError(
-          err.message || "Terjadi kesalahan saat mengambil detail pesanan."
+          err.message ||
+            "Terjadi kesalahan pada server saat mengambil detail pesanan."
         );
       } finally {
         setIsLoading(false);
@@ -196,6 +199,7 @@ function OrderDetailPage() {
 
   const handleShowCancelModal = () => {
     setCancelError("");
+    setCancelSuccessMessage("");
     setShowCancelModal(true);
   };
   const handleCloseCancelModal = () => setShowCancelModal(false);
@@ -204,20 +208,26 @@ function OrderDetailPage() {
     if (!orderDetails) return;
     setIsCancelling(true);
     setCancelError("");
+    setCancelSuccessMessage("");
     try {
       const response = await cancelOrderAsCustomer(orderDetails.orderId);
-      if (
-        response &&
-        (response.success ||
-          (response.orderId && response.orderStatus === "CANCELLED"))
-      ) {
-        alert("Pesanan berhasil dibatalkan.");
+      if (response && response.success) {
+        setCancelSuccessMessage(
+          response.message || "Pesanan berhasil dibatalkan."
+        );
         setOrderDetails((prevDetails) => ({
           ...prevDetails,
-          ...response,
-          orderStatus: "CANCELLED",
+          orderStatus: response.data?.orderStatus || "CANCELLED",
+          paymentDetails:
+            response.data?.paymentDetails || prevDetails.paymentDetails,
         }));
         setPaymentTransactionDetails(null);
+        setTimeout(() => {
+          setCancelSuccessMessage("");
+          if (response.data?.orderStatus === "CANCELLED") {
+            fetchOrderDetails(true);
+          }
+        }, 3000);
         handleCloseCancelModal();
       } else {
         setCancelError(response?.message || "Gagal membatalkan pesanan.");
@@ -251,7 +261,8 @@ function OrderDetailPage() {
           "noopener,noreferrer"
         );
         setStatusMessage(
-          "Anda akan diarahkan ke halaman pembayaran Midtrans. Setelah pembayaran, cek status di halaman ini."
+          paymentResponse.message ||
+            "Anda akan diarahkan ke halaman pembayaran. Setelah pembayaran, silakan cek status di halaman ini."
         );
       } else {
         setPaymentError(
@@ -278,7 +289,7 @@ function OrderDetailPage() {
         orderDetails.orderId
       );
       if (statusResponse && statusResponse.success && statusResponse.data) {
-        setPaymentTransactionDetails(statusResponse.data); // Simpan seluruh objek 'data'
+        setPaymentTransactionDetails(statusResponse.data);
         setStatusMessage(
           statusResponse.message || "Status pembayaran berhasil diperbarui."
         );
@@ -295,7 +306,7 @@ function OrderDetailPage() {
               ...prevOrder.paymentDetails,
               status: statusResponse.data.internalPaymentStatus,
               transactionId:
-                statusResponse.data.paymentGatewayStatus?.transaction_id || // Koreksi di sini juga
+                statusResponse.data.paymentGatewayStatus?.transaction_id ||
                 prevOrder.paymentDetails?.transactionId,
             },
           }));
@@ -314,6 +325,68 @@ function OrderDetailPage() {
     } finally {
       setIsCheckingStatus(false);
     }
+  };
+
+  const orderStatusIndonesian = {
+    PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+    AWAITING_PAYMENT: "Menunggu Pembayaran",
+    CONFIRMED: "Terkonfirmasi",
+    PROCESSING: "Sedang Diproses",
+    PREPARING: "Sedang Disiapkan",
+    READY_FOR_PICKUP: "Siap Diambil",
+    COMPLETED: "Selesai",
+    CANCELLED: "Dibatalkan",
+    PAYMENT_PENDING: "Pembayaran Tertunda",
+    PAYMENT_FAILED: "Pembayaran Gagal",
+    UNKNOWN: "Tidak Diketahui",
+  };
+
+  const paymentStatusIndonesian = {
+    awaiting_gateway_interaction:"Menunggu Pembayaran",
+    pending_gateway_payment: "Menunggu Pembayaran",
+    awaiting_payment_confirmation: "Menunggu Konfirmasi Pembayaran",
+    paid: "Lunas",
+    pay_on_pickup: "Bayar di Tempat",
+    failed: "Gagal",
+    cancelled: "Dibatalkan",
+    expired: "Kadaluarsa",
+  };
+
+  const paymentGatewayStatusIndonesian = {
+    capture: "Ditangkap",
+    settlement: "Berhasil",
+    pending: "Tertunda",
+    deny: "Ditolak",
+    cancel: "Batal",
+    expire: "Kadaluarsa",
+    failure: "Gagal",
+    refund: "Dikembalikan",
+    partial_refund: "Dikembalikan Sebagian",
+    authorize: "Otorisasi",
+  };
+
+  const getDisplayOrderStatus = (statusKey) => {
+    return (
+      orderStatusIndonesian[statusKey] ||
+      statusKey?.replace(/_/g, " ") ||
+      "Tidak Ada"
+    );
+  };
+
+  const getDisplayPaymentStatus = (statusKey) => {
+    return (
+      paymentStatusIndonesian[statusKey] ||
+      statusKey?.replace(/_/g, " ") ||
+      "Tidak Ada"
+    );
+  };
+
+  const getDisplayPaymentGatewayStatus = (statusKey) => {
+    return (
+      paymentGatewayStatusIndonesian[statusKey] ||
+      statusKey?.replace(/_/g, " ") ||
+      "Tidak Ada"
+    );
   };
 
   const getStatusBadgeVariant = (status) => {
@@ -362,7 +435,14 @@ function OrderDetailPage() {
         <Alert variant="danger">
           <Alert.Heading>Oops! Terjadi Kesalahan</Alert.Heading>
           <p>{error}</p>
-          <Button as={Link} to="/pesanan" variant="primary">
+          <Button
+            onClick={() => fetchOrderDetails(true)}
+            variant="primary"
+            className="me-2"
+          >
+            Coba Lagi
+          </Button>
+          <Button as={Link} to="/pesanan" variant="secondary">
             Kembali ke Daftar Pesanan
           </Button>
         </Alert>
@@ -402,17 +482,31 @@ function OrderDetailPage() {
   const showCheckStatusButton =
     orderDetails &&
     orderDetails.paymentDetails?.method === "ONLINE_PAYMENT" &&
-    !["COMPLETED", "CANCELLED"].includes(orderDetails.orderStatus);
+    !["COMPLETED", "CANCELLED", "PAYMENT_FAILED"].includes(
+      orderDetails.orderStatus
+    );
 
   return (
     <Container className="my-4 order-detail-page">
+      {cancelSuccessMessage && (
+        <Alert
+          variant="success"
+          onClose={() => setCancelSuccessMessage("")}
+          dismissible
+          className="position-fixed top-0 start-50 translate-middle-x mt-3 z-index-toast"
+          style={{ zIndex: 1055 }}
+        >
+          <CheckCircleFill className="me-2" />
+          {cancelSuccessMessage}
+        </Alert>
+      )}
       <Breadcrumb
         listProps={{
           className: "bg-light px-3 py-2 rounded-pill shadow-sm border mb-4",
         }}
       >
         <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
-          Home
+          Beranda
         </Breadcrumb.Item>
         <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/pesanan" }}>
           Pesanan Saya
@@ -460,9 +554,7 @@ function OrderDetailPage() {
                 }
                 pill
               >
-                {orderDetails?.orderStatus
-                  ? orderDetails.orderStatus.replace(/_/g, " ")
-                  : "N/A"}
+                {getDisplayOrderStatus(orderDetails?.orderStatus)}
               </Badge>
             </Card.Header>
             <Card.Body>
@@ -476,7 +568,7 @@ function OrderDetailPage() {
                       </strong>
                     </Col>
                     <Col sm={8} style={{ wordBreak: "break-all" }}>
-                      {orderDetails?.orderId}
+                      {orderDetails?.orderId || "Tidak Ada"}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -494,7 +586,7 @@ function OrderDetailPage() {
                             "id-ID",
                             { dateStyle: "long", timeStyle: "short" }
                           )
-                        : "N/A"}
+                        : "Tidak Ada"}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -507,7 +599,7 @@ function OrderDetailPage() {
                       </strong>
                     </Col>
                     <Col sm={8}>
-                      {user?.displayName || orderDetails?.userId}
+                      {user?.displayName || orderDetails?.userId || "Tidak Ada"}
                     </Col>
                   </Row>
                 </ListGroup.Item>
@@ -522,7 +614,7 @@ function OrderDetailPage() {
                     <Col sm={8}>
                       {orderDetails?.paymentDetails?.method
                         ? orderDetails.paymentDetails.method.replace(/_/g, " ")
-                        : "N/A"}
+                        : "Tidak Ada"}
                       <Badge
                         bg={
                           orderDetails?.paymentDetails?.status === "paid" ||
@@ -537,20 +629,16 @@ function OrderDetailPage() {
                         }
                         className="ms-2"
                       >
-                        {orderDetails?.paymentDetails?.status
-                          ? orderDetails.paymentDetails.status.replace(
-                              /_/g,
-                              " "
-                            )
-                          : orderDetails?.orderStatus === "AWAITING_PAYMENT"
-                          ? "AWAITING PAYMENT"
-                          : "N/A"}
+                        {getDisplayPaymentStatus(
+                          orderDetails?.paymentDetails?.status
+                        ) ||
+                          (orderDetails?.orderStatus === "AWAITING_PAYMENT"
+                            ? getDisplayOrderStatus("AWAITING_PAYMENT")
+                            : "Tidak Ada")}
                       </Badge>
                     </Col>
                   </Row>
                 </ListGroup.Item>
-
-                {/* AWAL KOREKSI: Menggunakan paymentGatewayStatus */}
                 {paymentTransactionDetails?.paymentGatewayStatus && (
                   <>
                     <ListGroup.Item>
@@ -572,7 +660,7 @@ function OrderDetailPage() {
                         </Col>
                         <Col sm={8} style={{ wordBreak: "break-all" }}>
                           {paymentTransactionDetails.paymentGatewayStatus
-                            .transaction_id || "N/A"}
+                            .transaction_id || "Tidak Ada"}
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -582,9 +670,10 @@ function OrderDetailPage() {
                           <strong>Status Transaksi:</strong>
                         </Col>
                         <Col sm={8}>
-                          {paymentTransactionDetails.paymentGatewayStatus.transaction_status
-                            ?.replace(/_/g, " ")
-                            .toUpperCase() || "N/A"}
+                          {getDisplayPaymentGatewayStatus(
+                            paymentTransactionDetails.paymentGatewayStatus
+                              .transaction_status
+                          )}
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -598,7 +687,7 @@ function OrderDetailPage() {
                           <Col sm={8}>
                             {paymentTransactionDetails.paymentGatewayStatus.payment_type
                               .replace(/_/g, " ")
-                              .toUpperCase() || "N/A"}
+                              .toUpperCase() || "Tidak Ada"}
                           </Col>
                         </Row>
                       </ListGroup.Item>
@@ -670,7 +759,7 @@ function OrderDetailPage() {
                         Jenis Pesanan:
                       </strong>
                     </Col>
-                    <Col sm={8}>{orderDetails?.orderType}</Col>
+                    <Col sm={8}>{orderDetails?.orderType || "Tidak Ada"}</Col>
                   </Row>
                 </ListGroup.Item>
                 {orderDetails?.notes && (
@@ -806,7 +895,7 @@ function OrderDetailPage() {
                             )
                               ? shopDetails.shopName
                               : item.shopName ||
-                                `Toko ID: ${item.shopId.substring(0, 6)}...`}
+                                `ID Toko: ${item.shopId.substring(0, 6)}...`}
                           </Link>
                         </>
                       )}
