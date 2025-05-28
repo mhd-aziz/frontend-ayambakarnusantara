@@ -12,8 +12,8 @@ import {
   updateCartItemQuantity as apiUpdateCartItemQuantity,
   removeCartItem as apiRemoveCartItem,
   clearCart as apiClearCart,
-} from "../services/CartService"; 
-import { useAuth } from "./AuthContext"; 
+} from "../services/CartService";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
 
@@ -25,7 +25,7 @@ export const CartProvider = ({ children }) => {
 
   const fetchCart = useCallback(async () => {
     if (!isLoggedIn) {
-      setCart(null); 
+      setCart(null);
       return;
     }
     setIsLoading(true);
@@ -38,10 +38,10 @@ export const CartProvider = ({ children }) => {
         response.message === "Keranjang Anda kosong." &&
         response.data
       ) {
-        setCart(response.data); 
+        setCart(response.data);
       } else {
         setError(response.message || "Gagal memuat keranjang dari konteks.");
-        setCart(null); 
+        setCart(null);
       }
     } catch (err) {
       if (err.message === "Keranjang Anda kosong." && err.data) {
@@ -74,8 +74,7 @@ export const CartProvider = ({ children }) => {
     try {
       const response = await apiAddItemToCart(itemData);
       if (response.status === "success" || response.success === true) {
-        setCart(response.data); // Update state keranjang dari konteks
-        alert(response.message || "Produk berhasil ditambahkan!");
+        setCart(response.data);
         return response;
       } else {
         throw new Error(
@@ -84,7 +83,7 @@ export const CartProvider = ({ children }) => {
       }
     } catch (err) {
       setError(err.message);
-      throw err; // Lempar error agar bisa ditangani di komponen
+      throw err;
     } finally {
       setIsLoading(false);
     }

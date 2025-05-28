@@ -1,4 +1,3 @@
-// src/pages/CartPage.js
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -18,7 +17,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { createOrder } from "../services/OrderService";
-import { Trash, PlusLg, DashLg, CartX } from "react-bootstrap-icons";
+import {
+  Trash,
+  PlusLg,
+  DashLg,
+  CartX,
+  CheckCircleFill,
+} from "react-bootstrap-icons";
 import "../css/CartPage.css";
 
 function CartPage() {
@@ -39,13 +44,12 @@ function CartPage() {
   const [isClearingCart, setIsClearingCart] = useState(false);
 
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("PAY_AT_STORE");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
   const [orderError, setOrderError] = useState("");
+  const [orderSuccessMessage, setOrderSuccessMessage] = useState("");
 
-  useEffect(() => {
-    // Logika fetchCart ada di CartContext, dipicu oleh perubahan isLoggedIn
-  }, [isLoggedIn, fetchCart]);
+  useEffect(() => {}, [isLoggedIn, fetchCart]);
 
   const handleUpdateQuantity = async (productId, currentQuantity, change) => {
     const newQuantity = currentQuantity + change;
@@ -108,12 +112,19 @@ function CartPage() {
 
   const handleConfirmOrder = async () => {
     if (!cart || cart.items.length === 0) {
-      alert("Keranjang Anda kosong. Silakan tambahkan produk terlebih dahulu.");
+      setOrderError(
+        "Keranjang Anda kosong. Silakan tambahkan produk terlebih dahulu."
+      );
       return;
     }
+    if (!paymentMethod) {
+      setOrderError("Silakan pilih metode pembayaran terlebih dahulu.");
+      return;
+    }
+
     setIsCreatingOrder(true);
     setOrderError("");
-    let orderSuccessfullyCreated = false;
+    setOrderSuccessMessage("");
     let createdOrderId = null;
 
     try {
@@ -129,19 +140,26 @@ function CartPage() {
         response.data &&
         response.data.orderId
       ) {
-        orderSuccessfullyCreated = true;
         createdOrderId = response.data.orderId;
-        alert("Pesanan berhasil dibuat! ID Pesanan: " + createdOrderId);
+        setOrderSuccessMessage(
+          response.message ||
+            `Pesanan #${createdOrderId} berhasil dibuat! Anda akan diarahkan ke detail pesanan.`
+        );
 
-        try {
-          await clearCartContext();
-        } catch (clearError) {
-          console.error(
-            // Log error jika gagal clear cart, tapi tidak menghentikan flow
-            "Gagal membersihkan keranjang setelah order:",
-            clearError
-          );
-        }
+        setTimeout(async () => {
+          try {
+            await clearCartContext();
+          } catch (clearError) {
+            console.error(
+              "Gagal membersihkan keranjang setelah order:",
+              clearError
+            );
+          }
+          if (createdOrderId) {
+            navigate(`/pesanan/${createdOrderId}`);
+          }
+          setOrderSuccessMessage("");
+        }, 3000);
       } else {
         if (
           response &&
@@ -165,9 +183,6 @@ function CartPage() {
       );
     } finally {
       setIsCreatingOrder(false);
-      if (orderSuccessfullyCreated && createdOrderId) {
-        navigate(`/pesanan/${createdOrderId}`);
-      }
     }
   };
 
@@ -194,7 +209,7 @@ function CartPage() {
     );
   }
 
-  if (cartError && !orderError) {
+  if (cartError && !orderError && !orderSuccessMessage) {
     return (
       <Container className="text-center py-5">
         <Alert variant="danger" className="cart-error-alert">
@@ -241,6 +256,18 @@ function CartPage() {
 
   return (
     <Container className="my-4 cart-page-container">
+      {orderSuccessMessage && (
+        <Alert
+          variant="success"
+          onClose={() => setOrderSuccessMessage("")}
+          dismissible
+          className="position-fixed top-0 start-50 translate-middle-x mt-3 z-index-toast"
+          style={{ zIndex: 1055 }}
+        >
+          <CheckCircleFill className="me-2" />
+          {orderSuccessMessage}
+        </Alert>
+      )}
       <h1 className="mb-4 cart-title">Keranjang Belanja Anda</h1>
       {cart.items.length === 0 ? (
         <Alert
@@ -432,13 +459,33 @@ function CartPage() {
                     </Form.Label>
                     <Form.Select
                       value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      onChange={(e) => {
+                        setPaymentMethod(e.target.value);
+                        if (
+                          orderError ===
+                          "Silakan pilih metode pembayaran terlebih dahulu."
+                        ) {
+                          setOrderError("");
+                        }
+                      }}
                       disabled={isCreatingOrder}
                       size="sm"
+                      isInvalid={
+                        orderError ===
+                        "Silakan pilih metode pembayaran terlebih dahulu."
+                      }
                     >
+                      <option value="" disabled>
+                        Pilih metode pembayaran...
+                      </option>
                       <option value="PAY_AT_STORE">Bayar di Tempat</option>
                       <option value="ONLINE_PAYMENT">Pembayaran Online</option>
                     </Form.Select>
+                    <Form.Control.Feedback type="invalid">
+                      {orderError ===
+                        "Silakan pilih metode pembayaran terlebih dahulu." &&
+                        orderError}
+                    </Form.Control.Feedback>
                   </Form.Group>
                   <Form.Group className="mb-3" controlId="orderNotesCart">
                     <Form.Label className="fw-semibold">
@@ -456,18 +503,22 @@ function CartPage() {
                   </Form.Group>
                 </Form>
 
-                {orderError && (
-                  <Alert variant="danger" className="mt-3">
-                    {orderError}
-                  </Alert>
-                )}
+                {orderError &&
+                  orderError !==
+                    "Silakan pilih metode pembayaran terlebih dahulu." && (
+                    <Alert variant="danger" className="mt-3">
+                      {orderError}
+                    </Alert>
+                  )}
 
                 <Button
                   variant="primary"
                   className="w-100 mt-3 btn-brand btn-checkout"
                   size="lg"
                   onClick={handleConfirmOrder}
-                  disabled={cart.items.length === 0 || isCreatingOrder}
+                  disabled={
+                    cart.items.length === 0 || isCreatingOrder || !paymentMethod
+                  }
                 >
                   {isCreatingOrder ? (
                     <>

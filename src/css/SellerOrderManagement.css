@@ -1,0 +1,58 @@
+/* src/css/SellerOrderManagement.css atau App.css */
+
+.order-management-page .seller-page-title {
+  font-size: 1.6rem; /* Sedikit lebih kecil jika perlu */
+}
+
+.order-list-group .list-group-item.order-list-item {
+  padding: 1rem 1.25rem;
+  transition: background-color 0.15s ease-in-out;
+}
+.order-list-group .list-group-item.order-list-item:hover {
+  background-color: #f8f9fa; /* Warna hover lembut */
+}
+
+.order-list-item .order-id-text {
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.order-list-item .order-status-badge {
+  font-size: 0.8em;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.order-list-item .action-button {
+  padding: 0.25rem 0.5rem; /* Padding lebih kecil untuk tombol ikon */
+  line-height: 1; /* Menyelaraskan ikon di dalam tombol */
+}
+.order-list-item .action-button svg {
+  vertical-align: middle;
+}
+
+/* Styling untuk Modal */
+.modal-header-primary {
+  /* Contoh untuk modal update status */
+  background-color: #cfe2ff; /* Biru muda Bootstrap */
+  color: #084298;
+  border-bottom: 1px solid #b6d4fe;
+}
+.modal-header-primary .btn-close {
+  filter: invert(35%) sepia(50%) saturate(2000%) hue-rotate(190deg)
+    brightness(90%) contrast(100%);
+}
+
+/* Penyesuaian untuk layar kecil */
+@media (max-width: 767.98px) {
+  /* md breakpoint */
+  .order-list-item .order-actions {
+    margin-top: 0.5rem;
+    text-align: left !important; /* Ratakan kiri tombol aksi di mobile */
+  }
+  .order-list-item .col-md-3.col-sm-12,
+  .order-list-item .col-md-3.col-sm-6,
+  .order-list-item .col-md-2.col-sm-6 {
+    margin-bottom: 0.5rem; /* Tambahkan sedikit jarak bawah antar kolom info di mobile */
+  }
+}

@@ -176,7 +176,7 @@ function RegisterForm() {
 
           <Form.Group className="mb-3" controlId="formRegisterPhoneNumber">
             <Form.Label>
-              Nomor Telepon <span className="text-muted">(Opsional)</span>
+              Nomor Telepon
             </Form.Label>
             <InputGroup>
               <InputGroup.Text className="input-group-text-brand">
@@ -196,7 +196,7 @@ function RegisterForm() {
 
           <Form.Group className="mb-3" controlId="formRegisterAddress">
             <Form.Label>
-              Alamat <span className="text-muted">(Opsional)</span>
+              Alamat
             </Form.Label>
             <InputGroup>
               <InputGroup.Text className="input-group-text-brand input-group-text-brand-textarea">
