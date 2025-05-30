@@ -74,4 +74,5 @@ const logoutUser = async () => {
   }
 };
 
-export { registerUser, loginUser, forgotPassword, logoutUser };
+
+export { registerUser, loginUser, forgotPassword, logoutUser};

@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import { Form, Button, Alert, Card, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { loginUser } from "../../services/AuthService"; // Pastikan path ini benar
-import { useAuth } from "../../context/AuthContext"; // Pastikan path ini benar
+import { loginUser } from "../../services/AuthService";
+import { useAuth } from "../../context/AuthContext";
 import { Envelope, Lock, Eye, EyeSlash } from "react-bootstrap-icons";
-import "../../css/AuthForms.css"; // Pastikan path ini benar
+import "../../css/AuthForms.css";
 
 const ICON_COLOR = "#C07722";
 
