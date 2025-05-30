@@ -5,10 +5,10 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
-  background-color: #F3D1A3 !important;
+  background-color: #f3d1a3 !important;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -32,4 +32,70 @@ body {
 
 .page-content-container {
   padding-top: 0px !important; /* Konten halaman bisa mulai dari atas */
+}
+
+/* Tombol Floating untuk membuka GlobalChat Modal */
+.global-chat-app-toggle-button {
+  position: fixed !important; /* Selalu di atas konten lain */
+  bottom: 20px;
+  right: 20px;
+  z-index: 1045; /* Di bawah z-index modal (Bootstrap modal ~1050+) */
+  border-radius: 50% !important;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  padding: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.global-chat-app-toggle-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Styling untuk dialog modal GlobalChat agar di pojok kanan bawah */
+/* Ini akan aktif jika Anda sudah menghapus prop 'centered' dari <Modal> di App.js */
+.global-chat-modal-dialog.modal-dialog {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  margin: 0 !important; /* Hapus margin default Bootstrap untuk modal centered */
+  max-width: 500px; /* Lebar tipikal untuk widget chat */
+  width: 90%; /* Agar responsif di layar kecil */
+  z-index: 1055; /* Pastikan modal di atas backdrop dan elemen lain */
+  pointer-events: auto; /* Pastikan modal bisa diinteraksi */
+}
+
+/* Styling untuk konten modal agar mengisi dialog */
+.global-chat-modal-content {
+  height: 70vh; /* Tinggi modal, bisa disesuaikan */
+  max-height: 550px; /* Batas tinggi maksimum, sesuaikan dengan tombol toggle */
+  border-radius: 0.5rem !important;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: none !important;
+  background-clip: padding-box;
+  pointer-events: auto;
+}
+
+.global-chat-modal-body {
+  padding: 0 !important;
+  flex-grow: 1;
+  display: flex !important;
+  overflow: hidden !important;
+}
+
+/* Jika GlobalChat.css Anda belum mengatur ini dengan baik untuk konteks modal: */
+.global-chat-window-modal-version {
+  width: 100%;
+  height: 100%;
+  border: none !important;
+  border-radius: 0 !important; /* Mengikuti radius modal content */
+  display: flex;
+  flex-direction: column;
 }

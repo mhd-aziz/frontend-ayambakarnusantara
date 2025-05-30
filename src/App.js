@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState, useEffect } from "react";
 import {
   Routes,
@@ -8,15 +7,17 @@ import {
   useNavigate,
   Navigate,
 } from "react-router-dom";
-import { Alert, Container, Modal, Spinner } from "react-bootstrap";
+import { Alert, Container, Modal, Spinner, Button } from "react-bootstrap";
+import { ChatDots } from "react-bootstrap-icons";
 import "./App.css";
 import NavigationBar from "./components/Layout/NavigationBar";
 import Footer from "./components/Layout/Footer";
+import GlobalChat from "./components/Chat/GlobalChat";
 import HomePage from "./pages/HomePage";
 import LoginForm from "./components/Auth/LoginForm";
 import RegisterForm from "./components/Auth/RegisterForm";
 import ForgotPasswordForm from "./components/Auth/ForgotPasswordForm";
-import { useAuth } from "./context/AuthContext"; 
+import { useAuth } from "./context/AuthContext";
 import MenuPage from "./pages/MenuPage";
 import DetailMenuPage from "./pages/DetailMenuPage";
 import ShopPage from "./pages/ShopPage";
@@ -35,12 +36,12 @@ import NotFoundPage from "./pages/NotFoundPage";
 function App() {
   const { isLoggedIn, isLoading } = useAuth();
   const [showTopBanner, setShowTopBanner] = useState(true);
-
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
-
-  const location = useLocation(); // location sudah ada
+  const [showGlobalChatModal, setShowGlobalChatModal] = useState(false);
+  const [recipientForChat, setRecipientForChat] = useState(null);
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -84,7 +85,21 @@ function App() {
     }
   };
 
-  // Tentukan path di mana footer akan ditampilkan
+  const handleInitiateChatWith = (recipientUID) => {
+    if (!isLoggedIn) {
+      navigate("/login", {
+        state: { from: location, message: "Silakan login untuk memulai chat." },
+      });
+      return;
+    }
+    setRecipientForChat(recipientUID);
+    setShowGlobalChatModal(true);
+  };
+
+  const handleChatSessionInitiated = (conversation) => {
+    setRecipientForChat(null);
+  };
+
   const pathsWithFooter = [
     "/",
     "/menu",
@@ -146,9 +161,12 @@ function App() {
           <Route path="/register" element={<HomePage />} />
           <Route path="/forgot-password" element={<HomePage />} />
           <Route path="/menu" element={<MenuPage />} />
-          <Route path="/menu/:productId" element={<DetailMenuPage />} />{" "}
+          <Route path="/menu/:productId" element={<DetailMenuPage />} />
           <Route path="/toko" element={<ShopPage />} />
-          <Route path="/toko/:shopId" element={<ShopDetailPage />} />
+          <Route
+            path="/toko/:shopId"
+            element={<ShopDetailPage onInitiateChat={handleInitiateChatWith} />}
+          />
           <Route
             path="/pesanan"
             element={
@@ -234,6 +252,50 @@ function App() {
           <ForgotPasswordForm />
         </Modal.Body>
       </Modal>
+
+      {isLoggedIn && (
+        <>
+          {!showGlobalChatModal && (
+            <Button
+              variant="primary"
+              className="global-chat-app-toggle-button btn-brand shadow" // ClassName ini akan kita style
+              onClick={() => {
+                setRecipientForChat(null);
+                setShowGlobalChatModal(true);
+              }}
+              title="Buka Chat"
+            >
+              <ChatDots size={28} />
+            </Button>
+          )}
+
+          <Modal
+            show={showGlobalChatModal}
+            onHide={() => {
+              setShowGlobalChatModal(false);
+              setRecipientForChat(null);
+            }}
+            dialogClassName="global-chat-modal-dialog" // Kelas ini akan kita targetkan di CSS
+            contentClassName="global-chat-modal-content"
+            // centered // <--- PASTIKAN PROP INI DIHAPUS ATAU DIKOMENTARI
+            scrollable={false}
+            backdrop={true}
+            keyboard={false} // Opsional, mencegah Esc menutup modal saat mengetik
+            aria-labelledby="global-chat-modal-title"
+          >
+            <Modal.Body className="p-0 global-chat-modal-body">
+              <GlobalChat
+                recipientToInitiateChat={recipientForChat}
+                onChatInitiated={handleChatSessionInitiated}
+                onRequestClose={() => {
+                  setShowGlobalChatModal(false);
+                  setRecipientForChat(null);
+                }}
+              />
+            </Modal.Body>
+          </Modal>
+        </>
+      )}
     </div>
   );
 }
