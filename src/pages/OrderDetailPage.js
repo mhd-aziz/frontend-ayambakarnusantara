@@ -10,16 +10,10 @@ import {
   Container,
   Row,
   Col,
-  Card,
-  Button,
   Spinner,
   Alert,
-  Image,
-  ListGroup,
-  Badge,
   Breadcrumb,
-  Modal,
-  Form,
+  Button,
 } from "react-bootstrap";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -31,55 +25,20 @@ import {
   getMidtransTransactionStatus,
 } from "../services/PaymentService";
 import { addRating } from "../services/RatingService";
-import {
-  BoxSeam,
-  CalendarCheck,
-  CreditCardFill,
-  GeoAltFill,
-  Hash,
-  InfoCircleFill,
-  ListTask,
-  PersonCircle,
-  Shop,
-  XCircleFill,
-  ExclamationTriangleFill,
-  ArrowClockwise,
-  Receipt,
-  CheckCircleFill,
-  StarFill,
-} from "react-bootstrap-icons";
+import { CheckCircleFill } from "react-bootstrap-icons";
+import OrderDetailCard from "../components/Order/OrderDetailCard";
+import OrderItemsList from "../components/Order/OrderItemsList";
+import ShopDetailsCard from "../components/Order/ShopDetailsCard";
+import SupportCard from "../components/Order/SupportCard";
+import CancelOrderModal from "../components/Order/CancelOrderModal";
+import RatingModal from "../components/Order/RatingModal";
 import "../css/OrderDetailPage.css";
 
-const ICON_COLOR = "#C07722";
-
-// Komponen untuk Rating Bintang
-const StarRating = ({ rating, setRating, disabled = false }) => {
-  return (
-    <div>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span
-          key={star}
-          onClick={() => !disabled && setRating(star)}
-          style={{
-            cursor: disabled ? "default" : "pointer",
-            color: star <= rating ? "#ffc107" : "#e4e5e9",
-            fontSize: "1.5rem",
-            marginRight: "5px",
-          }}
-        >
-          <StarFill />
-        </span>
-      ))}
-    </div>
-  );
-};
-
-function OrderDetailPage() {
+function OrderDetailPage({ onOpenChatbot }) {
   const { orderId } = useParams();
   const { isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const [orderDetails, setOrderDetails] = useState(null);
   const [shopDetails, setShopDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,8 +53,6 @@ function OrderDetailPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [paymentTransactionDetails, setPaymentTransactionDetails] =
     useState(null);
-
-  // State baru untuk fitur rating
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [productToRate, setProductToRate] = useState(null);
   const [ratingValue, setRatingValue] = useState(0);
@@ -126,79 +83,62 @@ function OrderDetailPage() {
 
       try {
         const response = await getCustomerOrderDetailById(orderId);
-        if (
-          response &&
-          response.success &&
-          response.data &&
-          response.data.order
-        ) {
+        if (response?.success && response.data?.order) {
           const fetchedOrderDetails = response.data.order;
           setOrderDetails(fetchedOrderDetails);
           setShopDetails(response.data.shopDetails || {});
 
-          if (shouldFetchPaymentStatus) {
-            const isOnlinePayment =
-              fetchedOrderDetails.paymentDetails?.method === "ONLINE_PAYMENT";
-            const isOrderStatusRelevantForCheck = ![
-              "COMPLETED",
-              "CANCELLED",
-              "PAYMENT_FAILED",
-            ].includes(fetchedOrderDetails.orderStatus);
+          const isOnlinePayment =
+            fetchedOrderDetails.paymentDetails?.method === "ONLINE_PAYMENT";
 
-            if (isOnlinePayment && isOrderStatusRelevantForCheck) {
-              setIsCheckingStatus(true);
-              setStatusMessage("Memeriksa status pembayaran terbaru...");
-              try {
-                const statusResponse = await getMidtransTransactionStatus(
-                  fetchedOrderDetails.orderId
+          if (shouldFetchPaymentStatus && isOnlinePayment) {
+            setIsCheckingStatus(true);
+            setStatusMessage("Memeriksa status pembayaran...");
+            try {
+              const statusResponse = await getMidtransTransactionStatus(
+                fetchedOrderDetails.orderId
+              );
+              if (statusResponse?.success && statusResponse.data) {
+                setPaymentTransactionDetails(statusResponse.data);
+                setStatusMessage(
+                  statusResponse.message || "Status pembayaran berhasil dimuat."
                 );
                 if (
-                  statusResponse &&
-                  statusResponse.success &&
-                  statusResponse.data
+                  fetchedOrderDetails.orderStatus !==
+                    statusResponse.data.internalOrderStatus ||
+                  fetchedOrderDetails.paymentDetails?.status !==
+                    statusResponse.data.internalPaymentStatus
                 ) {
-                  setPaymentTransactionDetails(statusResponse.data);
-                  setStatusMessage(
-                    statusResponse.message ||
-                      "Status pembayaran berhasil dimuat."
-                  );
-                  if (
-                    fetchedOrderDetails.orderStatus !==
-                      statusResponse.data.internalOrderStatus ||
-                    fetchedOrderDetails.paymentDetails?.status !==
-                      statusResponse.data.internalPaymentStatus
-                  ) {
-                    setOrderDetails((prevOrder) => ({
-                      ...prevOrder,
-                      orderStatus: statusResponse.data.internalOrderStatus,
-                      paymentDetails: {
-                        ...prevOrder.paymentDetails,
-                        status: statusResponse.data.internalPaymentStatus,
-                        transactionId:
-                          statusResponse.data.paymentGatewayStatus
-                            ?.transaction_id ||
-                          prevOrder.paymentDetails?.transactionId,
-                      },
-                    }));
-                  }
-                } else {
-                  setPaymentError(
-                    statusResponse?.message || "Gagal memuat status pembayaran."
-                  );
-                  setStatusMessage("");
+                  setOrderDetails((prevOrder) => ({
+                    ...prevOrder,
+                    orderStatus: statusResponse.data.internalOrderStatus,
+                    paymentDetails: {
+                      ...prevOrder.paymentDetails,
+                      status: statusResponse.data.internalPaymentStatus,
+                      transactionId:
+                        statusResponse.data.paymentGatewayStatus
+                          ?.transaction_id ||
+                        prevOrder.paymentDetails?.transactionId,
+                    },
+                  }));
                 }
-              } catch (statusErr) {
+              } else {
                 setPaymentError(
-                  statusErr.message ||
-                    "Terjadi kesalahan saat memeriksa status pembayaran."
+                  statusResponse?.message || "Gagal memuat status pembayaran."
                 );
                 setStatusMessage("");
-              } finally {
-                setIsCheckingStatus(false);
               }
-            } else {
+            } catch (statusErr) {
+              setPaymentError(
+                statusErr.message ||
+                  "Terjadi kesalahan saat memeriksa status pembayaran."
+              );
               setStatusMessage("");
+            } finally {
+              setIsCheckingStatus(false);
             }
+          } else {
+            setStatusMessage("");
           }
         } else {
           setError(
@@ -238,7 +178,6 @@ function OrderDetailPage() {
   };
   const handleCloseCancelModal = () => setShowCancelModal(false);
 
-  // Fungsi baru untuk modal rating
   const handleShowRatingModal = (product) => {
     setProductToRate(product);
     setRatingValue(0);
@@ -273,7 +212,6 @@ function OrderDetailPage() {
         setRatingSuccess(
           response.message || "Rating dan ulasan berhasil dikirim!"
         );
-        // Refresh order details to reflect the change (e.g., hide the rating button)
         fetchOrderDetails(true);
         setTimeout(() => {
           handleCloseRatingModal();
@@ -507,10 +445,15 @@ function OrderDetailPage() {
       <Container className="text-center py-5">
         <Spinner
           animation="border"
-          variant="primary"
-          style={{ width: "3rem", height: "3rem" }}
+          style={{
+            width: "3rem",
+            height: "3rem",
+            color: "var(--brand-primary)",
+          }}
         />
-        <p className="mt-3 lead">Memuat Detail Pesanan...</p>
+        <p className="mt-3 lead" style={{ color: "var(--brand-primary)" }}>
+          Memuat Detail Pesanan...
+        </p>
       </Container>
     );
   }
@@ -551,23 +494,14 @@ function OrderDetailPage() {
 
   const isActionInProgress =
     isCancelling || isProcessingPayment || isCheckingStatus;
-
-  const cancellableStatusesFromBackend = [
-    "AWAITING_PAYMENT",
-    "PENDING_CONFIRMATION",
-  ];
+  const cancellableStatuses = ["AWAITING_PAYMENT", "PENDING_CONFIRMATION"];
   const canCancelOrder =
-    orderDetails &&
-    cancellableStatusesFromBackend.includes(orderDetails.orderStatus);
-
+    orderDetails && cancellableStatuses.includes(orderDetails.orderStatus);
   const showPayNowButton =
-    orderDetails &&
-    orderDetails.paymentDetails?.method === "ONLINE_PAYMENT" &&
+    orderDetails?.paymentDetails?.method === "ONLINE_PAYMENT" &&
     orderDetails.orderStatus === "AWAITING_PAYMENT";
-
   const showCheckStatusButton =
-    orderDetails &&
-    orderDetails.paymentDetails?.method === "ONLINE_PAYMENT" &&
+    orderDetails?.paymentDetails?.method === "ONLINE_PAYMENT" &&
     !["COMPLETED", "CANCELLED", "PAYMENT_FAILED"].includes(
       orderDetails.orderStatus
     );
@@ -586,11 +520,7 @@ function OrderDetailPage() {
           {cancelSuccessMessage}
         </Alert>
       )}
-      <Breadcrumb
-        listProps={{
-          className: "bg-light px-3 py-2 rounded-pill shadow-sm border mb-4",
-        }}
-      >
+      <Breadcrumb className="breadcrumb-custom mb-4">
         <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
           Beranda
         </Breadcrumb.Item>
@@ -598,587 +528,78 @@ function OrderDetailPage() {
           Pesanan Saya
         </Breadcrumb.Item>
         <Breadcrumb.Item active>
-          Detail Pesanan #
-          {orderDetails.orderId ? orderDetails.orderId.substring(0, 8) : "N/A"}
+          Detail Pesanan #{orderDetails.orderId?.substring(0, 8)}
         </Breadcrumb.Item>
       </Breadcrumb>
 
       {paymentError && (
-        <Alert
-          variant="danger"
-          onClose={() => setPaymentError("")}
-          dismissible
-          className="mt-3"
-        >
+        <Alert variant="danger" onClose={() => setPaymentError("")} dismissible>
           {paymentError}
         </Alert>
       )}
       {statusMessage && (
-        <Alert
-          variant="info"
-          onClose={() => setStatusMessage("")}
-          dismissible
-          className="mt-3"
-        >
+        <Alert variant="info" onClose={() => setStatusMessage("")} dismissible>
           {statusMessage}
         </Alert>
       )}
 
       <Row>
         <Col lg={8}>
-          <Card className="shadow-sm mb-4">
-            <Card.Header
-              as="h5"
-              className="d-flex justify-content-between align-items-center"
-            >
-              Detail Pesanan
-              <Badge
-                bg={
-                  orderDetails
-                    ? getStatusBadgeVariant(orderDetails.orderStatus)
-                    : "light"
-                }
-                pill
-              >
-                {getDisplayOrderStatus(orderDetails?.orderStatus)}
-              </Badge>
-            </Card.Header>
-            <Card.Body>
-              <ListGroup variant="flush">
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>
-                        <Hash color={ICON_COLOR} className="me-2" />
-                        ID Pesanan:
-                      </strong>
-                    </Col>
-                    <Col sm={8} style={{ wordBreak: "break-all" }}>
-                      {orderDetails?.orderId || "Tidak Ada"}
-                    </Col>
-                  </Row>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>
-                        <CalendarCheck color={ICON_COLOR} className="me-2" />
-                        Tanggal Pesan:
-                      </strong>
-                    </Col>
-                    <Col sm={8}>
-                      {orderDetails?.createdAt
-                        ? new Date(orderDetails.createdAt).toLocaleString(
-                            "id-ID",
-                            { dateStyle: "long", timeStyle: "short" }
-                          )
-                        : "Tidak Ada"}
-                    </Col>
-                  </Row>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>
-                        <PersonCircle color={ICON_COLOR} className="me-2" />
-                        Nama Pemesan:
-                      </strong>
-                    </Col>
-                    <Col sm={8}>
-                      {user?.displayName || orderDetails?.userId || "Tidak Ada"}
-                    </Col>
-                  </Row>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>
-                        <CreditCardFill color={ICON_COLOR} className="me-2" />
-                        Metode Pembayaran:
-                      </strong>
-                    </Col>
-                    <Col sm={8}>
-                      {orderDetails?.paymentDetails?.method
-                        ? orderDetails.paymentDetails.method.replace(/_/g, " ")
-                        : "Tidak Ada"}
-                      <Badge
-                        bg={
-                          orderDetails?.paymentDetails?.status === "paid" ||
-                          orderDetails?.paymentDetails?.status ===
-                            "pay_on_pickup"
-                            ? "success"
-                            : orderDetails?.paymentDetails?.status ===
-                                "pending_online_payment" ||
-                              orderDetails?.orderStatus === "AWAITING_PAYMENT"
-                            ? "warning"
-                            : "secondary"
-                        }
-                        className="ms-2"
-                      >
-                        {getDisplayPaymentStatus(
-                          orderDetails?.paymentDetails?.status
-                        ) ||
-                          (orderDetails?.orderStatus === "AWAITING_PAYMENT"
-                            ? getDisplayOrderStatus("AWAITING_PAYMENT")
-                            : "Tidak Ada")}
-                      </Badge>
-                    </Col>
-                  </Row>
-                </ListGroup.Item>
-                {paymentTransactionDetails?.paymentGatewayStatus && (
-                  <>
-                    <ListGroup.Item>
-                      <Row>
-                        <Col>
-                          <strong className="text-muted">
-                            Detail Transaksi:
-                          </strong>
-                        </Col>
-                      </Row>
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <Row>
-                        <Col sm={4}>
-                          <strong>
-                            <Receipt color={ICON_COLOR} className="me-2" />
-                            ID Transaksi Midtrans:
-                          </strong>
-                        </Col>
-                        <Col sm={8} style={{ wordBreak: "break-all" }}>
-                          {paymentTransactionDetails.paymentGatewayStatus
-                            .transaction_id || "Tidak Ada"}
-                        </Col>
-                      </Row>
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <Row>
-                        <Col sm={4}>
-                          <strong>Status Transaksi:</strong>
-                        </Col>
-                        <Col sm={8}>
-                          {getDisplayPaymentGatewayStatus(
-                            paymentTransactionDetails.paymentGatewayStatus
-                              .transaction_status
-                          )}
-                        </Col>
-                      </Row>
-                    </ListGroup.Item>
-                    {paymentTransactionDetails.paymentGatewayStatus
-                      .payment_type && (
-                      <ListGroup.Item>
-                        <Row>
-                          <Col sm={4}>
-                            <strong>Tipe Pembayaran:</strong>
-                          </Col>
-                          <Col sm={8}>
-                            {paymentTransactionDetails.paymentGatewayStatus.payment_type
-                              .replace(/_/g, " ")
-                              .toUpperCase() || "Tidak Ada"}
-                          </Col>
-                        </Row>
-                      </ListGroup.Item>
-                    )}
-                    {paymentTransactionDetails.paymentGatewayStatus
-                      .va_numbers &&
-                      paymentTransactionDetails.paymentGatewayStatus.va_numbers
-                        .length > 0 && (
-                        <ListGroup.Item>
-                          <Row>
-                            <Col sm={4}>
-                              <strong>Nomor VA:</strong>
-                            </Col>
-                            <Col sm={8}>
-                              {paymentTransactionDetails.paymentGatewayStatus.va_numbers
-                                .map(
-                                  (va) =>
-                                    `${va.bank.toUpperCase()}: ${va.va_number}`
-                                )
-                                .join(", ")}
-                            </Col>
-                          </Row>
-                        </ListGroup.Item>
-                      )}
-                    {paymentTransactionDetails.paymentGatewayStatus
-                      .expiry_time && (
-                      <ListGroup.Item>
-                        <Row>
-                          <Col sm={4}>
-                            <strong>Waktu Kadaluarsa Pembayaran:</strong>
-                          </Col>
-                          <Col sm={8}>
-                            {new Date(
-                              paymentTransactionDetails.paymentGatewayStatus.expiry_time
-                            ).toLocaleString("id-ID", {
-                              dateStyle: "long",
-                              timeStyle: "short",
-                            })}
-                          </Col>
-                        </Row>
-                      </ListGroup.Item>
-                    )}
-                    {paymentTransactionDetails.paymentGatewayStatus
-                      .settlement_time && (
-                      <ListGroup.Item>
-                        <Row>
-                          <Col sm={4}>
-                            <strong>Waktu Penyelesaian:</strong>
-                          </Col>
-                          <Col sm={8}>
-                            {new Date(
-                              paymentTransactionDetails.paymentGatewayStatus.settlement_time
-                            ).toLocaleString("id-ID", {
-                              dateStyle: "long",
-                              timeStyle: "short",
-                            })}
-                          </Col>
-                        </Row>
-                      </ListGroup.Item>
-                    )}
-                  </>
-                )}
-
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>
-                        <BoxSeam color={ICON_COLOR} className="me-2" />
-                        Jenis Pesanan:
-                      </strong>
-                    </Col>
-                    <Col sm={8}>{orderDetails?.orderType || "Tidak Ada"}</Col>
-                  </Row>
-                </ListGroup.Item>
-                {orderDetails?.notes && (
-                  <ListGroup.Item>
-                    <Row>
-                      <Col sm={4}>
-                        <strong>Catatan:</strong>
-                      </Col>
-                      <Col sm={8}>
-                        <pre
-                          style={{
-                            whiteSpace: "pre-wrap",
-                            margin: 0,
-                            fontFamily: "inherit",
-                          }}
-                        >
-                          {orderDetails.notes}
-                        </pre>
-                      </Col>
-                    </Row>
-                  </ListGroup.Item>
-                )}
-                <ListGroup.Item>
-                  <Row>
-                    <Col sm={4}>
-                      <strong>Total Pembayaran:</strong>
-                    </Col>
-                    <Col sm={8} className="fw-bold fs-5 text-primary">
-                      Rp{" "}
-                      {orderDetails?.totalPrice?.toLocaleString("id-ID") || "0"}
-                    </Col>
-                  </Row>
-                </ListGroup.Item>
-              </ListGroup>
-            </Card.Body>
-            <Card.Footer className="text-end d-flex justify-content-end flex-wrap gap-2">
-              {canCancelOrder && (
-                <Button
-                  variant="danger"
-                  onClick={handleShowCancelModal}
-                  disabled={isActionInProgress}
-                  className="mb-2 mb-md-0"
-                >
-                  <XCircleFill className="me-2" /> Batalkan Pesanan
-                </Button>
-              )}
-              {showPayNowButton && (
-                <Button
-                  variant="success"
-                  onClick={handlePayOnline}
-                  disabled={isActionInProgress}
-                  className="mb-2 mb-md-0"
-                >
-                  {isProcessingPayment ? (
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      className="me-2"
-                    />
-                  ) : (
-                    <CreditCardFill className="me-2" />
-                  )}
-                  Bayar Sekarang
-                </Button>
-              )}
-              {showCheckStatusButton && (
-                <Button
-                  variant="info"
-                  onClick={handleCheckPaymentStatusManual}
-                  disabled={isActionInProgress}
-                  className="mb-2 mb-md-0"
-                >
-                  {isCheckingStatus ? (
-                    <Spinner
-                      as="span"
-                      animation="border"
-                      size="sm"
-                      className="me-2"
-                    />
-                  ) : (
-                    <ArrowClockwise className="me-2" />
-                  )}
-                  Cek Status Pembayaran
-                </Button>
-              )}
-            </Card.Footer>
-          </Card>
-
-          <Card className="shadow-sm mb-4">
-            <Card.Header as="h5">
-              <ListTask color={ICON_COLOR} className="me-2" />
-              Item Pesanan
-            </Card.Header>
-            <ListGroup variant="flush">
-              {orderDetails?.items.map((item) => (
-                <ListGroup.Item
-                  key={item.productId}
-                  className="d-flex align-items-center"
-                >
-                  <Image
-                    src={
-                      item.productImageURL ||
-                      `https://placehold.co/60x60/EFEFEF/AAAAAA?text=${encodeURIComponent(
-                        item.name
-                      )}`
-                    }
-                    onError={(e) => handleImageError(e, item.name)}
-                    alt={item.name}
-                    style={{
-                      width: "60px",
-                      height: "60px",
-                      objectFit: "cover",
-                      marginRight: "15px",
-                      borderRadius: "0.25rem",
-                    }}
-                  />
-                  <div className="flex-grow-1">
-                    <h6 className="mb-0">{item.name}</h6>
-                    <small className="text-muted">
-                      {item.quantity} x Rp {item.price.toLocaleString("id-ID")}
-                      {item.shopId && (
-                        <>
-                          {" "}
-                          dari{" "}
-                          <Link
-                            to={`/toko/${item.shopId}`}
-                            className="text-decoration-none"
-                          >
-                            {shopDetails?.shopName &&
-                            orderDetails.items.find(
-                              (oItem) => oItem.shopId === item.shopId
-                            )
-                              ? shopDetails.shopName
-                              : item.shopName ||
-                                `ID Toko: ${item.shopId.substring(0, 6)}...`}
-                          </Link>
-                        </>
-                      )}
-                    </small>
-                  </div>
-                  <div className="text-end fw-semibold me-3">
-                    Rp {item.subtotal.toLocaleString("id-ID")}
-                  </div>
-                  {/* Tombol Beri Ulasan */}
-                  {orderDetails.orderStatus === "COMPLETED" && (
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={() => handleShowRatingModal(item)}
-                      disabled={item.isReviewed} // (asumsi ada flag isReviewed dari backend)
-                    >
-                      {item.isReviewed ? "Diberi Ulasan" : "Beri Ulasan"}
-                    </Button>
-                  )}
-                </ListGroup.Item>
-              ))}
-            </ListGroup>
-          </Card>
+          <OrderDetailCard
+            orderDetails={orderDetails}
+            user={user}
+            getDisplayOrderStatus={getDisplayOrderStatus}
+            getStatusBadgeVariant={getStatusBadgeVariant}
+            getDisplayPaymentStatus={getDisplayPaymentStatus}
+            paymentTransactionDetails={paymentTransactionDetails}
+            getDisplayPaymentGatewayStatus={getDisplayPaymentGatewayStatus}
+            isActionInProgress={isActionInProgress}
+            canCancelOrder={canCancelOrder}
+            showPayNowButton={showPayNowButton}
+            showCheckStatusButton={showCheckStatusButton}
+            onCancel={handleShowCancelModal}
+            onPay={handlePayOnline}
+            onCheckStatus={handleCheckPaymentStatusManual}
+          />
+          <OrderItemsList
+            items={orderDetails.items}
+            shopDetails={shopDetails}
+            orderStatus={orderDetails.orderStatus}
+            onShowRatingModal={handleShowRatingModal}
+            handleImageError={handleImageError}
+          />
         </Col>
-
         <Col lg={4}>
-          {shopDetails && shopDetails.shopName ? (
-            <Card className="shadow-sm mb-4">
-              <Card.Header as="h5">
-                <Shop color={ICON_COLOR} className="me-2" />
-                Detail Toko
-              </Card.Header>
-              <Card.Body>
-                {shopDetails.bannerImageURL && (
-                  <Image
-                    src={shopDetails.bannerImageURL}
-                    alt={`Banner ${shopDetails.shopName}`}
-                    fluid
-                    rounded
-                    className="mb-3"
-                    style={{
-                      maxHeight: "150px",
-                      width: "100%",
-                      objectFit: "contain",
-                    }}
-                    onError={(e) => handleImageError(e, shopDetails.shopName)}
-                  />
-                )}
-                <h5>{shopDetails.shopName}</h5>
-                {shopDetails.shopAddress && (
-                  <p className="mb-1 small">
-                    <GeoAltFill className="me-1" />{" "}
-                    {shopDetails.shopAddress || "Alamat tidak tersedia"}
-                  </p>
-                )}
-                {shopDetails.description && (
-                  <p className="text-muted small mb-2">
-                    {shopDetails.description}
-                  </p>
-                )}
-                {orderDetails?.items &&
-                  orderDetails.items.length > 0 &&
-                  orderDetails.items[0].shopId && (
-                    <Button
-                      as={Link}
-                      to={`/toko/${orderDetails.items[0].shopId}`}
-                      variant="outline-primary"
-                      size="sm"
-                      className="w-100"
-                    >
-                      Kunjungi Toko
-                    </Button>
-                  )}
-              </Card.Body>
-            </Card>
-          ) : (
-            <Card className="shadow-sm mb-4">
-              <Card.Header as="h5">
-                <Shop color={ICON_COLOR} className="me-2" />
-                Detail Toko
-              </Card.Header>
-              <Card.Body>
-                <p className="text-muted small">
-                  Detail toko tidak tersedia untuk pesanan ini.
-                </p>
-              </Card.Body>
-            </Card>
-          )}
-          <Card className="shadow-sm">
-            <Card.Header as="h5">
-              <InfoCircleFill color={ICON_COLOR} className="me-2" />
-              Bantuan
-            </Card.Header>
-            <Card.Body>
-              <p className="small">
-                Jika ada masalah dengan pesanan Anda, silakan hubungi layanan
-                pelanggan kami.
-              </p>
-              <Button variant="outline-secondary" size="sm" className="w-100">
-                Hubungi Dukungan
-              </Button>
-            </Card.Body>
-          </Card>
+          <ShopDetailsCard
+            shopDetails={shopDetails}
+            orderItems={orderDetails.items}
+            handleImageError={handleImageError}
+          />
+          <SupportCard onOpenChatbot={onOpenChatbot} />
         </Col>
       </Row>
 
-      <Modal show={showCancelModal} onHide={handleCloseCancelModal} centered>
-        <Modal.Header closeButton className="modal-header-danger">
-          <Modal.Title>
-            <ExclamationTriangleFill className="me-2" /> Konfirmasi Pembatalan
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {cancelError && <Alert variant="danger">{cancelError}</Alert>}
-          Anda yakin ingin membatalkan pesanan ini? Tindakan ini mungkin tidak
-          dapat diurungkan tergantung pada status pesanan saat ini.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={handleCloseCancelModal}
-            disabled={isCancelling}
-          >
-            Tidak
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleConfirmCancelOrder}
-            disabled={isCancelling}
-          >
-            {isCancelling ? (
-              <>
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  className="me-2"
-                />
-                Membatalkan...
-              </>
-            ) : (
-              "Ya, Batalkan Pesanan"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <CancelOrderModal
+        show={showCancelModal}
+        onHide={handleCloseCancelModal}
+        onConfirm={handleConfirmCancelOrder}
+        isCancelling={isCancelling}
+        error={cancelError}
+      />
 
-      {/* Modal untuk Memberi Rating */}
-      <Modal show={showRatingModal} onHide={handleCloseRatingModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Beri Ulasan untuk {productToRate?.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {ratingError && <Alert variant="danger">{ratingError}</Alert>}
-          {ratingSuccess && <Alert variant="success">{ratingSuccess}</Alert>}
-          <Form>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Rating Anda</Form.Label>
-              <br />
-              <StarRating rating={ratingValue} setRating={setRatingValue} />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Ulasan Anda (Opsional)</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Bagaimana pengalaman Anda dengan produk ini?"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={handleCloseRatingModal}
-            disabled={isSubmittingRating}
-          >
-            Tutup
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleRatingSubmit}
-            disabled={isSubmittingRating || !ratingValue}
-          >
-            {isSubmittingRating ? (
-              <>
-                <Spinner as="span" size="sm" className="me-2" />
-                Mengirim...
-              </>
-            ) : (
-              "Kirim Ulasan"
-            )}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <RatingModal
+        show={showRatingModal}
+        onHide={handleCloseRatingModal}
+        productToRate={productToRate}
+        ratingValue={ratingValue}
+        setRatingValue={setRatingValue}
+        reviewText={reviewText}
+        setReviewText={setReviewText}
+        isSubmitting={isSubmittingRating}
+        error={ratingError}
+        success={ratingSuccess}
+        onSubmit={handleRatingSubmit}
+      />
     </Container>
   );
 }
