@@ -29,17 +29,25 @@ function ShopDetailsCard({ shopDetails, orderItems, handleImageError }) {
         Detail Toko
       </Card.Header>
       <Card.Body>
-        {shopDetails.bannerImageURL && (
-          <Image
-            src={shopDetails.bannerImageURL}
-            alt={`Banner ${shopDetails.shopName}`}
-            fluid
-            rounded
-            className="mb-3"
-            style={{ maxHeight: "150px", width: "100%", objectFit: "contain" }}
-            onError={(e) => handleImageError(e, shopDetails.shopName)}
-          />
-        )}
+        <Image
+          src={
+            shopDetails.bannerImageURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              shopDetails.shopName || "Toko"
+            )}&size=400&background=efefef&color=757575&font-size=0.33&length=2`
+          }
+          alt={`Banner ${shopDetails.shopName}`}
+          fluid
+          rounded
+          className="mb-3"
+          style={{
+            maxHeight: "150px",
+            width: "100%",
+            objectFit: "contain",
+            backgroundColor: "#f8f9fa",
+          }}
+          onError={(e) => handleImageError(e, shopDetails.shopName)}
+        />
         <h5>{shopDetails.shopName}</h5>
         {shopDetails.shopAddress && (
           <p className="mb-1 small">
