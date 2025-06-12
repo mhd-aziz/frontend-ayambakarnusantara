@@ -214,10 +214,6 @@ function ShopPage() {
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
               {shops.map((shop) => {
-                // --- LOKASI CONSOLE LOG UNTUK DEBUGGING ---
-                // console.log(`Shop Name: ${shop.shopName}, Description: ${shop.description}`);
-                // console.log("Full shop object:", shop);
-                // --- Anda bisa uncomment salah satu atau keduanya untuk melihat data ---
                 return (
                   <Col key={shop.shopId} className="d-flex align-items-stretch">
                     <Card className="w-100 shop-card">
