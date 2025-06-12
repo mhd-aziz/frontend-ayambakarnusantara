@@ -8,6 +8,8 @@ import {
   Alert,
   Button,
   Pagination,
+  Form,
+  InputGroup,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getAllShops } from "../services/ShopService";
@@ -17,6 +19,7 @@ import {
   Shop,
   ArrowClockwise,
   GeoAltFill,
+  Search,
 } from "react-bootstrap-icons";
 
 function ShopPage() {
@@ -25,12 +28,17 @@ function ShopPage() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchShops = useCallback(async (page = 1) => {
+  const fetchShops = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getAllShops({ page });
+      const params = { page };
+      if (search) {
+        params.searchByShopName = search;
+      }
+      const response = await getAllShops(params);
       if (
         response &&
         response.success &&
@@ -61,8 +69,19 @@ function ShopPage() {
   }, []);
 
   useEffect(() => {
-    fetchShops(currentPage);
-  }, [fetchShops, currentPage]);
+    const handler = setTimeout(() => {
+      fetchShops(currentPage, searchTerm);
+    }, 300); // Debounce untuk mengurangi frekuensi pemanggilan API saat mengetik
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm, currentPage, fetchShops]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset ke halaman pertama setiap kali ada pencarian baru
+  };
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -148,8 +167,8 @@ function ShopPage() {
     <Container fluid className="py-4 px-md-4 shop-page-container-fluid">
       <Container>
         <div className="page-header-wrapper mb-4 mb-md-5">
-          <Row className="align-items-center">
-            <Col>
+          <Row className="align-items-center justify-content-between">
+            <Col xs={12} md="auto" className="mb-3 mb-md-0">
               <h1 className="h2 mb-1" style={{ color: "var(--brand-primary)" }}>
                 Temukan Toko Ayam Bakar Nusantara
               </h1>
@@ -157,6 +176,22 @@ function ShopPage() {
                 Jelajahi berbagai pilihan toko Ayam Bakar Nusantara di dekat
                 Anda.
               </p>
+            </Col>
+            <Col xs={12} md={5} lg={4}>
+              <Form onSubmit={(e) => e.preventDefault()}>
+                <InputGroup>
+                  <Form.Control
+                    type="search"
+                    placeholder="Cari nama toko..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    aria-label="Cari Toko"
+                  />
+                  <Button variant="outline-secondary" disabled>
+                    <Search />
+                  </Button>
+                </InputGroup>
+              </Form>
             </Col>
           </Row>
         </div>
@@ -204,9 +239,15 @@ function ShopPage() {
               <Shop className="me-2 fs-1" />
             </Alert.Heading>
             <p className="text-muted mb-0">
-              Maaf, belum ada toko yang terdaftar.
+              {searchTerm
+                ? "Toko yang Anda cari tidak ditemukan."
+                : "Maaf, belum ada toko yang terdaftar."}
             </p>
-            <p className="text-muted">Silakan kembali lagi nanti.</p>
+            {searchTerm && (
+              <p className="text-muted">
+                Coba gunakan kata kunci lain atau lihat semua toko.
+              </p>
+            )}
           </Alert>
         )}
 

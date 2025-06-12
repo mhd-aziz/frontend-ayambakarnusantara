@@ -134,6 +134,11 @@ function App() {
       : location.pathname === pattern
   );
 
+  const handleOpenChatbot = () => {
+    setRecipientForChat(null);
+    setShowGlobalChatModal(true);
+  };
+
   if (isLoading) {
     return (
       <Container
@@ -189,7 +194,7 @@ function App() {
             path="/pesanan/:orderId"
             element={
               isLoggedIn ? (
-                <OrderDetailPage />
+                <OrderDetailPage onOpenChatbot={handleOpenChatbot} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -297,10 +302,10 @@ function App() {
             <Modal.Body className="p-0 global-chat-modal-body">
               <GlobalChat
                 recipientToInitiateChat={recipientForChat}
-                onChatInitiated={handleChatSessionInitiated} 
+                onChatInitiated={handleChatSessionInitiated}
                 onRequestClose={() => {
                   setShowGlobalChatModal(false);
-                  setRecipientForChat(null); 
+                  setRecipientForChat(null);
                 }}
               />
             </Modal.Body>
