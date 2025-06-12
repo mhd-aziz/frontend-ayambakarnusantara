@@ -12,11 +12,22 @@ import {
   Breadcrumb,
   Form,
   InputGroup,
+  Card,
 } from "react-bootstrap";
 import { getProductById } from "../services/MenuService";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
-import { CheckCircleFill } from "react-bootstrap-icons";
+import {
+  CheckCircleFill,
+  ExclamationTriangleFill,
+  Search,
+  ArrowLeftCircleFill,
+  DashLg,
+  PlusLg,
+  CartPlusFill,
+  XCircleFill,
+  ArrowLeft,
+} from "react-bootstrap-icons";
 import "../css/DetailMenuPage.css";
 
 function DetailMenuPage() {
@@ -81,6 +92,9 @@ function DetailMenuPage() {
       if (newQuantity < 1) return 1;
       const currentProduct = menuItem?.data || menuItem;
       if (currentProduct && newQuantity > currentProduct.stock) {
+        alert(
+          `Stok produk tersisa ${currentProduct.stock}. Kuantitas diatur ke ${currentProduct.stock}.`
+        );
         return currentProduct.stock;
       }
       return newQuantity;
@@ -148,43 +162,58 @@ function DetailMenuPage() {
 
   const handleImageError = (e) => {
     e.target.onerror = null;
-    e.target.src = `https://via.placeholder.com/600x400.png?text=Gambar+Tidak+Tersedia`;
+    const nameForAvatar = e.target.alt || "Produk";
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      nameForAvatar
+    )}&size=600&background=efefef&color=757575&font-size=0.33&length=2`;
   };
 
   if (isLoading) {
     return (
-      <Container className="text-center py-5 loading-spinner-container">
-        <Spinner
-          animation="border"
-          style={{ width: "4rem", height: "4rem", color: "#c0392b" }}
-        />
-        <p className="mt-3 lead" style={{ color: "#c0392b" }}>
-          Memuat detail produk...
-        </p>
+      <Container fluid className="py-5 detail-menu-page-container-fluid">
+        <Container className="text-center loading-spinner-container">
+          <Spinner
+            animation="border"
+            style={{
+              width: "4rem",
+              height: "4rem",
+              color: "var(--brand-primary, #c0392b)",
+            }}
+          />
+          <p
+            className="mt-3 lead"
+            style={{ color: "var(--brand-primary, #c0392b)" }}
+          >
+            Memuat detail produk...
+          </p>
+        </Container>
       </Container>
     );
   }
 
   const pageError = error && !addToCartSuccessMessage;
 
-  if (pageError) {
+  if (pageError && !menuItem) {
     return (
-      <Container className="py-5">
-        <Alert variant="danger" className="text-center lead py-4 shadow-sm">
-          <Alert.Heading as="h3">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>Gagal Memuat
-            Data
-          </Alert.Heading>
-          <p>{error}</p>
-          <Button
-            as={Link}
-            to="/menu"
-            variant="outline-primary"
-            className="fw-semibold"
-          >
-            <i className="bi bi-arrow-left-circle-fill me-2"></i>Kembali ke Menu
-          </Button>
-        </Alert>
+      <Container fluid className="py-5 detail-menu-page-container-fluid">
+        <Container>
+          <Alert variant="danger" className="text-center lead py-4 shadow-sm">
+            <Alert.Heading as="h3">
+              <ExclamationTriangleFill className="me-2" />
+              Gagal Memuat Data
+            </Alert.Heading>
+            <p>{error}</p>
+            <Button
+              as={Link}
+              to="/menu"
+              variant="outline-primary"
+              className="fw-semibold"
+            >
+              <ArrowLeftCircleFill className="me-2" />
+              Kembali ke Menu
+            </Button>
+          </Alert>
+        </Container>
       </Container>
     );
   }
@@ -193,203 +222,242 @@ function DetailMenuPage() {
 
   if (!currentProduct || Object.keys(currentProduct).length === 0) {
     return (
-      <Container className="py-5">
-        <Alert variant="warning" className="text-center lead py-4 shadow-sm">
-          <Alert.Heading as="h3">
-            <i className="bi bi-search me-2"></i>Produk Tidak Ditemukan
-          </Alert.Heading>
-          <p>Detail untuk produk ini tidak dapat ditemukan.</p>
-          <Button
-            as={Link}
-            to="/menu"
-            variant="outline-primary"
-            className="fw-semibold"
-          >
-            <i className="bi bi-arrow-left-circle-fill me-2"></i>Kembali ke Menu
-          </Button>
-        </Alert>
+      <Container fluid className="py-5 detail-menu-page-container-fluid">
+        <Container>
+          <Alert variant="warning" className="text-center lead py-4 shadow-sm">
+            <Alert.Heading as="h3">
+              <Search className="me-2" />
+              Produk Tidak Ditemukan
+            </Alert.Heading>
+            <p>Detail untuk produk ini tidak dapat ditemukan.</p>
+            <Button
+              as={Link}
+              to="/menu"
+              variant="outline-primary"
+              className="fw-semibold"
+            >
+              <ArrowLeftCircleFill className="me-2" />
+              Kembali ke Menu
+            </Button>
+          </Alert>
+        </Container>
       </Container>
     );
   }
 
   return (
-    <Container className="detail-menu-page">
-      {addToCartSuccessMessage && (
-        <Alert
-          variant="success"
-          onClose={() => setAddToCartSuccessMessage("")}
-          dismissible
-          className="position-fixed top-0 start-50 translate-middle-x mt-3 z-index-toast"
-          style={{ zIndex: 1055 }}
-        >
-          <CheckCircleFill className="me-2" />
-          {addToCartSuccessMessage}
-        </Alert>
-      )}
-      {error &&
-        !addToCartSuccessMessage && ( // Hanya tampilkan error umum jika tidak ada pesan sukses
+    <Container fluid className="py-4 px-lg-5 detail-menu-page-container-fluid">
+      <Container>
+        {addToCartSuccessMessage && (
+          <Alert
+            variant="success"
+            onClose={() => setAddToCartSuccessMessage("")}
+            dismissible
+            className="position-fixed top-0 start-50 translate-middle-x mt-3 z-index-toast shadow-lg"
+            style={{ zIndex: 1055 }}
+          >
+            <CheckCircleFill className="me-2" />
+            {addToCartSuccessMessage}
+          </Alert>
+        )}
+        {error && !addToCartSuccessMessage && (
           <Alert
             variant="danger"
             onClose={() => setError(null)}
             dismissible
-            className="mt-3"
+            className="mt-3 mb-4 shadow-sm"
           >
             {error}
           </Alert>
         )}
-      <Breadcrumb
-        listProps={{
-          className: "bg-light px-3 py-2 rounded-pill shadow-sm border",
-        }}
-      >
-        <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
-          Home
-        </Breadcrumb.Item>
-        <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/menu" }}>
-          Menu
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active>{currentProduct.name}</Breadcrumb.Item>
-      </Breadcrumb>
+        <Breadcrumb
+          listProps={{
+            className: "bg-transparent px-0 py-2 mb-3",
+          }}
+          className="breadcrumb-custom"
+        >
+          <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
+            Home
+          </Breadcrumb.Item>
+          <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/menu" }}>
+            Menu
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>{currentProduct.name}</Breadcrumb.Item>
+        </Breadcrumb>
 
-      <Row className="mt-4 detail-menu-card">
-        <Col md={6} className="mb-4 mb-md-0 detail-menu-image-col">
-          <Image
-            src={
-              currentProduct.productImageURL ||
-              `https://via.placeholder.com/600x400.png?text=${encodeURIComponent(
-                currentProduct.name
-              )}`
-            }
-            alt={currentProduct.name}
-            className="detail-menu-image shadow"
-            onError={handleImageError}
-          />
-        </Col>
-        <Col md={6}>
-          <Badge
-            pill
-            bg="light"
-            text="dark"
-            className="mb-2 detail-menu-category-badge"
-          >
-            {currentProduct.category}
-          </Badge>
-          <h1 className="detail-menu-title">{currentProduct.name}</h1>
-
-          <p className="detail-menu-description">
-            {currentProduct.description}
-          </p>
-
-          <div className="mb-3 detail-menu-stock-info">
-            {currentProduct.stock > 0 ? (
-              <Badge bg="success" pill>
-                <i className="bi bi-check-circle-fill me-1"></i>Stok Tersedia:{" "}
-                {currentProduct.stock}
-              </Badge>
-            ) : (
-              <Badge bg="danger" pill>
-                <i className="bi bi-x-circle-fill me-1"></i>Stok Habis
-              </Badge>
-            )}
-          </div>
-
-          <div className="detail-menu-price mb-3">
-            Rp {currentProduct.price.toLocaleString("id-ID")}
-          </div>
-
-          {currentProduct.stock > 0 && (
-            <Row className="align-items-center mb-3">
-              <Col xs="auto" className="pe-0">
-                <Form.Label
-                  htmlFor="quantity-input"
-                  className="mb-0 me-2 small text-muted"
-                >
-                  Jumlah:
-                </Form.Label>
+        <Card className="border-0 shadow-sm detail-menu-card-wrapper">
+          <Card.Body>
+            <Row className="detail-menu-card">
+              <Col lg={6} md={5} className="mb-4 mb-md-0 detail-menu-image-col">
+                <Image
+                  src={
+                    currentProduct.productImageURL ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      currentProduct.name || "Produk"
+                    )}&size=600&background=efefef&color=757575&font-size=0.33&length=2`
+                  }
+                  alt={currentProduct.name}
+                  className="detail-menu-image rounded"
+                  onError={handleImageError}
+                  fluid
+                />
               </Col>
-              <Col xs="auto">
-                <InputGroup className="quantity-selector" size="sm">
-                  <Button
-                    variant="outline-secondary"
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={
-                      quantity <= 1 || isProcessingCartAction || isCartLoading
-                    }
-                  >
-                    <i className="bi bi-dash-lg"></i>
-                  </Button>
-                  <Form.Control
-                    id="quantity-input"
-                    type="text"
-                    value={quantity}
-                    readOnly
-                    className="text-center fw-bold"
-                    style={{ maxWidth: "50px" }}
-                  />
-                  <Button
-                    variant="outline-secondary"
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={
-                      quantity >= currentProduct.stock ||
-                      isProcessingCartAction ||
-                      isCartLoading
-                    }
-                  >
-                    <i className="bi bi-plus-lg"></i>
-                  </Button>
-                </InputGroup>
+              <Col lg={6} md={7} className="detail-menu-info-col ps-md-4">
+                <Badge
+                  bg="light"
+                  text="dark"
+                  className="mb-2 px-2 py-1 category-badge shadow-sm"
+                >
+                  {currentProduct.category}
+                </Badge>
+                <h1 className="h2 detail-menu-title mb-3">
+                  {currentProduct.name}
+                </h1>
+
+                <p className="detail-menu-description lead text-muted mb-3">
+                  {currentProduct.description ||
+                    "Deskripsi produk tidak tersedia."}
+                </p>
+
+                <div className="mb-3 detail-menu-stock-info">
+                  {currentProduct.stock > 0 ? (
+                    <Badge
+                      bg="success-light"
+                      text="success"
+                      pill
+                      className="stock-badge px-3 py-2"
+                    >
+                      <CheckCircleFill className="me-1" />
+                      Stok Tersedia: {currentProduct.stock}
+                    </Badge>
+                  ) : (
+                    <Badge
+                      bg="danger-light"
+                      text="danger"
+                      pill
+                      className="stock-badge px-3 py-2"
+                    >
+                      <XCircleFill className="me-1" />
+                      Stok Habis
+                    </Badge>
+                  )}
+                </div>
+
+                <div
+                  className="detail-menu-price h3 mb-3 fw-bold"
+                  style={{ color: "var(--brand-primary, #c0392b)" }}
+                >
+                  Rp {currentProduct.price.toLocaleString("id-ID")}
+                </div>
+
+                {currentProduct.stock > 0 && (
+                  <Row className="align-items-center mb-3 gx-2">
+                    <Col xs="auto">
+                      <Form.Label
+                        htmlFor="quantity-input"
+                        className="mb-0 small text-muted"
+                      >
+                        Jumlah:
+                      </Form.Label>
+                    </Col>
+                    <Col xs="auto">
+                      <InputGroup
+                        className="quantity-selector shadow-sm"
+                        size="sm"
+                      >
+                        <Button
+                          variant="outline-secondary"
+                          className="rounded-start"
+                          onClick={() => handleQuantityChange(-1)}
+                          disabled={
+                            quantity <= 1 ||
+                            isProcessingCartAction ||
+                            isCartLoading
+                          }
+                        >
+                          <DashLg />
+                        </Button>
+                        <Form.Control
+                          id="quantity-input"
+                          type="text"
+                          value={quantity}
+                          readOnly
+                          className="text-center fw-bold border-start-0 border-end-0"
+                          style={{ maxWidth: "50px", backgroundColor: "#fff" }}
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          className="rounded-end"
+                          onClick={() => handleQuantityChange(1)}
+                          disabled={
+                            quantity >= currentProduct.stock ||
+                            isProcessingCartAction ||
+                            isCartLoading
+                          }
+                        >
+                          <PlusLg />
+                        </Button>
+                      </InputGroup>
+                    </Col>
+                  </Row>
+                )}
+
+                <Row className="mt-4 actions-row gx-2">
+                  <Col xs={12} sm={6} className="mb-2 mb-sm-0 d-grid">
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => navigate(-1)}
+                      disabled={isProcessingCartAction || isCartLoading}
+                      className="btn-action shadow-sm"
+                    >
+                      <ArrowLeft className="me-1" />
+                      Kembali
+                    </Button>
+                  </Col>
+                  {currentProduct.stock > 0 && (
+                    <Col xs={12} sm={6} className="d-grid">
+                      <Button
+                        variant="primary"
+                        onClick={handleAddToCartClick}
+                        disabled={
+                          currentProduct.stock === 0 ||
+                          quantity === 0 ||
+                          isProcessingCartAction ||
+                          isCartLoading
+                        }
+                        className="btn-add-to-cart btn-action shadow-sm"
+                        style={{
+                          backgroundColor: "var(--brand-primary, #c0392b)",
+                          borderColor: "var(--brand-primary, #c0392b)",
+                        }}
+                      >
+                        {isProcessingCartAction || isCartLoading ? (
+                          <>
+                            <Spinner
+                              as="span"
+                              animation="border"
+                              size="sm"
+                              role="status"
+                              aria-hidden="true"
+                              className="me-2"
+                            />
+                            Memproses...
+                          </>
+                        ) : (
+                          <>
+                            <CartPlusFill className="me-2" />
+                            Tambah Keranjang
+                          </>
+                        )}
+                      </Button>
+                    </Col>
+                  )}
+                </Row>
               </Col>
             </Row>
-          )}
-
-          <Row className="mt-3 actions-row">
-            <Col xs={12} sm="auto" className="mb-2 mb-sm-0 d-grid">
-              <Button
-                variant="outline-primary"
-                onClick={() => navigate(-1)}
-                disabled={isProcessingCartAction || isCartLoading}
-              >
-                <i className="bi bi-arrow-left me-2"></i>Kembali
-              </Button>
-            </Col>
-            {currentProduct.stock > 0 && (
-              <Col xs={12} sm className="d-grid">
-                <Button
-                  variant="primary"
-                  onClick={handleAddToCartClick}
-                  disabled={
-                    currentProduct.stock === 0 ||
-                    quantity === 0 ||
-                    isProcessingCartAction ||
-                    isCartLoading
-                  }
-                  className="btn-add-to-cart"
-                  style={{ backgroundColor: "#c0392b", borderColor: "#c0392b" }}
-                >
-                  {isProcessingCartAction || isCartLoading ? (
-                    <>
-                      <Spinner
-                        as="span"
-                        animation="border"
-                        size="sm"
-                        role="status"
-                        aria-hidden="true"
-                        className="me-2"
-                      />
-                      Menambahkan...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-cart-plus-fill me-2"></i>Tambah ke
-                      Keranjang
-                    </>
-                  )}
-                </Button>
-              </Col>
-            )}
-          </Row>
-        </Col>
-      </Row>
+          </Card.Body>
+        </Card>
+      </Container>
     </Container>
   );
 }

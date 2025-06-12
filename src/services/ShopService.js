@@ -102,9 +102,9 @@ const deleteMyShop = async () => {
   }
 };
 
-const getAllShops = async () => {
+const getAllShops = async (params = {}) => {
   try {
-    const response = await axios.get(`${BASE_URL}/shop`);
+    const response = await axios.get(`${BASE_URL}/shop`, { params });
     return response.data;
   } catch (error) {
     throw (
