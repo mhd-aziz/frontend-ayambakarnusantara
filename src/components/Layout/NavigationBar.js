@@ -1,6 +1,5 @@
-// src/components/Layout/NavigationBar.js
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Navbar,
   Nav,
@@ -8,29 +7,73 @@ import {
   Form,
   InputGroup,
   Button,
-  Badge, // Impor Badge
+  Badge,
 } from "react-bootstrap";
 import { Search, Cart, PersonCircle, ShopWindow } from "react-bootstrap-icons";
 import "../../css/Navbar.css";
 import logoImage from "../../assets/logo.jpg";
 import { useAuth } from "../../context/AuthContext";
-import { useCart } from "../../context/CartContext"; // Impor useCart
+import { useCart } from "../../context/CartContext";
 
 function NavigationBar() {
   const { isLoggedIn, user, logout: contextLogout } = useAuth();
-  const { cartItemCount } = useCart(); // Ambil cartItemCount dari CartContext
+  const { cartItemCount } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isNavbarSolid, setIsNavbarSolid] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const transparentPaths = ["/", "/login", "/register", "/forgot-password"];
     setIsNavbarSolid(!transparentPaths.includes(location.pathname));
   }, [location.pathname]);
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const qParam = queryParams.get("q") || "";
+    if (qParam !== searchQuery) {
+      setSearchQuery(qParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+    const queryParams = new URLSearchParams(location.search);
+    const qParam = queryParams.get("q") || "";
+
+    if (trimmedQuery === qParam) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      if (trimmedQuery) {
+        navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
+      } else {
+        if (location.pathname === "/menu") {
+          navigate("/menu");
+        }
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery, navigate, location.pathname, location.search]);
+
   const handleLogout = () => {
     const confirmLogout = window.confirm("Anda yakin ingin logout?");
     if (confirmLogout) {
       contextLogout();
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const trimmedQuery = searchQuery.trim();
+    const queryParams = new URLSearchParams(location.search);
+    if (trimmedQuery !== (queryParams.get("q") || "")) {
+      navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
     }
   };
 
@@ -134,17 +177,27 @@ function NavigationBar() {
             )}
           </Nav>
 
-          <Form className="search-form-desktop d-flex">
+          <Form
+            className="search-form-desktop d-flex"
+            onSubmit={handleSearchSubmit}
+          >
             <InputGroup className="search-input-group-custom">
               <Form.Control
                 type="search"
                 placeholder="Cari ayam kesukaanmu..."
                 aria-label="Search"
                 className="search-bar-custom"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <InputGroup.Text className="search-icon-button-custom">
+              <Button
+                type="submit"
+                variant="light"
+                className="search-icon-button-custom"
+                aria-label="Submit Search"
+              >
                 <Search size={18} />
-              </InputGroup.Text>
+              </Button>
             </InputGroup>
           </Form>
 

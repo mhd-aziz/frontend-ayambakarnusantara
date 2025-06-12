@@ -33,19 +33,31 @@ function MenuPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [filterParams, setFilterParams] = useState({
-    page: 1,
-    limit: 8,
-    category: "",
-    sortBy: "createdAt",
-    order: "desc",
+  // FIX: Menginisialisasi state filter langsung dari parameter URL 'q'
+  // Ini memastikan pencarian diterapkan pada pemuatan pertama halaman.
+  const [filterParams, setFilterParams] = useState(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return {
+      page: 1,
+      limit: 8,
+      category: "",
+      sortBy: "createdAt",
+      order: "desc",
+      searchByName: queryParams.get("q") || "",
+    };
   });
 
   const fetchProducts = useCallback(async () => {
     setIsLoadingProducts(true);
     setError(null);
     try {
-      const response = await getProducts(filterParams);
+      // Pastikan parameter searchByName tidak dikirim jika kosong
+      const paramsToSend = { ...filterParams };
+      if (!paramsToSend.searchByName) {
+        delete paramsToSend.searchByName;
+      }
+
+      const response = await getProducts(paramsToSend);
       if (response && response.data) {
         setProductsData({
           products: response.data.products || [],
@@ -80,6 +92,20 @@ function MenuPage() {
       setIsLoadingProducts(false);
     }
   }, [filterParams]);
+
+  // Effect ini tetap berguna untuk menangani pencarian berikutnya
+  // saat pengguna sudah berada di halaman Menu.
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get("q") || "";
+    if (searchQuery !== filterParams.searchByName) {
+      setFilterParams((prevParams) => ({
+        ...prevParams,
+        searchByName: searchQuery,
+        page: 1,
+      }));
+    }
+  }, [location.search, filterParams.searchByName]);
 
   useEffect(() => {
     fetchProducts();

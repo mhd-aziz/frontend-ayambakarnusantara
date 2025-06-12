@@ -28,8 +28,7 @@ import * as ChatService from "../../services/ChatService";
 import ChatbotPane from "./ChatbotPane";
 import "../../css/GlobalChat.css";
 
-const MAPS_API_KEY =
-  process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
+const MAPS_API_KEY = process.env.REACT_APP_Maps_API_KEY || "YOUR_Maps_API_KEY";
 
 function firestoreTimestampToDate(tsObject) {
   if (!tsObject) return null;
@@ -164,7 +163,7 @@ const MessageBubble = ({ message, isSender }) => {
     const { latitude, longitude } = message.location;
     const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
-    if (MAPS_API_KEY === "YOUR_GOOGLE_MAPS_API_KEY") {
+    if (MAPS_API_KEY === "YOUR_Maps_API_KEY") {
       return (
         <a
           href={gmapsUrl}
@@ -240,6 +239,7 @@ function GlobalChat({
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [imageFile, setImageFile] = useState(null); // State untuk menyimpan file gambar
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -459,19 +459,18 @@ function GlobalChat({
         alert("Ukuran file tidak boleh melebihi 5MB.");
         return;
       }
+      // Membuat URL pratinjau dan menyimpan file untuk dikirim
+      setImagePreviewUrl(URL.createObjectURL(file));
+      setImageFile(file);
       setShowAttachmentOptions(false);
-      setConfirmation({
-        show: true,
-        message: "Anda yakin ingin mengirim gambar ini?",
-        action: () => sendMessageOptimistically({ image: file }),
-      });
     }
   };
 
   const removeImagePreview = () => {
     setImagePreviewUrl("");
+    setImageFile(null); // Hapus juga file dari state
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ""; // Reset input file
     }
   };
 
@@ -596,10 +595,13 @@ function GlobalChat({
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    const messagePayload = { text: newMessage.trim() };
-    sendMessageOptimistically(messagePayload);
+    // Prioritaskan mengirim gambar jika ada yang dipilih
+    if (imageFile) {
+      sendMessageOptimistically({ image: imageFile });
+      setImageFile(null); // Bersihkan state file setelah pengiriman dimulai
+    } else if (newMessage.trim()) {
+      sendMessageOptimistically({ text: newMessage.trim() });
+    }
   };
 
   const getOtherParticipantDisplayInfo = (conversation) => {
@@ -838,10 +840,15 @@ function GlobalChat({
                           />
                           <Form.Control
                             type="text"
-                            placeholder="Ketik pesan..."
+                            placeholder={
+                              imageFile
+                                ? "Kirim gambar yang dipilih"
+                                : "Ketik pesan..."
+                            }
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             disabled={
+                              imageFile ||
                               isLoadingMessages ||
                               !selectedConversation ||
                               isGettingLocation
@@ -853,9 +860,10 @@ function GlobalChat({
                             variant="primary"
                             type="submit"
                             disabled={
-                              !newMessage.trim() ||
+                              (!newMessage.trim() && !imageFile) ||
                               !selectedConversation ||
-                              isGettingLocation
+                              isGettingLocation ||
+                              isSendingMessage
                             }
                             className="btn-brand chat-send-button"
                           >
