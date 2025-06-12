@@ -10,7 +10,7 @@
   --light-background-chat: #f8f9fa !important;
   --chat-shadow-color: rgba(0, 0, 0, 0.15);
   --chat-shadow-hover-color: rgba(0, 0, 0, 0.25);
-  --chat-modal-max-width: 600px; 
+  --chat-modal-max-width: 700px; 
   --chat-modal-max-height: 500px; 
   --chat-modal-border-radius: 0.75rem !important; 
 }

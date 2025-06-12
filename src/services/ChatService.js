@@ -51,28 +51,61 @@ const getAllConversations = async () => {
   }
 };
 
-const sendMessage = async (conversationId, text) => {
+const sendMessage = async (conversationId, messageData) => {
   if (!conversationId || typeof conversationId !== "string") {
     const err = new Error("conversationId (string) wajib diisi.");
     err.success = false;
     err.statusCode = 400;
     throw err;
   }
-  if (!text || typeof text !== "string" || text.trim() === "") {
-    const err = new Error(
-      "Isi pesan (text) wajib diisi dan tidak boleh kosong."
-    );
+
+  const hasText =
+    messageData.text &&
+    typeof messageData.text === "string" &&
+    messageData.text.trim() !== "";
+  const hasImage = messageData.image instanceof File;
+  const hasLocation =
+    messageData.location &&
+    typeof messageData.location.latitude === "number" &&
+    typeof messageData.location.longitude === "number";
+
+  if (!hasText && !hasImage && !hasLocation) {
+    const err = new Error("Pesan harus berisi teks, gambar, atau lokasi.");
     err.success = false;
     err.statusCode = 400;
     throw err;
   }
+
+  let requestBody;
+  const config = {
+    withCredentials: true,
+  };
+
+  if (hasImage) {
+    requestBody = new FormData();
+    requestBody.append("chatImage", messageData.image);
+    if (hasText) {
+      requestBody.append("text", messageData.text.trim());
+    }
+    config.headers = {
+      "Content-Type": "multipart/form-data",
+    };
+  } else {
+    if (hasLocation) {
+      requestBody = {
+        latitude: messageData.location.latitude,
+        longitude: messageData.location.longitude,
+      };
+    } else {
+      requestBody = { text: messageData.text.trim() };
+    }
+  }
+
   try {
     const response = await axios.post(
       `${CHAT_API_URL}/conversations/${conversationId}/messages`,
-      { text },
-      {
-        withCredentials: true,
-      }
+      requestBody,
+      config
     );
     return response.data;
   } catch (error) {
