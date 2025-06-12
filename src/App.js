@@ -92,11 +92,23 @@ function App() {
       });
       return;
     }
+    console.log(`App.js: Initiating chat with ${recipientUID}`);
     setRecipientForChat(recipientUID);
     setShowGlobalChatModal(true);
   };
 
   const handleChatSessionInitiated = (conversation) => {
+    if (conversation) {
+      console.log(
+        `App.js: Chat session ready/selected. Conversation ID: ${
+          conversation._id
+        }, Participants: ${conversation.participantUIDs.join(", ")}`
+      );
+    } else {
+      console.log(
+        "App.js: Chat session initiation callback without specific conversation data, or chat deselected."
+      );
+    }
     setRecipientForChat(null);
   };
 
@@ -258,7 +270,7 @@ function App() {
           {!showGlobalChatModal && (
             <Button
               variant="primary"
-              className="global-chat-app-toggle-button btn-brand shadow" // ClassName ini akan kita style
+              className="global-chat-app-toggle-button btn-brand shadow"
               onClick={() => {
                 setRecipientForChat(null);
                 setShowGlobalChatModal(true);
@@ -275,21 +287,20 @@ function App() {
               setShowGlobalChatModal(false);
               setRecipientForChat(null);
             }}
-            dialogClassName="global-chat-modal-dialog" // Kelas ini akan kita targetkan di CSS
+            dialogClassName="global-chat-modal-dialog"
             contentClassName="global-chat-modal-content"
-            // centered // <--- PASTIKAN PROP INI DIHAPUS ATAU DIKOMENTARI
             scrollable={false}
             backdrop={true}
-            keyboard={false} // Opsional, mencegah Esc menutup modal saat mengetik
+            keyboard={false}
             aria-labelledby="global-chat-modal-title"
           >
             <Modal.Body className="p-0 global-chat-modal-body">
               <GlobalChat
                 recipientToInitiateChat={recipientForChat}
-                onChatInitiated={handleChatSessionInitiated}
+                onChatInitiated={handleChatSessionInitiated} 
                 onRequestClose={() => {
                   setShowGlobalChatModal(false);
-                  setRecipientForChat(null);
+                  setRecipientForChat(null); 
                 }}
               />
             </Modal.Body>
