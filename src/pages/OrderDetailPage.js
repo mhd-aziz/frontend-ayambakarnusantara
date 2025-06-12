@@ -528,7 +528,7 @@ function OrderDetailPage({ onOpenChatbot }) {
           Pesanan Saya
         </Breadcrumb.Item>
         <Breadcrumb.Item active>
-          Detail Pesanan #{orderDetails.orderId?.substring(0, 8)}
+          Detail Pesanan #{orderDetails.orderId?.substring(0, 20)}
         </Breadcrumb.Item>
       </Breadcrumb>
 

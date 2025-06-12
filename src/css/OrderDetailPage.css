@@ -39,7 +39,7 @@
 }
 
 .breadcrumb-custom .breadcrumb-item.active {
-  color: var(--text-light);
+  color: var(--brand-secondary);
 }
 
 .order-detail-page .card {
@@ -83,8 +83,6 @@
   font-size: 0.8em;
   vertical-align: middle;
 }
-
-/* Tambahkan kode ini di dalam file src/css/OrderDetailPage.css */
 
 .order-detail-page .link-brand-color {
   color: var(--brand-primary);

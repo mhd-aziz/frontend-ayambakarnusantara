@@ -1,4 +1,3 @@
-// src/pages/OrderPage.js
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
@@ -16,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { getUserOrders } from "../services/OrderService";
 import { createMidtransTransaction } from "../services/PaymentService";
 import { BasketFill, CreditCard } from "react-bootstrap-icons";
+import "../css/OrderPage.css";
 
 function OrderPage() {
   const { isLoggedIn } = useAuth();
@@ -66,6 +66,26 @@ function OrderPage() {
     fetchOrders();
   }, [fetchOrders]);
 
+  const orderStatusIndonesian = {
+    PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+    AWAITING_PAYMENT: "Menunggu Pembayaran",
+    CONFIRMED: "Terkonfirmasi",
+    PROCESSING: "Sedang Diproses",
+    PREPARING: "Sedang Disiapkan",
+    READY_FOR_PICKUP: "Siap Diambil",
+    COMPLETED: "Selesai",
+    CANCELLED: "Dibatalkan",
+    PAYMENT_PENDING: "Pembayaran Tertunda",
+    PAYMENT_FAILED: "Pembayaran Gagal",
+    UNKNOWN: "Tidak Diketahui",
+  };
+
+  const getDisplayOrderStatus = (statusKey) => {
+    return (
+      orderStatusIndonesian[statusKey] || statusKey?.replace(/_/g, " ") || "N/A"
+    );
+  };
+
   const getStatusBadgeVariant = (status) => {
     switch (status) {
       case "PENDING_CONFIRMATION":
@@ -101,7 +121,6 @@ function OrderPage() {
         paymentResponse.data &&
         paymentResponse.data.redirect_url
       ) {
-        // Membuka URL redirect di tab baru
         window.open(
           paymentResponse.data.redirect_url,
           "_blank",
@@ -117,7 +136,7 @@ function OrderPage() {
       alert(err.message || "Terjadi kesalahan saat memulai pembayaran.");
       setError(err.message || "Terjadi kesalahan saat memulai pembayaran.");
     } finally {
-      setProcessingPaymentOrderId(null); // Reset loading state setelah selesai atau gagal
+      setProcessingPaymentOrderId(null);
     }
   };
 
@@ -128,15 +147,20 @@ function OrderPage() {
   if (isLoading) {
     return (
       <Container className="text-center py-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2">Memuat daftar pesanan...</p>
+        <Spinner
+          animation="border"
+          style={{ width: "3rem", height: "3rem", color: "#c07722" }}
+        />
+        <p className="mt-3" style={{ color: "#c07722" }}>
+          Memuat daftar pesanan...
+        </p>
       </Container>
     );
   }
 
   return (
-    <Container className="my-4">
-      <h1 className="mb-4">Pesanan Saya</h1>
+    <Container className="my-4 order-page-container">
+      <h1 className="mb-4 order-page-title">Pesanan Saya</h1>
       {error && (
         <Alert variant="danger" onClose={() => setError("")} dismissible>
           {error}
@@ -173,7 +197,7 @@ function OrderPage() {
             .map((order) => (
               <ListGroup.Item
                 key={order.orderId}
-                className="mb-3 shadow-sm rounded border"
+                className="mb-3 shadow-sm rounded border order-list-item"
               >
                 <Row
                   className="align-items-center gy-2"
@@ -183,7 +207,7 @@ function OrderPage() {
                   <Col md={3} sm={12} xs={12}>
                     <strong className="d-block">Order ID:</strong>
                     <span
-                      className="text-muted"
+                      className="order-id-text"
                       style={{ wordBreak: "break-all" }}
                     >
                       #{order.orderId || "N/A"}
@@ -218,9 +242,7 @@ function OrderPage() {
                       pill
                       className="px-3 py-2"
                     >
-                      {order.orderStatus
-                        ? order.orderStatus.replace(/_/g, " ")
-                        : "N/A"}
+                      {getDisplayOrderStatus(order.orderStatus)}
                     </Badge>
                   </Col>
                 </Row>
@@ -242,7 +264,7 @@ function OrderPage() {
                 </Row>
                 <div className="text-end mt-3 d-flex justify-content-end gap-2">
                   <Button
-                    variant="outline-primary"
+                    variant="outline-secondary"
                     size="sm"
                     as={Link}
                     to={`/pesanan/${order.orderId}`}
@@ -253,7 +275,8 @@ function OrderPage() {
                   {order.paymentDetails?.method === "ONLINE_PAYMENT" &&
                     order.orderStatus === "AWAITING_PAYMENT" && (
                       <Button
-                        variant="success"
+                        variant="primary"
+                        className="btn-brand"
                         size="sm"
                         onClick={(e) => handlePayNow(order.orderId, e)}
                         disabled={processingPaymentOrderId === order.orderId}
