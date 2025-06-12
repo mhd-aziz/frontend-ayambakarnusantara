@@ -19,6 +19,7 @@ import {
   Badge,
   Breadcrumb,
   Modal,
+  Form,
 } from "react-bootstrap";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -29,6 +30,7 @@ import {
   createMidtransTransaction,
   getMidtransTransactionStatus,
 } from "../services/PaymentService";
+import { addRating } from "../services/RatingService";
 import {
   BoxSeam,
   CalendarCheck,
@@ -44,10 +46,33 @@ import {
   ArrowClockwise,
   Receipt,
   CheckCircleFill,
+  StarFill,
 } from "react-bootstrap-icons";
 import "../css/OrderDetailPage.css";
 
 const ICON_COLOR = "#C07722";
+
+// Komponen untuk Rating Bintang
+const StarRating = ({ rating, setRating, disabled = false }) => {
+  return (
+    <div>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          onClick={() => !disabled && setRating(star)}
+          style={{
+            cursor: disabled ? "default" : "pointer",
+            color: star <= rating ? "#ffc107" : "#e4e5e9",
+            fontSize: "1.5rem",
+            marginRight: "5px",
+          }}
+        >
+          <StarFill />
+        </span>
+      ))}
+    </div>
+  );
+};
 
 function OrderDetailPage() {
   const { orderId } = useParams();
@@ -69,6 +94,15 @@ function OrderDetailPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [paymentTransactionDetails, setPaymentTransactionDetails] =
     useState(null);
+
+  // State baru untuk fitur rating
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [productToRate, setProductToRate] = useState(null);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSuccess, setRatingSuccess] = useState("");
 
   const fetchOrderDetails = useCallback(
     async (shouldFetchPaymentStatus = false) => {
@@ -203,6 +237,58 @@ function OrderDetailPage() {
     setShowCancelModal(true);
   };
   const handleCloseCancelModal = () => setShowCancelModal(false);
+
+  // Fungsi baru untuk modal rating
+  const handleShowRatingModal = (product) => {
+    setProductToRate(product);
+    setRatingValue(0);
+    setReviewText("");
+    setRatingError("");
+    setRatingSuccess("");
+    setShowRatingModal(true);
+  };
+
+  const handleCloseRatingModal = () => {
+    setShowRatingModal(false);
+    setProductToRate(null);
+  };
+
+  const handleRatingSubmit = async () => {
+    if (!productToRate || ratingValue === 0) {
+      setRatingError("Rating bintang wajib diisi.");
+      return;
+    }
+    setIsSubmittingRating(true);
+    setRatingError("");
+    setRatingSuccess("");
+
+    try {
+      const ratingData = {
+        orderId: orderDetails.orderId,
+        ratingValue,
+        reviewText,
+      };
+      const response = await addRating(productToRate.productId, ratingData);
+      if (response && response.success) {
+        setRatingSuccess(
+          response.message || "Rating dan ulasan berhasil dikirim!"
+        );
+        // Refresh order details to reflect the change (e.g., hide the rating button)
+        fetchOrderDetails(true);
+        setTimeout(() => {
+          handleCloseRatingModal();
+        }, 2000);
+      } else {
+        setRatingError(response?.message || "Gagal mengirim rating.");
+      }
+    } catch (err) {
+      setRatingError(
+        err.message || "Terjadi kesalahan server saat mengirim rating."
+      );
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
 
   const handleConfirmCancelOrder = async () => {
     if (!orderDetails) return;
@@ -342,7 +428,7 @@ function OrderDetailPage() {
   };
 
   const paymentStatusIndonesian = {
-    awaiting_gateway_interaction:"Menunggu Pembayaran",
+    awaiting_gateway_interaction: "Menunggu Pembayaran",
     pending_gateway_payment: "Menunggu Pembayaran",
     awaiting_payment_confirmation: "Menunggu Konfirmasi Pembayaran",
     paid: "Lunas",
@@ -901,9 +987,20 @@ function OrderDetailPage() {
                       )}
                     </small>
                   </div>
-                  <div className="text-end fw-semibold">
+                  <div className="text-end fw-semibold me-3">
                     Rp {item.subtotal.toLocaleString("id-ID")}
                   </div>
+                  {/* Tombol Beri Ulasan */}
+                  {orderDetails.orderStatus === "COMPLETED" && (
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={() => handleShowRatingModal(item)}
+                      disabled={item.isReviewed} // (asumsi ada flag isReviewed dari backend)
+                    >
+                      {item.isReviewed ? "Diberi Ulasan" : "Beri Ulasan"}
+                    </Button>
+                  )}
                 </ListGroup.Item>
               ))}
             </ListGroup>
@@ -1027,6 +1124,57 @@ function OrderDetailPage() {
               </>
             ) : (
               "Ya, Batalkan Pesanan"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal untuk Memberi Rating */}
+      <Modal show={showRatingModal} onHide={handleCloseRatingModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Beri Ulasan untuk {productToRate?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {ratingError && <Alert variant="danger">{ratingError}</Alert>}
+          {ratingSuccess && <Alert variant="success">{ratingSuccess}</Alert>}
+          <Form>
+            <Form.Group className="mb-3 text-center">
+              <Form.Label>Rating Anda</Form.Label>
+              <br />
+              <StarRating rating={ratingValue} setRating={setRatingValue} />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Ulasan Anda (Opsional)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                placeholder="Bagaimana pengalaman Anda dengan produk ini?"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={handleCloseRatingModal}
+            disabled={isSubmittingRating}
+          >
+            Tutup
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleRatingSubmit}
+            disabled={isSubmittingRating || !ratingValue}
+          >
+            {isSubmittingRating ? (
+              <>
+                <Spinner as="span" size="sm" className="me-2" />
+                Mengirim...
+              </>
+            ) : (
+              "Kirim Ulasan"
             )}
           </Button>
         </Modal.Footer>
