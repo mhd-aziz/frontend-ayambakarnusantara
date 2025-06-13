@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Navbar,
@@ -8,12 +8,56 @@ import {
   InputGroup,
   Button,
   Badge,
+  Dropdown,
+  Spinner,
 } from "react-bootstrap";
-import { Search, Cart, PersonCircle, ShopWindow } from "react-bootstrap-icons";
+import {
+  Search,
+  Cart,
+  PersonCircle,
+  ShopWindow,
+  Bell,
+  BellFill,
+} from "react-bootstrap-icons";
 import "../../css/Navbar.css";
 import logoImage from "../../assets/logo.jpg";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
+import {
+  getMyNotifications,
+  markNotificationAsRead,
+} from "../../services/NotificationService";
+
+function NotificationItem({ notification, onNotificationClick }) {
+  const timeSince = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " tahun lalu";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " bulan lalu";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " hari lalu";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " jam lalu";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " menit lalu";
+    return Math.floor(seconds) + " detik lalu";
+  };
+
+  return (
+    <Dropdown.Item
+      as="div"
+      onClick={() => onNotificationClick(notification)}
+      className={!notification.isRead ? "notification-unread" : ""}
+    >
+      <div className="d-flex w-100 justify-content-between">
+        <h6 className="mb-1">{notification.title}</h6>
+        <small>{timeSince(notification.createdAt)}</small>
+      </div>
+      <p className="mb-1 small">{notification.body}</p>
+    </Dropdown.Item>
+  );
+}
 
 function NavigationBar() {
   const { isLoggedIn, user, logout: contextLogout } = useAuth();
@@ -24,6 +68,53 @@ function NavigationBar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
   const navRef = useRef(null);
+
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingNotif, setIsLoadingNotif] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isLoggedIn) return;
+    setIsLoadingNotif(true);
+    try {
+      const response = await getMyNotifications();
+      if (response.success && Array.isArray(response.data)) {
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter((n) => !n.isRead).length);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil notifikasi:", error);
+    } finally {
+      setIsLoadingNotif(false);
+    }
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, fetchNotifications]);
+
+  const handleNotificationClick = async (notification) => {
+    const { notificationId, data } = notification;
+
+    if (data?.orderId) {
+      navigate(`/pesanan/${data.orderId}`);
+    } else if (data?.conversationId) {
+      navigate(`/chat?conversationId=${data.conversationId}`);
+    }
+
+    if (!notification.isRead) {
+      try {
+        await markNotificationAsRead(notificationId);
+        fetchNotifications();
+      } catch (error) {
+        console.error("Gagal menandai notifikasi:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,8 +154,7 @@ function NavigationBar() {
     if (qParam !== searchQuery) {
       setSearchQuery(qParam);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [location.search, searchQuery]);
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
@@ -163,7 +253,6 @@ function NavigationBar() {
                 style={{ fontSize: "0.6em", padding: "0.3em 0.5em" }}
               >
                 {cartItemCount}
-                <span className="visually-hidden">item di keranjang</span>
               </Badge>
             )}
           </Nav.Link>
@@ -263,10 +352,76 @@ function NavigationBar() {
                   }}
                 >
                   {cartItemCount}
-                  <span className="visually-hidden">item di keranjang</span>
                 </Badge>
               )}
             </Nav.Link>
+
+            {isLoggedIn && (
+              <Dropdown align="end">
+                <Dropdown.Toggle
+                  as={Nav.Link}
+                  className="nav-link-icon-custom d-none d-xl-flex me-2"
+                  id="notification-dropdown"
+                >
+                  <div className="position-relative">
+                    {unreadCount > 0 ? (
+                      <BellFill size={24} />
+                    ) : (
+                      <Bell size={24} />
+                    )}
+                    {unreadCount > 0 && (
+                      <Badge
+                        pill
+                        bg="danger"
+                        className="position-absolute top-0 start-100 translate-middle"
+                        style={{ fontSize: "0.6em", padding: "0.3em 0.5em" }}
+                      >
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Badge>
+                    )}
+                  </div>
+                </Dropdown.Toggle>
+                <Dropdown.Menu
+                  className="notification-dropdown-menu"
+                  style={{
+                    maxHeight: "400px",
+                    overflowY: "auto",
+                    minWidth: "350px",
+                  }}
+                >
+                  <Dropdown.Header>Notifikasi</Dropdown.Header>
+                  <Dropdown.Divider />
+                  {isLoadingNotif ? (
+                    <div className="text-center p-2">
+                      <Spinner animation="border" size="sm" />
+                    </div>
+                  ) : notifications.length > 0 ? (
+                    notifications
+                      .slice(0, 7)
+                      .map((notif) => (
+                        <NotificationItem
+                          key={notif.notificationId}
+                          notification={notif}
+                          onNotificationClick={handleNotificationClick}
+                        />
+                      ))
+                  ) : (
+                    <Dropdown.ItemText>
+                      Tidak ada notifikasi baru.
+                    </Dropdown.ItemText>
+                  )}
+                  <Dropdown.Divider />
+                  <Dropdown.Item
+                    as={Link}
+                    to="/notifikasi"
+                    className="text-center small"
+                  >
+                    Lihat Semua Notifikasi
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
+
             {isLoggedIn ? (
               <>
                 <Nav.Link
