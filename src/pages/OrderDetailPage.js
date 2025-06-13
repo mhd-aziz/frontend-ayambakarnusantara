@@ -32,6 +32,7 @@ import ShopDetailsCard from "../components/Order/ShopDetailsCard";
 import SupportCard from "../components/Order/SupportCard";
 import CancelOrderModal from "../components/Order/CancelOrderModal";
 import RatingModal from "../components/Order/RatingModal";
+import PaymentProofViewer from "../components/Order/PaymentProofViewer";
 import "../css/OrderDetailPage.css";
 
 function OrderDetailPage({ onOpenChatbot }) {
@@ -575,6 +576,13 @@ function OrderDetailPage({ onOpenChatbot }) {
             orderItems={orderDetails.items}
             handleImageError={handleImageError}
           />
+
+          {orderDetails && (
+            <PaymentProofViewer
+              orderId={orderDetails.orderId}
+              paymentDetails={orderDetails.paymentDetails}
+            />
+          )}
           <SupportCard onOpenChatbot={onOpenChatbot} />
         </Col>
       </Row>
