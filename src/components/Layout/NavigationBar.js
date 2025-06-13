@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Navbar,
@@ -22,11 +22,40 @@ function NavigationBar() {
   const navigate = useNavigate();
   const [isNavbarSolid, setIsNavbarSolid] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const navRef = useRef(null);
 
   useEffect(() => {
-    const transparentPaths = ["/", "/login", "/register", "/forgot-password"];
-    setIsNavbarSolid(!transparentPaths.includes(location.pathname));
+    const handleScroll = () => {
+      const isSolid = window.scrollY > window.innerHeight;
+      const isHomePage = location.pathname === "/";
+
+      if (isHomePage) {
+        setIsNavbarSolid(isSolid);
+      } else {
+        setIsNavbarSolid(true);
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        setExpanded(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [navRef]);
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -79,6 +108,9 @@ function NavigationBar() {
 
   return (
     <Navbar
+      ref={navRef}
+      expanded={expanded}
+      onToggle={() => setExpanded(!expanded)}
       expand="xl"
       sticky="top"
       className={`main-navbar ${
