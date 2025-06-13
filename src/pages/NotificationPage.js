@@ -6,6 +6,7 @@ import {
   Spinner,
   Alert,
   Badge,
+  Button,
 } from "react-bootstrap";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -13,9 +14,14 @@ import {
   getMyNotifications,
   markNotificationAsRead,
 } from "../services/NotificationService";
-import { Bell, ExclamationTriangleFill } from "react-bootstrap-icons";
+import {
+  Bell,
+  ExclamationTriangleFill,
+  ArrowClockwise,
+} from "react-bootstrap-icons";
 
 const timeSince = (date) => {
+  if (!date) return "";
   const seconds = Math.floor((new Date() - new Date(date)) / 1000);
   let interval = seconds / 31536000;
   if (interval > 1) return `${Math.floor(interval)} tahun yang lalu`;
@@ -30,8 +36,31 @@ const timeSince = (date) => {
   return `${Math.floor(seconds)} detik yang lalu`;
 };
 
+const statusTranslations = {
+  PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+  AWAITING_PAYMENT: "Menunggu Pembayaran",
+  CONFIRMED: "Dikonfirmasi",
+  PROCESSING: "Sedang Diproses",
+  READY_FOR_PICKUP: "Siap Diambil",
+  COMPLETED: "Selesai",
+  CANCELLED: "Dibatalkan",
+  PAYMENT_FAILED: "Pembayaran Gagal",
+};
+
+const formatNotificationBody = (body) => {
+  if (!body) return "";
+  const statusRegex = new RegExp(
+    Object.keys(statusTranslations).join("|"),
+    "g"
+  );
+  return body.replace(
+    statusRegex,
+    (matched) => statusTranslations[matched] || matched
+  );
+};
+
 function NotificationPage({ onNavigateToChat }) {
-  const { isLoggedIn, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoggedIn, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +95,10 @@ function NotificationPage({ onNavigateToChat }) {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if (isLoggedIn) {
+      fetchNotifications();
+    }
+  }, [isLoggedIn, fetchNotifications]);
 
   const handleNotificationClick = async (notification) => {
     const { notificationId, data, isRead } = notification;
@@ -85,11 +116,35 @@ function NotificationPage({ onNavigateToChat }) {
       }
     }
 
-    if (data?.orderId) {
-      navigate(`/pesanan/${data.orderId}`);
-    }
-    else if (data?.recipientUID && typeof onNavigateToChat === "function") {
-      onNavigateToChat(data.recipientUID);
+    if (data && data.type) {
+      switch (data.type) {
+        case "NEW_MESSAGE":
+          if (data.conversationId && typeof onNavigateToChat === "function") {
+            onNavigateToChat(data.conversationId);
+          }
+          break;
+        case "NEW_ORDER":
+        case "ORDER_CANCELLED":
+        case "ORDER_STATUS_UPDATE":
+        case "PAYMENT_CONFIRMED":
+          if (data.orderId) {
+            const isNotificationForSeller =
+              notification.title.includes("Pesanan Baru") ||
+              notification.title.includes("Pesanan Dibatalkan");
+            if (user && user.role === "seller" && isNotificationForSeller) {
+              navigate("/toko-saya/pesanan");
+            } else {
+              navigate(`/pesanan/${data.orderId}`);
+            }
+          }
+          break;
+        default:
+          console.log(
+            "Tipe notifikasi tidak memiliki aksi navigasi:",
+            data.type
+          );
+          break;
+      }
     }
   };
 
@@ -106,7 +161,7 @@ function NotificationPage({ onNavigateToChat }) {
   }
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && notifications.length === 0) {
       return (
         <div className="text-center py-5">
           <Spinner animation="border" variant="primary" />
@@ -142,13 +197,20 @@ function NotificationPage({ onNavigateToChat }) {
             action
             onClick={() => handleNotificationClick(notif)}
             className={`d-flex justify-content-between align-items-start p-3 ${
-              !notif.isRead ? "bg-light" : ""
+              !notif.isRead ? "bg-light fw-bold" : ""
             }`}
           >
             <div className="ms-2 me-auto">
               <div className="fw-bold">{notif.title}</div>
-              {notif.body}
+              <span className={!notif.isRead ? "" : "text-muted"}>
+                {formatNotificationBody(notif.body)}
+              </span>
             </div>
+            {!notif.isRead && (
+              <Badge bg="primary" pill className="me-3">
+                Baru
+              </Badge>
+            )}
             <Badge bg="secondary" pill>
               {timeSince(notif.createdAt)}
             </Badge>
@@ -160,7 +222,30 @@ function NotificationPage({ onNavigateToChat }) {
 
   return (
     <Container className="my-4" style={{ maxWidth: "800px" }}>
-      <h1 className="mb-4">Notifikasi</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="mb-0">Notifikasi</h1>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          onClick={fetchNotifications}
+          disabled={loading}
+          className="d-flex align-items-center"
+        >
+          {loading ? (
+            <Spinner
+              as="span"
+              animation="border"
+              size="sm"
+              role="status"
+              aria-hidden="true"
+              className="me-2"
+            />
+          ) : (
+            <ArrowClockwise size={16} className="me-2" />
+          )}
+          <span>{loading ? "Memuat..." : "Refresh"}</span>
+        </Button>
+      </div>
       <Card className="shadow-sm">
         <Card.Body className="p-0">{renderContent()}</Card.Body>
       </Card>

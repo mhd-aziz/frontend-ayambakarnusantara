@@ -44,6 +44,7 @@ function App() {
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showGlobalChatModal, setShowGlobalChatModal] = useState(false);
   const [recipientForChat, setRecipientForChat] = useState(null);
+  const [conversationToOpen, setConversationToOpen] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -118,8 +119,21 @@ function App() {
     setShowGlobalChatModal(true);
   };
 
+  const handleOpenChatConversation = (conversationId) => {
+    if (!isLoggedIn) {
+      navigate("/login", {
+        state: { from: location, message: "Silakan login untuk melihat chat." },
+      });
+      return;
+    }
+    setRecipientForChat(null);
+    setConversationToOpen(conversationId);
+    setShowGlobalChatModal(true);
+  };
+
   const handleChatSessionInitiated = () => {
     setRecipientForChat(null);
+    setConversationToOpen(null);
   };
 
   const pathsWithFooter = [
@@ -145,6 +159,7 @@ function App() {
   );
 
   const handleOpenChatbot = () => {
+    setConversationToOpen(null);
     setRecipientForChat(null);
     setShowGlobalChatModal(true);
   };
@@ -245,7 +260,9 @@ function App() {
             path="/notifikasi"
             element={
               isLoggedIn ? (
-                <NotificationPage onNavigateToChat={handleInitiateChatWith} />
+                <NotificationPage
+                  onNavigateToChat={handleOpenChatConversation}
+                />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -311,6 +328,7 @@ function App() {
             onHide={() => {
               setShowGlobalChatModal(false);
               setRecipientForChat(null);
+              setConversationToOpen(null);
             }}
             dialogClassName="global-chat-modal-dialog"
             contentClassName="global-chat-modal-content"
@@ -321,11 +339,13 @@ function App() {
           >
             <Modal.Body className="p-0 global-chat-modal-body">
               <GlobalChat
+                conversationToLoad={conversationToOpen}
                 recipientToInitiateChat={recipientForChat}
                 onChatInitiated={handleChatSessionInitiated}
                 onRequestClose={() => {
                   setShowGlobalChatModal(false);
                   setRecipientForChat(null);
+                  setConversationToOpen(null);
                 }}
               />
             </Modal.Body>

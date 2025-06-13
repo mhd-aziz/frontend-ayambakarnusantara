@@ -1,37 +1,30 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
 
-// TODO: Ganti dengan konfigurasi Firebase Anda
 const firebaseConfig = {
-  apiKey: "AIzaSyAGM3Sn3OLLxg-7--gzjmu8AnjIPxLF6ww",
-  authDomain: "ayambakarnusantara-51a05.firebaseapp.com",
-  projectId: "ayambakarnusantara-51a05",
-  storageBucket: "ayambakarnusantara-51a05.firebasestorage.app",
-  messagingSenderId: "1013559069503",
-  appId: "1:1013559069503:web:10c410858415c6eb7aa18a",
-  measurementId: "G-F348XTFCX4",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
 
-// Inisialisasi Firebase App
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-/**
- * Meminta izin notifikasi dan mendapatkan FCM Token.
- * @returns {Promise<string|null>} FCM Token atau null jika gagal.
- */
 export const getFCMToken = async () => {
-  // TODO: Ganti dengan VAPID key dari Firebase Console Anda
-  const VAPID_KEY =
-    "BGncMmcruMDN3GtMsiT-YysR22TUG2KFwK0UpOMnplE6cY_oz6VDBnCC4I9gJ7FQGq-JhlYUxqrEONlIQbKY55s";
+  const VAPID_KEY = process.env.REACT_APP_FIREBASE_VAPID_KEY;
+
+  if (!VAPID_KEY) {
+    console.error("VAPID key tidak ditemukan di environment variables.");
+    return null;
+  }
 
   try {
-    // Meminta izin dari pengguna untuk menerima notifikasi
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      console.log("Izin notifikasi diberikan.");
-
-      // Mendapatkan token
       const currentToken = await getToken(messaging, {
         vapidKey: VAPID_KEY,
       });
