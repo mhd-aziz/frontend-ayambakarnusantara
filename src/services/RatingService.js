@@ -116,4 +116,27 @@ const deleteRating = async (ratingId) => {
   }
 };
 
-export { addRating, getProductRatings, updateRating, deleteRating };
+const getAllRatings = async (params = {}) => {
+  try {
+    const response = await axios.get(RATING_API_URL, {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Terjadi kesalahan pada server saat mengambil semua rating.",
+        statusCode: error.response?.status || 500,
+      }
+    );
+  }
+};
+
+export {
+  addRating,
+  getProductRatings,
+  updateRating,
+  deleteRating,
+  getAllRatings,
+};

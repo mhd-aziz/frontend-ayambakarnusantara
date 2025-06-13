@@ -1,6 +1,3 @@
-/* src/pages/HomePage.css */
-
-/* Gaya dasar (untuk layar besar/desktop) */
 .hero-section {
   position: relative;
   background-size: cover;
@@ -11,9 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: calc(
-    -1 * var(--navbar-height)
-  ); /* Tarik ke atas di belakang navbar */
+  margin-top: calc(-1 * var(--navbar-height));
 }
 
 .hero-overlay {
@@ -22,12 +17,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(
-    0,
-    0,
-    0,
-    0.55
-  ); /* Sedikit lebih gelap untuk kontras lebih baik */
+  background-color: rgba(0, 0, 0, 0.55);
   z-index: 1;
 }
 
@@ -36,10 +26,8 @@
   z-index: 2;
   text-align: center;
   width: 100%;
-  padding-top: calc(
-    var(--banner-height) + var(--navbar-height) + 70px
-  );
-  padding-bottom: 70px; /* UPDATE: Tambah sedikit padding bawah */
+  padding-top: calc(var(--banner-height) + var(--navbar-height) + 70px);
+  padding-bottom: 70px;
   padding-left: 20px;
   padding-right: 20px;
 }
@@ -47,7 +35,7 @@
 .hero-title {
   font-size: 3.2rem;
   font-weight: 700;
-  margin-bottom: 1.75rem; /* UPDATE: Jarak dari title ke subtitle (misal: dari 1.5rem menjadi 1.75rem atau 2rem) */
+  margin-bottom: 1.75rem;
   text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
   letter-spacing: 0.5px;
 }
@@ -55,7 +43,7 @@
 .hero-subtitle {
   font-size: 1.4rem;
   font-weight: 400;
-  margin-bottom: 2.25rem; /* UPDATE: Jarak dari subtitle ke description (misal: dari 1.75rem menjadi 2.25rem) */
+  margin-bottom: 2.25rem;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
   line-height: 1.5;
 }
@@ -71,12 +59,12 @@
 }
 
 .hero-cta-button {
-  background-color: #C07722 !important;
-  border-color: #C07722 !important;
+  background-color: #c07722 !important;
+  border-color: #c07722 !important;
   color: #333;
   font-weight: bold;
   padding: 0.85rem 2rem;
-  font-size: 1.1rem; 
+  font-size: 1.1rem;
   border-radius: 50px;
   transition: all 0.3s ease;
 }
@@ -87,102 +75,207 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-
-.other-content-section h2 {
+.other-content-section h2,
+.testimonials-section h2 {
   font-size: 2.2rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 2.5rem; /* UPDATE: Menambah jarak bawah pada judul section */
+  margin-bottom: 2.5rem;
   text-align: center;
 }
 
-/* --- Media Queries untuk Responsivitas --- */
+.testimonials-section {
+  background-color: transparent !important;
+}
 
-/* Tablet (Large devices, layar < 992px, Bootstrap: lg) */
+.testimonials-section h2 {
+  color: #c07722;
+}
+
+.testimonial-card {
+  border: 1px solid #f0e4d4 !important;
+  background-color: #fff !important;
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.testimonial-card .blockquote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.testimonial-card .blockquote p {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.testimonial-card .card-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.horizontal-scroll-wrapper {
+  position: relative;
+  padding: 0 40px;
+}
+
+.horizontal-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1rem;
+  scrollbar-width: none;
+}
+
+.horizontal-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.rating-card-wrapper {
+  flex: 0 0 auto;
+  width: 300px;
+  margin-right: 1.5rem;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.rating-card-wrapper .testimonial-card {
+  width: 100% !important;
+}
+
+.scroll-button-container {
+  display: none;
+}
+
+.scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-70%);
+  z-index: 10;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  background-color: #c07722 !important;
+  border: 1px solid #a5671e !important;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.scroll-button:hover {
+  background-color: #a5671e !important;
+  border-color: #a5671e !important;
+  opacity: 1;
+  transform: translateY(-70%) scale(1.05);
+}
+
+.scroll-button.left {
+  left: 0px;
+}
+
+.scroll-button.right {
+  right: 0px;
+}
+
+@media (min-width: 992px) {
+  .scroll-button-container {
+    display: block;
+  }
+}
+
 @media (max-width: 991.98px) {
   .hero-section .hero-content {
-    padding-top: calc(
-      var(--banner-height) + var(--navbar-height) + 60px
-    ); /* Disesuaikan dari desktop */
-    padding-bottom: 60px; /* Disesuaikan dari desktop */
+    padding-top: calc(var(--banner-height) + var(--navbar-height) + 60px);
+    padding-bottom: 60px;
   }
   .hero-title {
     font-size: 2.8rem;
-    margin-bottom: 1.5rem; /* Jarak disesuaikan untuk tablet */
+    margin-bottom: 1.5rem;
   }
   .hero-subtitle {
     font-size: 1.25rem;
-    margin-bottom: 2rem; /* Jarak disesuaikan untuk tablet */
+    margin-bottom: 2rem;
   }
   .hero-description {
     font-size: 1rem;
     max-width: 600px;
-    margin-bottom: 2.5rem; /* Jarak disesuaikan untuk tablet */
+    margin-bottom: 2.5rem;
   }
   .hero-cta-button {
     padding: 0.8rem 1.9rem;
     font-size: 1.05rem;
   }
-  .other-content-section h2 {
+  .other-content-section h2,
+  .testimonials-section h2 {
     font-size: 2rem;
     margin-bottom: 2.25rem;
   }
 }
 
-/* Ponsel Besar & Tablet Potrait (Medium devices, layar < 768px, Bootstrap: md) */
 @media (max-width: 767.98px) {
   .hero-section .hero-content {
-    padding-top: calc(
-      var(--banner-height) + var(--navbar-height) + 50px /* Disesuaikan */
-    );
-    padding-bottom: 50px; /* Disesuaikan */
+    padding-top: calc(var(--banner-height) + var(--navbar-height) + 50px);
+    padding-bottom: 50px;
     padding-left: 15px;
     padding-right: 15px;
   }
   .hero-title {
     font-size: 2.2rem;
     letter-spacing: 0;
-    margin-bottom: 1.25rem; /* Jarak disesuaikan untuk mobile */
+    margin-bottom: 1.25rem;
   }
   .hero-subtitle {
     font-size: 1.1rem;
     line-height: 1.4;
-    margin-bottom: 1.75rem; /* Jarak disesuaikan untuk mobile */
+    margin-bottom: 1.75rem;
   }
   .hero-description {
     font-size: 0.95rem;
-    margin-bottom: 2.25rem; /* Jarak disesuaikan untuk mobile */
+    margin-bottom: 2.25rem;
     line-height: 1.5;
   }
   .hero-cta-button {
     font-size: 1rem;
     padding: 0.75rem 1.6rem;
   }
-  .other-content-section h2 {
+  .other-content-section h2,
+  .testimonials-section h2 {
     font-size: 1.8rem;
     margin-bottom: 2rem;
   }
+  .rating-card-wrapper {
+    width: 250px;
+    margin-right: 1rem;
+  }
 }
 
-/* Ponsel Kecil (Small devices, layar < 576px, Bootstrap: sm & xs) */
 @media (max-width: 575.98px) {
   .hero-section .hero-content {
-    padding-top: calc(
-      var(--banner-height) + var(--navbar-height) + 40px
-    ); /* Disesuaikan */
-    padding-bottom: 40px; /* Disesuaikan */
+    padding-top: calc(var(--banner-height) + var(--navbar-height) + 40px);
+    padding-bottom: 40px;
   }
   .hero-title {
     font-size: 1.8rem;
-    margin-bottom: 1rem; /* Jarak disesuaikan untuk ponsel kecil */
+    margin-bottom: 1rem;
   }
   .hero-subtitle {
     font-size: 1rem;
-    margin-bottom: 1.5rem; /* Jarak disesuaikan untuk ponsel kecil */
+    margin-bottom: 1.5rem;
   }
   .hero-description {
     font-size: 0.9rem;
-    margin-bottom: 2rem; /* Jarak disesuaikan untuk ponsel kecil */
+    margin-bottom: 2rem;
   }
   .hero-cta-button {
     width: 100%;
@@ -193,7 +286,8 @@
     font-size: 0.95rem;
     padding: 0.7rem 1rem;
   }
-  .other-content-section h2 {
+  .other-content-section h2,
+  .testimonials-section h2 {
     font-size: 1.6rem;
     margin-bottom: 1.75rem;
   }
