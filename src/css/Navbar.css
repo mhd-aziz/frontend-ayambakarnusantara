@@ -1,9 +1,7 @@
-/* src/components/Layout/Navbar.css */
-
 .main-navbar {
   position: sticky;
   top: 0;
-  z-index: 1020;
+  z-index: 1030;
   transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   padding-top: 0.6rem;
   padding-bottom: 0.6rem;
@@ -327,7 +325,7 @@
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-    z-index: 1010;
+    z-index: 1031;
   }
 
   .main-navbar .navbar-collapse .nav-links-desktop .nav-link-custom {
@@ -348,34 +346,57 @@
   }
 
   .main-navbar .navbar-collapse .search-form-desktop {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-    width: 100%;
-    max-width: none;
-    min-width: unset;
-    margin-left: 0;
-    margin-right: 0;
+    margin: 1rem 0 !important;
+    width: 100% !important;
   }
+
+  .main-navbar .navbar-collapse .search-input-group-custom {
+    display: flex !important;
+  }
+
   .main-navbar
     .navbar-collapse
     .search-input-group-custom
     .form-control.search-bar-custom {
+    flex: 1 1 auto;
+    width: 1%; 
+    min-width: 0;
     background-color: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
     color: #ffffff !important;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   }
+
+  .main-navbar
+    .navbar-collapse
+    .search-input-group-custom
+    .form-control.search-bar-custom:focus {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-color: #ffc633 !important;
+    box-shadow: none !important;
+  }
+
   .main-navbar
     .navbar-collapse
     .search-input-group-custom
     .form-control.search-bar-custom::placeholder {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
   }
+
   .main-navbar
     .navbar-collapse
     .search-input-group-custom
     .input-group-text.search-icon-button-custom {
     background-color: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .main-navbar
+    .navbar-collapse
+    .search-input-group-custom
+    .input-group-text.search-icon-button-custom:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
   }
   .main-navbar
     .navbar-collapse
