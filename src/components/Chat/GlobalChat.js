@@ -28,6 +28,7 @@ import * as ChatService from "../../services/ChatService";
 import ChatbotPane from "./ChatbotPane";
 import "../../css/GlobalChat.css";
 
+// ... (fungsi firestoreTimestampToDate, ConfirmationModal, ConversationItem, MessageBubble tetap sama) ...
 const MAPS_API_KEY = process.env.REACT_APP_Maps_API_KEY || "YOUR_Maps_API_KEY";
 
 function firestoreTimestampToDate(tsObject) {
@@ -228,6 +229,7 @@ const MessageBubble = ({ message, isSender }) => {
 };
 
 function GlobalChat({
+  conversationToLoad,
   recipientToInitiateChat,
   onChatInitiated,
   onRequestClose,
@@ -239,7 +241,7 @@ function GlobalChat({
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [imageFile, setImageFile] = useState(null); // State untuk menyimpan file gambar
+  const [imageFile, setImageFile] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -320,6 +322,20 @@ function GlobalChat({
       setMessages([]);
     }
   }, [isLoggedIn, chatMode, recipientToInitiateChat, loadConversations]);
+
+  useEffect(() => {
+    if (conversationToLoad && conversations.length > 0) {
+      const targetConversation = conversations.find(
+        (c) => c._id === conversationToLoad
+      );
+
+      // Jika percakapan ditemukan di dalam daftar
+      if (targetConversation) {
+        setChatMode("seller"); 
+        setSelectedConversation(targetConversation); 
+      }
+    }
+  }, [conversationToLoad, conversations]); 
 
   const loadMessages = useCallback(
     async (conversationId, loadMore = false, currentMessagesState = []) => {
@@ -437,6 +453,7 @@ function GlobalChat({
     selectedConversation,
   ]);
 
+  // ... (sisa dari semua fungsi handler seperti handleSelectConversation, handleSendMessage, dll, tetap sama)
   const handleSelectConversation = (conversation) => {
     if (
       chatMode === "seller" &&
@@ -459,7 +476,6 @@ function GlobalChat({
         alert("Ukuran file tidak boleh melebihi 5MB.");
         return;
       }
-      // Membuat URL pratinjau dan menyimpan file untuk dikirim
       setImagePreviewUrl(URL.createObjectURL(file));
       setImageFile(file);
       setShowAttachmentOptions(false);
@@ -468,9 +484,9 @@ function GlobalChat({
 
   const removeImagePreview = () => {
     setImagePreviewUrl("");
-    setImageFile(null); // Hapus juga file dari state
+    setImageFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset input file
+      fileInputRef.current.value = "";
     }
   };
 
@@ -595,10 +611,9 @@ function GlobalChat({
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    // Prioritaskan mengirim gambar jika ada yang dipilih
     if (imageFile) {
       sendMessageOptimistically({ image: imageFile });
-      setImageFile(null); // Bersihkan state file setelah pengiriman dimulai
+      setImageFile(null);
     } else if (newMessage.trim()) {
       sendMessageOptimistically({ text: newMessage.trim() });
     }
@@ -639,6 +654,7 @@ function GlobalChat({
   const showMessagePanel =
     chatMode === "chatbot" || (chatMode === "seller" && selectedConversation);
 
+  // ... (return JSX tetap sama)
   return (
     <>
       <ConfirmationModal
