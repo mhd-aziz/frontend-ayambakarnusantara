@@ -32,9 +32,12 @@ import SellerProductManagement from "./pages/Seller/SellerProductManagement";
 import SellerOrderManagement from "./pages/Seller/SellerOrderManagement";
 import CartPage from "./pages/CartPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import { registerFCMToken } from "./services/ProfileService";
+import { getFCMToken } from "./firebase-config";
+import NotificationPage from "./pages/NotificationPage";
 
 function App() {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading, user } = useAuth();
   const [showTopBanner, setShowTopBanner] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -43,6 +46,25 @@ function App() {
   const [recipientForChat, setRecipientForChat] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const setupAndRegisterFCM = async () => {
+      if (isLoggedIn && user) {
+        try {
+          const currentToken = await getFCMToken();
+          if (currentToken) {
+            await registerFCMToken({ token: currentToken });
+          }
+        } catch (error) {
+          console.error("Gagal melakukan setup FCM:", error);
+        }
+      }
+    };
+
+    if (!isLoading) {
+      setupAndRegisterFCM();
+    }
+  }, [isLoggedIn, isLoading, user]);
 
   useEffect(() => {
     if (location.pathname === "/login") {
@@ -62,7 +84,7 @@ function App() {
       setShowRegisterModal(false);
       setShowForgotPasswordModal(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
   const handleLoginModalClose = () => {
     setShowLoginModal(false);
@@ -92,23 +114,11 @@ function App() {
       });
       return;
     }
-    console.log(`App.js: Initiating chat with ${recipientUID}`);
     setRecipientForChat(recipientUID);
     setShowGlobalChatModal(true);
   };
 
-  const handleChatSessionInitiated = (conversation) => {
-    if (conversation) {
-      console.log(
-        `App.js: Chat session ready/selected. Conversation ID: ${
-          conversation._id
-        }, Participants: ${conversation.participantUIDs.join(", ")}`
-      );
-    } else {
-      console.log(
-        "App.js: Chat session initiation callback without specific conversation data, or chat deselected."
-      );
-    }
+  const handleChatSessionInitiated = () => {
     setRecipientForChat(null);
   };
 
@@ -228,6 +238,16 @@ function App() {
                 <CartPage />
               ) : (
                 <Navigate to="/login" state={{ from: "/keranjang" }} replace />
+              )
+            }
+          />
+          <Route
+            path="/notifikasi"
+            element={
+              isLoggedIn ? (
+                <NotificationPage onNavigateToChat={handleInitiateChatWith} />
+              ) : (
+                <Navigate to="/login" replace />
               )
             }
           />
