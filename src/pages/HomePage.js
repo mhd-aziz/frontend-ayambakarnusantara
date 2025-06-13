@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Container,
   Row,
@@ -6,12 +6,18 @@ import {
   Button,
   Card,
   Spinner,
-  Alert,
   Badge,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getProducts } from "../services/MenuService";
-import { Star, StarFill, StarHalf } from "react-bootstrap-icons";
+import { getAllRatings } from "../services/RatingService";
+import {
+  Star,
+  StarFill,
+  StarHalf,
+  ChevronLeft,
+  ChevronRight,
+} from "react-bootstrap-icons";
 import "../css/HomePage.css";
 import "../css/MenuPage.css";
 
@@ -35,21 +41,63 @@ const StarRatingDisplay = ({ rating, size = 16 }) => {
   );
 };
 
+const RatingCard = ({ rating }) => (
+  <div className="rating-card-wrapper">
+    <Card className="w-100 h-100 text-center p-3 testimonial-card shadow-sm">
+      <Card.Img
+        variant="top"
+        src={
+          rating.userPhotoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+            rating.userDisplayName || "U"
+          )}&background=C07722&color=fff&size=80`
+        }
+        alt={rating.userDisplayName}
+        className="rounded-circle mx-auto mb-3"
+        style={{
+          width: "80px",
+          height: "80px",
+          objectFit: "cover",
+          border: "3px solid #C07722",
+        }}
+      />
+      <Card.Body className="d-flex flex-column">
+        <Card.Title as="h5" className="h6 mb-1">
+          {rating.userDisplayName}
+        </Card.Title>
+        <div className="mb-2">
+          <StarRatingDisplay rating={rating.ratingValue} size={18} />
+        </div>
+        <blockquote className="blockquote mb-0 flex-grow-1 d-flex align-items-center justify-content-center">
+          <p className="small fst-italic mb-0">
+            "{rating.reviewText || "Pengguna ini tidak memberikan ulasan teks."}
+            "
+          </p>
+        </blockquote>
+      </Card.Body>
+    </Card>
+  </div>
+);
+
 function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [ratings, setRatings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRecommendationsLoading, setIsRecommendationsLoading] =
     useState(true);
   const [recommendationsError, setRecommendationsError] = useState(null);
+  const [isRatingsLoading, setIsRatingsLoading] = useState(true);
+  const [ratingsError, setRatingsError] = useState(null);
+  const ratingsContainerRef = useRef(null);
 
   const fetchFeaturedProducts = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await getProducts({
-        limit: 8, // Mengambil 8 produk untuk 2 baris
+        limit: 8,
         sortBy: "name",
         order: "asc",
       });
@@ -73,7 +121,7 @@ function HomePage() {
     setRecommendationsError(null);
     try {
       const response = await getProducts({
-        limit: 4, // Mengambil 4 produk untuk 1 baris
+        limit: 4,
         sortBy: "averageRating",
         order: "desc",
       });
@@ -95,14 +143,53 @@ function HomePage() {
     }
   }, []);
 
+  const fetchRatings = useCallback(async () => {
+    setIsRatingsLoading(true);
+    setRatingsError(null);
+    try {
+      const response = await getAllRatings({
+        sortBy: "createdAt",
+        order: "desc",
+      });
+      if (
+        response &&
+        response.success &&
+        Array.isArray(response.data.ratings)
+      ) {
+        setRatings(response.data.ratings);
+      } else {
+        setRatingsError("Gagal memuat data ulasan.");
+      }
+    } catch (err) {
+      setRatingsError(
+        err.message || "Terjadi kesalahan pada server saat mengambil ulasan."
+      );
+    } finally {
+      setIsRatingsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchFeaturedProducts();
     fetchRecommendedProducts();
-  }, [fetchFeaturedProducts, fetchRecommendedProducts]);
+    fetchRatings();
+  }, [fetchFeaturedProducts, fetchRecommendedProducts, fetchRatings]);
 
-  const handleImageError = (e) => {
+  const handleImageError = (e, productName) => {
     e.target.onerror = null;
-    e.target.src = `https://via.placeholder.com/400x300.png?text=Ayam+Nusantara`;
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      productName || "Ayam"
+    )}&background=f0f2f5&color=757575&size=400`;
+  };
+
+  const scrollRatings = (direction) => {
+    if (ratingsContainerRef.current) {
+      const scrollAmount = direction === "left" ? -320 : 320;
+      ratingsContainerRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+    }
   };
 
   const ProductCard = ({ product, showRating = false }) => (
@@ -112,11 +199,11 @@ function HomePage() {
           variant="top"
           src={
             product.productImageURL ||
-            `https://via.placeholder.com/400x300.png?text=${encodeURIComponent(
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
               product.name
-            )}`
+            )}&background=f0f2f5&color=757575&size=400`
           }
-          onError={handleImageError}
+          onError={(e) => handleImageError(e, product.name)}
           alt={product.name}
         />
         <Card.Body className="d-flex flex-column p-3">
@@ -162,13 +249,7 @@ function HomePage() {
     </Col>
   );
 
-  const renderProductSection = (
-    loading,
-    error,
-    products,
-    noProductMessage,
-    showRating
-  ) => {
+  const renderProductSection = (loading, error, products, showRating) => {
     if (loading) {
       return (
         <div className="text-center py-5">
@@ -179,19 +260,9 @@ function HomePage() {
         </div>
       );
     }
-
-    if (error) {
-      return <Alert variant="danger">{error}</Alert>;
+    if (error || products.length === 0) {
+      return null;
     }
-
-    if (products.length === 0) {
-      return (
-        <Alert variant="light" className="text-center">
-          {noProductMessage}
-        </Alert>
-      );
-    }
-
     return (
       <Row xs={1} sm={2} md={3} lg={4} className="g-4">
         {products.map((product) => (
@@ -202,6 +273,49 @@ function HomePage() {
           />
         ))}
       </Row>
+    );
+  };
+
+  const renderRatingsSection = (loading, error, ratingsData) => {
+    if (loading) {
+      return (
+        <div className="text-center py-5">
+          <Spinner
+            animation="border"
+            style={{ width: "3rem", height: "3rem", color: "#c07722" }}
+          />
+        </div>
+      );
+    }
+    if (error || ratingsData.length === 0) {
+      return null;
+    }
+    return (
+      <div className="horizontal-scroll-wrapper">
+        <div className="horizontal-scroll-container" ref={ratingsContainerRef}>
+          <div className="d-flex flex-nowrap">
+            {ratingsData.map((rating) => (
+              <RatingCard key={rating.ratingId} rating={rating} />
+            ))}
+          </div>
+        </div>
+        <div className="scroll-button-container">
+          <Button
+            className="scroll-button left"
+            onClick={() => scrollRatings("left")}
+            aria-label="Geser ke kiri"
+          >
+            <ChevronLeft />
+          </Button>
+          <Button
+            className="scroll-button right"
+            onClick={() => scrollRatings("right")}
+            aria-label="Geser ke kanan"
+          >
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
     );
   };
 
@@ -239,14 +353,13 @@ function HomePage() {
       </div>
 
       <Container className="mt-5 pt-5 pb-4">
-        {!isRecommendationsLoading && recommendedProducts.length > 0 && (
+        {recommendedProducts.length > 0 && !isRecommendationsLoading && (
           <>
             <h2 className="text-center mb-5">REKOMENDASI UNTUK ANDA</h2>
             {renderProductSection(
               isRecommendationsLoading,
               recommendationsError,
               recommendedProducts,
-              "Menu rekomendasi belum tersedia.",
               true
             )}
           </>
@@ -255,26 +368,28 @@ function HomePage() {
 
       <Container className="pt-2 pb-5">
         <h2 className="text-center mb-5">MENU UNGGULAN KAMI</h2>
-        {renderProductSection(
-          isLoading,
-          error,
-          featuredProducts,
-          "Menu unggulan belum tersedia saat ini.",
-          false
-        )}
+        {renderProductSection(isLoading, error, featuredProducts, false)}
+        <div className="text-center mt-5">
+          <Button
+            as={Link}
+            to="/menu"
+            variant="primary"
+            size="lg"
+            className="btn-brand"
+          >
+            Lihat Semua Menu
+          </Button>
+        </div>
       </Container>
 
-      <div className="text-center pb-5">
-        <Button
-          as={Link}
-          to="/menu"
-          variant="primary"
-          size="lg"
-          className="btn-brand"
-        >
-          Lihat Semua Menu
-        </Button>
-      </div>
+      {ratings.length > 0 && !isRatingsLoading && (
+        <div className="testimonials-section py-5">
+          <Container>
+            <h2 className="text-center mb-5">APA KATA PELANGGAN KAMI?</h2>
+            {renderRatingsSection(isRatingsLoading, ratingsError, ratings)}
+          </Container>
+        </div>
+      )}
     </>
   );
 }
