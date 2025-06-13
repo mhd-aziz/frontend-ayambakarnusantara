@@ -83,30 +83,42 @@ function NavigationBar() {
     };
   }, [navRef]);
 
+  // DIPERBAIKI: Menghapus `searchQuery` dari dependency array.
+  // Hook ini sekarang HANYA akan berjalan ketika URL berubah (misalnya saat navigasi back/forward),
+  // bukan saat pengguna mengetik.
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const qParam = queryParams.get("q") || "";
     if (qParam !== searchQuery) {
       setSearchQuery(qParam);
     }
-  }, [location.search, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
+  // DIPERBAIKI: Logika navigasi dipisahkan agar tidak konflik.
   useEffect(() => {
+    // Jangan lakukan navigasi jika kita tidak berada di halaman menu
+    // dan inputnya kosong. Ini mencegah navigasi yang tidak diinginkan dari halaman lain.
+    if (location.pathname !== "/menu" && searchQuery.trim() === "") {
+      return;
+    }
+
     const trimmedQuery = searchQuery.trim();
     const queryParams = new URLSearchParams(location.search);
     const qParam = queryParams.get("q") || "";
 
+    // Hanya lakukan navigasi jika query yang diketik berbeda dengan query di URL
     if (trimmedQuery === qParam) {
       return;
     }
 
+    // Debounce untuk menunda navigasi saat pengguna masih mengetik
     const handler = setTimeout(() => {
       if (trimmedQuery) {
         navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
       } else {
-        if (location.pathname === "/menu") {
-          navigate("/menu");
-        }
+        // Jika input dikosongkan, kembali ke halaman menu utama
+        navigate("/menu");
       }
     }, 500);
 
@@ -126,8 +138,14 @@ function NavigationBar() {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim();
     const queryParams = new URLSearchParams(location.search);
+
+    // Hanya navigasi jika query-nya berbeda dari yang sudah ada di URL
     if (trimmedQuery !== (queryParams.get("q") || "")) {
-      navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
+      if (trimmedQuery) {
+        navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
+      } else {
+        navigate("/menu");
+      }
     }
   };
 
@@ -191,6 +209,26 @@ function NavigationBar() {
               </Badge>
             )}
           </Nav.Link>
+          {isLoggedIn && (
+            <Nav.Link
+              as={Link}
+              to="/notifikasi"
+              className="nav-link-icon-mobile p-1 me-1 position-relative"
+              title="Notifikasi"
+            >
+              {unreadCount > 0 ? <BellFill size={22} /> : <Bell size={22} />}
+              {unreadCount > 0 && (
+                <Badge
+                  pill
+                  bg="danger"
+                  className="position-absolute top-0 start-100 translate-middle-x"
+                  style={{ fontSize: "0.6em", padding: "0.3em 0.5em" }}
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </Badge>
+              )}
+            </Nav.Link>
+          )}
           {isLoggedIn ? (
             <Nav.Link
               as={Link}

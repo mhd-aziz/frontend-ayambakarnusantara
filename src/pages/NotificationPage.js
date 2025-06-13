@@ -18,7 +18,9 @@ import {
   Bell,
   ExclamationTriangleFill,
   ArrowClockwise,
+  CheckCircleFill,
 } from "react-bootstrap-icons";
+import "../css/NotificationPage.css";
 
 const timeSince = (date) => {
   if (!date) return "";
@@ -151,7 +153,10 @@ function NotificationPage({ onNavigateToChat }) {
   if (isAuthLoading) {
     return (
       <Container className="text-center py-5">
-        <Spinner animation="border" variant="primary" />
+        <Spinner
+          animation="border"
+          style={{ color: "var(--brand-primary, #C07722)" }}
+        />
       </Container>
     );
   }
@@ -160,19 +165,10 @@ function NotificationPage({ onNavigateToChat }) {
     return <Navigate to="/login" replace />;
   }
 
-  const renderContent = () => {
-    if (loading && notifications.length === 0) {
-      return (
-        <div className="text-center py-5">
-          <Spinner animation="border" variant="primary" />
-          <p className="mt-2">Memuat notifikasi...</p>
-        </div>
-      );
-    }
-
+  const renderPageContent = () => {
     if (error) {
       return (
-        <Alert variant="danger">
+        <Alert variant="danger" className="m-3">
           <ExclamationTriangleFill className="me-2" />
           {error}
         </Alert>
@@ -181,75 +177,109 @@ function NotificationPage({ onNavigateToChat }) {
 
     if (notifications.length === 0) {
       return (
-        <div className="text-center py-5 text-muted">
-          <Bell size={40} className="mb-3" />
-          <h4>Tidak Ada Notifikasi</h4>
-          <p>Semua notifikasi Anda akan muncul di sini.</p>
-        </div>
+        <Card className="text-center py-5 shadow-sm empty-notifications-card">
+          <Card.Body>
+            <Bell size={48} className="text-muted mb-3" />
+            <Card.Title as="h4">Tidak Ada Notifikasi</Card.Title>
+            <Card.Text className="text-muted">
+              Semua pemberitahuan penting Anda akan muncul di sini.
+            </Card.Text>
+          </Card.Body>
+        </Card>
       );
     }
 
     return (
-      <ListGroup variant="flush">
-        {notifications.map((notif) => (
-          <ListGroup.Item
-            key={notif.notificationId}
-            action
-            onClick={() => handleNotificationClick(notif)}
-            className={`d-flex justify-content-between align-items-start p-3 ${
-              !notif.isRead ? "bg-light fw-bold" : ""
-            }`}
-          >
-            <div className="ms-2 me-auto">
-              <div className="fw-bold">{notif.title}</div>
-              <span className={!notif.isRead ? "" : "text-muted"}>
-                {formatNotificationBody(notif.body)}
-              </span>
-            </div>
-            {!notif.isRead && (
-              <Badge bg="primary" pill className="me-3">
-                Baru
-              </Badge>
-            )}
-            <Badge bg="secondary" pill>
-              {timeSince(notif.createdAt)}
-            </Badge>
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
+      <Card className="shadow-sm">
+        <ListGroup variant="flush" className="notification-list">
+          {notifications.map((notif) => (
+            <ListGroup.Item
+              key={notif.notificationId}
+              action
+              onClick={() => handleNotificationClick(notif)}
+              className={`d-flex justify-content-between align-items-start p-3 ${
+                !notif.isRead ? "bg-light" : ""
+              }`}
+            >
+              <div className="d-flex align-items-center notification-content">
+                <CheckCircleFill
+                  size={20}
+                  className={`me-3 icon-status ${
+                    !notif.isRead ? "icon-unread" : "icon-read"
+                  }`}
+                />
+                <div className="w-100">
+                  <div className="notification-title">{notif.title}</div>
+                  <span className="notification-body">
+                    {formatNotificationBody(notif.body)}
+                  </span>
+                </div>
+              </div>
+              <div className="d-flex flex-column align-items-end ms-2">
+                {!notif.isRead && (
+                  <Badge bg="primary" pill className="mb-2">
+                    Baru
+                  </Badge>
+                )}
+                <small className="notification-timestamp">
+                  {timeSince(notif.createdAt)}
+                </small>
+              </div>
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </Card>
     );
   };
 
   return (
-    <Container className="my-4" style={{ maxWidth: "800px" }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Notifikasi</h1>
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          onClick={fetchNotifications}
-          disabled={loading}
-          className="d-flex align-items-center"
-        >
-          {loading ? (
+    <div className="notification-page">
+      <Container as="main" className="container-md">
+        <div className="page-header d-flex justify-content-between align-items-center mb-4">
+          <h1 className="page-title mb-0">Notifikasi</h1>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={fetchNotifications}
+            disabled={loading}
+            className="d-flex align-items-center"
+          >
+            {loading ? (
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                className="me-2"
+              />
+            ) : (
+              <ArrowClockwise size={16} className="me-2" />
+            )}
+            <span>{loading ? "Memuat..." : "Refresh"}</span>
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-5">
             <Spinner
-              as="span"
               animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-              className="me-2"
+              style={{
+                width: "3rem",
+                height: "3rem",
+                color: "var(--brand-primary, #C07722)",
+              }}
             />
-          ) : (
-            <ArrowClockwise size={16} className="me-2" />
-          )}
-          <span>{loading ? "Memuat..." : "Refresh"}</span>
-        </Button>
-      </div>
-      <Card className="shadow-sm">
-        <Card.Body className="p-0">{renderContent()}</Card.Body>
-      </Card>
-    </Container>
+            <p
+              className="mt-3"
+              style={{ color: "var(--brand-primary, #C07722)" }}
+            >
+              Memuat notifikasi...
+            </p>
+          </div>
+        ) : (
+          renderPageContent()
+        )}
+      </Container>
+    </div>
   );
 }
 
