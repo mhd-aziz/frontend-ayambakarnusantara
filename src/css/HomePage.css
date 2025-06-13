@@ -88,8 +88,14 @@
   background-color: transparent !important;
 }
 
+.other-content-section h2,
 .testimonials-section h2 {
-  color: #c07722;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+.testimonials-section h2 {
+  color: #000000 !important;
 }
 
 .testimonial-card {
