@@ -1,5 +1,3 @@
-// src/App.js
-
 import React, { useState, useEffect } from "react";
 import {
   Routes,
@@ -37,6 +35,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import { registerFCMToken } from "./services/ProfileService";
 import { getFCMToken } from "./firebase-config";
 import NotificationPage from "./pages/NotificationPage";
+import ScrollToAnchor from "./utils/ScrollToAnchor";
 
 function App() {
   const { isLoggedIn, isLoading, user } = useAuth();
@@ -50,7 +49,6 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // PERUBAHAN: Tambahkan variabel ini untuk melacak apakah ada modal autentikasi yang terbuka.
   const isAuthModalOpen =
     showLoginModal || showRegisterModal || showForgotPasswordModal;
 
@@ -186,6 +184,7 @@ function App() {
 
   return (
     <div className="d-flex flex-column min-vh-100 app-container">
+      <ScrollToAnchor />
       {!isLoggedIn && showTopBanner && (
         <Alert
           variant="dark"
@@ -201,7 +200,6 @@ function App() {
           </Alert.Heading>
         </Alert>
       )}
-      {/* PERUBAHAN: Kirim prop isAuthModalOpen ke NavigationBar */}
       <NavigationBar isAuthModalOpen={isAuthModalOpen} />
       <Container fluid className="page-content-container p-0 flex-grow-1">
         <Routes>

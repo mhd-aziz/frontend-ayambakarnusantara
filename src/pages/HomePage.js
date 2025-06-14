@@ -7,16 +7,22 @@ import {
   Card,
   Spinner,
   Badge,
+  Form,
+  Alert,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getProducts } from "../services/MenuService";
 import { getAllRatings } from "../services/RatingService";
+import { sendFeedback } from "../services/FeedbackService";
 import {
   Star,
   StarFill,
   StarHalf,
   ChevronLeft,
   ChevronRight,
+  SendFill,
+  CheckCircleFill,
+  ExclamationTriangleFill,
 } from "react-bootstrap-icons";
 import "../css/HomePage.css";
 import "../css/MenuPage.css";
@@ -41,7 +47,6 @@ const StarRatingDisplay = ({ rating, size = 16 }) => {
   );
 };
 
-// PERUBAHAN: Menambahkan fungsi onError ke RatingCard
 const RatingCard = ({ rating }) => {
   const nameForAvatar = rating.userDisplayName || "U";
   const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -49,8 +54,8 @@ const RatingCard = ({ rating }) => {
   )}&background=C07722&color=fff&size=80`;
 
   const handleAvatarError = (e) => {
-    e.target.onerror = null; // Mencegah loop error
-    e.target.src = avatarUrl; // Fallback ke ui-avatars jika URL asli gagal
+    e.target.onerror = null;
+    e.target.src = avatarUrl;
   };
 
   return (
@@ -67,7 +72,7 @@ const RatingCard = ({ rating }) => {
             objectFit: "cover",
             border: "3px solid #C07722",
           }}
-          onError={handleAvatarError} // Menambahkan event handler onError
+          onError={handleAvatarError}
         />
         <Card.Body className="d-flex flex-column">
           <Card.Title as="h5" className="h6 mb-1">
@@ -102,6 +107,16 @@ function HomePage() {
   const [isRatingsLoading, setIsRatingsLoading] = useState(true);
   const [ratingsError, setRatingsError] = useState(null);
   const ratingsContainerRef = useRef(null);
+
+  const [feedbackData, setFeedbackData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [feedbackSuccess, setFeedbackSuccess] = useState("");
+  const [feedbackError, setFeedbackError] = useState("");
 
   const fetchFeaturedProducts = useCallback(async () => {
     setIsLoading(true);
@@ -200,6 +215,34 @@ function HomePage() {
         left: scrollAmount,
         behavior: "smooth",
       });
+    }
+  };
+
+  const handleFeedbackChange = (e) => {
+    const { name, value } = e.target;
+    setFeedbackData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmittingFeedback(true);
+    setFeedbackError("");
+    setFeedbackSuccess("");
+    try {
+      const response = await sendFeedback(feedbackData);
+      if (response.success) {
+        setFeedbackSuccess(response.message);
+        setFeedbackData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        setFeedbackError(response.message || "Gagal mengirim pesan.");
+      }
+    } catch (err) {
+      setFeedbackError(err.message || "Terjadi kesalahan pada server.");
+    } finally {
+      setIsSubmittingFeedback(false);
     }
   };
 
@@ -329,7 +372,6 @@ function HomePage() {
       </div>
     );
   };
-
   return (
     <>
       <div
@@ -363,48 +405,167 @@ function HomePage() {
         </Container>
       </div>
 
-      <Container className="mt-5 pt-5 pb-4">
-        {recommendedProducts.length > 0 && !isRecommendationsLoading && (
-          <>
-            <h2 className="text-center mb-5 section-title">
-              REKOMENDASI UNTUK ANDA
-            </h2>
-            {renderProductSection(
-              isRecommendationsLoading,
-              recommendationsError,
-              recommendedProducts,
-              true
-            )}
-          </>
-        )}
-      </Container>
+      <div className="page-section">
+        <Container className="py-5">
+          {recommendedProducts.length > 0 && !isRecommendationsLoading && (
+            <>
+              <h2 className="text-center mb-5 section-title">
+                <span>REKOMENDASI UNTUK ANDA</span>
+              </h2>
+              {renderProductSection(
+                isRecommendationsLoading,
+                recommendationsError,
+                recommendedProducts,
+                true
+              )}
+            </>
+          )}
+        </Container>
+      </div>
 
-      <Container className="pt-2 pb-5">
-        <h2 className="text-center mb-5 section-title">MENU UNGGULAN KAMI</h2>
-        {renderProductSection(isLoading, error, featuredProducts, false)}
-        <div className="text-center mt-5">
-          <Button
-            as={Link}
-            to="/menu"
-            variant="primary"
-            size="lg"
-            className="btn-brand"
-          >
-            Lihat Semua Menu
-          </Button>
-        </div>
-      </Container>
+      <div className="section-divider-wrapper">
+        <Container>
+          <hr className="section-divider" />
+        </Container>
+      </div>
+
+      <div className="page-section">
+        <Container className="py-5">
+          <h2 className="text-center mb-5 section-title">
+            <span>MENU UNGGULAN KAMI</span>
+          </h2>
+          {renderProductSection(isLoading, error, featuredProducts, false)}
+          <div className="text-center mt-5">
+            <Button
+              as={Link}
+              to="/menu"
+              variant="primary"
+              size="lg"
+              className="btn-brand"
+            >
+              Lihat Semua Menu
+            </Button>
+          </div>
+        </Container>
+      </div>
 
       {ratings.length > 0 && !isRatingsLoading && (
-        <div className="testimonials-section py-5">
+        <div className="page-section testimonials-section py-5">
           <Container>
             <h2 className="text-center mb-5 section-title">
-              APA KATA PELANGGAN KAMI?
+              <span>APA KATA PELANGGAN KAMI?</span>
             </h2>
             {renderRatingsSection(isRatingsLoading, ratingsError, ratings)}
           </Container>
         </div>
       )}
+
+      <div id="hubungi-kami" className="page-section contact-section py-5">
+        <Container>
+          <Row className="justify-content-center">
+            <Col md={8} lg={6}>
+              <h2 className="text-center mb-4 section-title">
+                <span>Hubungi Kami</span>
+              </h2>
+              <p className="text-center text-muted mb-4">
+                Jika ada masukan atau saran, jangan ragu untuk memberikan kami
+                feedback melalui form di bawah ini.
+              </p>
+              <Card className="p-4 shadow-sm">
+                <Card.Body>
+                  {feedbackSuccess && (
+                    <Alert variant="success">
+                      <CheckCircleFill className="me-2" />
+                      {feedbackSuccess}
+                    </Alert>
+                  )}
+                  {feedbackError && (
+                    <Alert variant="danger">
+                      <ExclamationTriangleFill className="me-2" />
+                      {feedbackError}
+                    </Alert>
+                  )}
+                  <Form onSubmit={handleFeedbackSubmit}>
+                    <Row>
+                      <Col md={6}>
+                        <Form.Group className="mb-3" controlId="feedbackName">
+                          <Form.Label>Nama Anda</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="name"
+                            value={feedbackData.name}
+                            onChange={handleFeedbackChange}
+                            required
+                            disabled={isSubmittingFeedback}
+                            placeholder="Nama Lengkap"
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3" controlId="feedbackEmail">
+                          <Form.Label>Email Anda</Form.Label>
+                          <Form.Control
+                            type="email"
+                            name="email"
+                            value={feedbackData.email}
+                            onChange={handleFeedbackChange}
+                            required
+                            disabled={isSubmittingFeedback}
+                            placeholder="nama_email@gmail.com"
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <Form.Group className="mb-3" controlId="feedbackSubject">
+                      <Form.Label>Subjek</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="subject"
+                        value={feedbackData.subject}
+                        onChange={handleFeedbackChange}
+                        required
+                        disabled={isSubmittingFeedback}
+                        placeholder="Judul pesan Anda"
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="feedbackMessage">
+                      <Form.Label>Pesan</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={5}
+                        name="message"
+                        value={feedbackData.message}
+                        onChange={handleFeedbackChange}
+                        required
+                        disabled={isSubmittingFeedback}
+                        placeholder="Tuliskan pesan Anda di sini..."
+                      />
+                    </Form.Group>
+                    <Button
+                      variant="primary"
+                      type="submit"
+                      className="w-100 btn-brand"
+                      disabled={isSubmittingFeedback}
+                    >
+                      {isSubmittingFeedback ? (
+                        <>
+                          <Spinner size="sm" as="span" className="me-2" />
+                          Mengirim...
+                        </>
+                      ) : (
+                        <>
+                          <SendFill className="me-2" />
+                          Kirim Pesan
+                        </>
+                      )}
+                    </Button>
+                  </Form>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </div>
     </>
   );
 }
