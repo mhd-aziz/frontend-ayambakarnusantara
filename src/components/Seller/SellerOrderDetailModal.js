@@ -18,6 +18,57 @@ function SellerOrderDetailModal({
   error,
   getStatusBadgeVariant,
 }) {
+  const getPaymentStatusInfo = (paymentDetails) => {
+    const statusMap = {
+      paid: { text: "Lunas", variant: "success" },
+      pay_on_pickup: { text: "Belum Lunas", variant: "warning" },
+      awaiting_gateway_interaction: {
+        text: "Menunggu Pembayaran",
+        variant: "warning",
+      },
+      pending_gateway_payment: {
+        text: "Proses Pembayaran",
+        variant: "warning",
+      },
+      cancelled_by_user: { text: "Dibatalkan", variant: "secondary" },
+    };
+
+    const statusInfo = statusMap[paymentDetails?.status];
+    if (statusInfo) {
+      return statusInfo;
+    }
+
+    return {
+      text: paymentDetails?.status?.replace(/_/g, " ") || "N/A",
+      variant: "secondary",
+    };
+  };
+
+  const formatOrderStatus = (status) => {
+    const statusMap = {
+      PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+      AWAITING_PAYMENT: "Menunggu Pembayaran",
+      CONFIRMED: "Dikonfirmasi",
+      PROCESSING: "Sedang Diproses",
+      READY_FOR_PICKUP: "Siap Diambil",
+      COMPLETED: "Selesai",
+      CANCELLED: "Dibatalkan",
+    };
+    return statusMap[status] || status.replace(/_/g, " ");
+  };
+
+  const formatPaymentMethod = (method) => {
+    const methodMap = {
+      PAY_AT_STORE: "Bayar di Toko",
+      ONLINE_PAYMENT: "Pembayaran Online",
+    };
+    return methodMap[method] || method?.replace(/_/g, " ") || "N/A";
+  };
+
+  const paymentStatusInfo = orderData?.order
+    ? getPaymentStatusInfo(orderData.order.paymentDetails)
+    : { text: "N/A", variant: "secondary" };
+
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
       <Modal.Header closeButton>
@@ -31,8 +82,11 @@ function SellerOrderDetailModal({
       <Modal.Body>
         {isLoading && (
           <div className="text-center">
-            <Spinner animation="border" variant="primary" />
-            <p>Memuat detail...</p>
+            <Spinner
+              animation="border"
+              style={{ color: "var(--brand-primary)" }}
+            />
+            <p className="mt-2">Memuat detail...</p>
           </div>
         )}
         {error && <Alert variant="danger">{error}</Alert>}
@@ -57,7 +111,7 @@ function SellerOrderDetailModal({
                     <Badge
                       bg={getStatusBadgeVariant(orderData.order.orderStatus)}
                     >
-                      {orderData.order.orderStatus.replace(/_/g, " ")}
+                      {formatOrderStatus(orderData.order.orderStatus)}
                     </Badge>
                   </ListGroup.Item>
                   <ListGroup.Item>
@@ -66,27 +120,14 @@ function SellerOrderDetailModal({
                   </ListGroup.Item>
                   <ListGroup.Item>
                     <strong>Metode Pembayaran:</strong>{" "}
-                    {orderData.order.paymentDetails?.method?.replace(
-                      /_/g,
-                      " "
-                    ) || "N/A"}
+                    {formatPaymentMethod(
+                      orderData.order.paymentDetails?.method
+                    )}
                   </ListGroup.Item>
                   <ListGroup.Item>
                     <strong>Status Pembayaran:</strong>{" "}
-                    <Badge
-                      bg={
-                        orderData.order.paymentDetails?.status === "paid"
-                          ? "success"
-                          : orderData.order.paymentDetails?.status ===
-                            "pending_online_payment"
-                          ? "warning"
-                          : "secondary"
-                      }
-                    >
-                      {orderData.order.paymentDetails?.status?.replace(
-                        /_/g,
-                        " "
-                      ) || "N/A"}
+                    <Badge bg={paymentStatusInfo.variant}>
+                      {paymentStatusInfo.text}
                     </Badge>
                   </ListGroup.Item>
                   {orderData.order.notes && (

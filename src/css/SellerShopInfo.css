@@ -29,7 +29,6 @@
   border-radius: 0.5rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.045);
   margin-bottom: 1.5rem;
-  background-color: #fff;
 }
 
 .seller-card-banner {
@@ -40,7 +39,6 @@
 }
 
 .seller-card .card-header.section-header {
-  background-color: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
   font-size: 1.1rem;
   font-weight: 500;

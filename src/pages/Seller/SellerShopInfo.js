@@ -203,7 +203,6 @@ function SellerShopInfo() {
     );
   }
 
-  // Tampilan Form Edit Toko
   if (isEditing && userRole === "seller" && hasShop) {
     return (
       <div className="seller-page-content">
@@ -357,7 +356,6 @@ function SellerShopInfo() {
     );
   }
 
-  // Tampilan Informasi Toko (Mode Baca)
   if (userRole === "seller" && hasShop && initialShopData) {
     const bannerSrc =
       initialShopData.bannerImageURL ||
@@ -371,7 +369,8 @@ function SellerShopInfo() {
             <h2 className="seller-page-title">Informasi Toko</h2>
             <div className="seller-header-actions">
               <Button
-                variant="outline-primary"
+                variant="primary"
+                className="btn-brand"
                 size="sm"
                 onClick={() => setIsEditing(true)}
                 disabled={isDeletingShop}
@@ -379,7 +378,7 @@ function SellerShopInfo() {
                 <PencilSquare className="me-2" /> Edit Info
               </Button>
               <Button
-                variant="outline-danger"
+                variant="danger"
                 size="sm"
                 onClick={openDeleteModal}
                 disabled={isDeletingShop}
@@ -419,7 +418,6 @@ function SellerShopInfo() {
                   width: "100%",
                   height: "20rem",
                   objectFit: "contain",
-                  backgroundColor: "#f0f2f5",
                 }}
               />
             </Card.Header>
