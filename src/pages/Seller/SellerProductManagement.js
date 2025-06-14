@@ -1,4 +1,3 @@
-// src/pages/Seller/SellerProductManagement.js
 import React, { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
@@ -38,21 +37,19 @@ function SellerProductManagement() {
 
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(""); // Untuk error umum halaman
+  const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   const [showProductModal, setShowProductModal] = useState(false);
   const [productToEdit, setProductToEdit] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Untuk loading pada form submit
-  const [formServerError, setFormServerError] = useState(""); // Untuk error spesifik dari form
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formServerError, setFormServerError] = useState("");
 
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [productToDeleteId, setProductToDeleteId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchMyStoreProducts = useCallback(async () => {
-    // Tidak lagi memerlukan shopData.shopId karena getMyProducts seharusnya
-    // mengambil produk berdasarkan sesi/token pengguna (seller)
     if (!hasShop) {
       setProducts([]);
       return;
@@ -60,14 +57,11 @@ function SellerProductManagement() {
     setIsLoading(true);
     setError("");
     try {
-      const response = await getMyProducts(); // Panggil API baru
-      // Respons diharapkan: { success: true, message: "...", data: [...] }
-      // atau { success: false, message: "...", statusCode: ... }
+      const response = await getMyProducts();
       if (response && response.success && Array.isArray(response.data)) {
         setProducts(response.data);
       } else {
         setProducts([]);
-        // Jika backend mengembalikan success: false dengan pesan
         if (response && response.success === false) {
           setError(response.message || "Gagal mengambil produk toko Anda.");
         } else {
@@ -77,14 +71,12 @@ function SellerProductManagement() {
         }
       }
     } catch (err) {
-      // err sekarang bisa jadi objek error dari backend { message, statusCode }
-      // atau error Axios
       setError(err.message || "Terjadi kesalahan saat mengambil produk Anda.");
       setProducts([]);
     } finally {
       setIsLoading(false);
     }
-  }, [hasShop]); // shopData?.shopId dihapus dari dependensi
+  }, [hasShop]);
 
   useEffect(() => {
     if (userRole === "seller" && hasShop) {
@@ -124,7 +116,6 @@ function SellerProductManagement() {
         response = await createProduct(formData);
       }
 
-      // Asumsi response dari create/update selalu memiliki { success: boolean, message: string }
       if (response.success) {
         setSuccessMessage(
           response.message ||
@@ -138,7 +129,6 @@ function SellerProductManagement() {
           setSuccessMessage("");
         }, 1500);
       } else {
-        // Jika success: false, message harusnya ada dari backend
         setFormServerError(
           response.message ||
             (productId
@@ -147,7 +137,6 @@ function SellerProductManagement() {
         );
       }
     } catch (err) {
-      // err bisa jadi objek error dari backend atau error Axios
       setFormServerError(err.message || "Terjadi kesalahan pada server.");
     } finally {
       setIsSubmitting(false);
@@ -189,7 +178,7 @@ function SellerProductManagement() {
   if (!outletContext) {
     return (
       <Container className="d-flex justify-content-center align-items-center vh-100">
-        <Spinner animation="border" variant="primary" />
+        <Spinner animation="border" style={{ color: "var(--brand-primary)" }} />
       </Container>
     );
   }
@@ -248,7 +237,10 @@ function SellerProductManagement() {
 
       {isLoading && (
         <div className="text-center py-5">
-          <Spinner animation="border" variant="secondary" />
+          <Spinner
+            animation="border"
+            style={{ color: "var(--brand-primary)" }}
+          />
           <p className="mt-2 text-muted">Memuat produk Anda...</p>
         </div>
       )}

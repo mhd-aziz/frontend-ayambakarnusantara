@@ -85,6 +85,19 @@ function SellerOrderManagement() {
     "CONFIRMED",
   ];
 
+  const formatOrderStatus = (status) => {
+    const statusMap = {
+      PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+      AWAITING_PAYMENT: "Menunggu Pembayaran",
+      CONFIRMED: "Dikonfirmasi",
+      PROCESSING: "Sedang Diproses",
+      READY_FOR_PICKUP: "Siap Diambil",
+      COMPLETED: "Selesai",
+      CANCELLED: "Dibatalkan",
+    };
+    return statusMap[status] || status.replace(/_/g, " ");
+  };
+
   const fetchOrdersForSeller = useCallback(async () => {
     if (!hasShop) {
       setAllOrders([]);
@@ -265,7 +278,7 @@ function SellerOrderManagement() {
     setSearchTerm("");
     setStatusFilter("ALL");
     setCurrentPage(1);
-    // fetchOrdersForSeller(); // Jika ingin langsung fetch setelah reset tanpa menunggu useEffect
+    fetchOrdersForSeller();
   };
 
   const getStatusBadgeVariant = (status) => {
@@ -322,7 +335,7 @@ function SellerOrderManagement() {
   if (!outletContext) {
     return (
       <Container className="d-flex justify-content-center align-items-center vh-100">
-        <Spinner animation="border" variant="primary" />
+        <Spinner animation="border" style={{ color: "var(--brand-primary)" }} />
       </Container>
     );
   }
@@ -387,7 +400,7 @@ function SellerOrderManagement() {
                   <option key={status} value={status}>
                     {status === "ALL"
                       ? "Semua Status"
-                      : status.replace(/_/g, " ")}
+                      : formatOrderStatus(status)}
                   </option>
                 ))}
               </Form.Select>
@@ -424,7 +437,10 @@ function SellerOrderManagement() {
 
       {isLoading && (
         <div className="text-center py-5">
-          <Spinner animation="border" variant="secondary" />
+          <Spinner
+            animation="border"
+            style={{ color: "var(--brand-primary)" }}
+          />
           <p className="mt-2 text-muted">Memuat pesanan...</p>
         </div>
       )}
@@ -478,10 +494,10 @@ function SellerOrderManagement() {
               {[...Array(totalPages).keys()].map((number) => {
                 const pageNumber = number + 1;
                 const MAX_PAGES_AROUND_CURRENT = 2;
-                const MAX_PAGES_EDGES = 1; // Tampilkan 1 halaman di awal dan akhir jika ada ellipsis
+                const MAX_PAGES_EDGES = 1;
 
                 if (
-                  totalPages <= 7 || // Tampilkan semua jika total halaman sedikit
+                  totalPages <= 7 ||
                   pageNumber === 1 ||
                   pageNumber === totalPages ||
                   (pageNumber >= currentPage - MAX_PAGES_AROUND_CURRENT &&

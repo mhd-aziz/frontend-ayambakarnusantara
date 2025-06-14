@@ -1,0 +1,13 @@
+.order-list-item .badge {
+  white-space: normal !important; /* Allows text to wrap to the next line */
+  word-break: break-word !important; /* Breaks long words if they are too long */
+  text-align: center;
+  line-height: 1.3;
+}
+
+/*
+ * Ensures action buttons wrap nicely on smaller screens.
+ */
+.order-list-item .order-actions {
+  min-width: 160px; /* Provides enough space for buttons before wrapping */
+}
