@@ -1,3 +1,5 @@
+// src/App.js
+
 import React, { useState, useEffect } from "react";
 import {
   Routes,
@@ -47,6 +49,10 @@ function App() {
   const [conversationToOpen, setConversationToOpen] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // PERUBAHAN: Tambahkan variabel ini untuk melacak apakah ada modal autentikasi yang terbuka.
+  const isAuthModalOpen =
+    showLoginModal || showRegisterModal || showForgotPasswordModal;
 
   useEffect(() => {
     const setupAndRegisterFCM = async () => {
@@ -195,7 +201,8 @@ function App() {
           </Alert.Heading>
         </Alert>
       )}
-      <NavigationBar />
+      {/* PERUBAHAN: Kirim prop isAuthModalOpen ke NavigationBar */}
+      <NavigationBar isAuthModalOpen={isAuthModalOpen} />
       <Container fluid className="page-content-container p-0 flex-grow-1">
         <Routes>
           <Route path="/" element={<HomePage />} />

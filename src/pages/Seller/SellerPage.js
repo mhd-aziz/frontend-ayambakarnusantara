@@ -1,13 +1,5 @@
-// src/pages/SellerPage.js
 import { useState, useEffect, useCallback } from "react";
-import {
-  Container,
-  Spinner,
-  Alert,
-  Row,
-  Col,
-  Button,
-} from "react-bootstrap";
+import { Container, Spinner, Alert, Row, Col, Button } from "react-bootstrap";
 import { ExclamationCircleFill } from "react-bootstrap-icons";
 import { useAuth } from "../../context/AuthContext";
 import { getMyShop } from "../../services/ShopService";
@@ -38,10 +30,10 @@ function SellerPage() {
     }
     setIsLoadingPage(true);
     setPageError("");
-    setUserRole(null); // Reset sebelum fetch
-    setHasShop(false); // Reset sebelum fetch
-    setShopData(null); // Reset sebelum fetch
-    setCurrentUserProfile(null); // Reset sebelum fetch
+    setUserRole(null); 
+    setHasShop(false); 
+    setShopData(null); 
+    setCurrentUserProfile(null);
 
     try {
       const profileResponse = await getProfile();
@@ -137,14 +129,20 @@ function SellerPage() {
   if (authLoading || isLoadingPage) {
     return (
       <Container
-        fluid // Spinner bisa tetap fluid untuk mengisi layar penuh saat loading
-        className="d-flex justify-content-center align-items-center vh-100"
+        fluid
+        className="d-flex flex-column justify-content-center align-items-center vh-100"
       >
         <Spinner
           animation="border"
-          variant="primary"
-          style={{ width: "3rem", height: "3rem" }}
+          style={{
+            width: "3rem",
+            height: "3rem",
+            color: "var(--brand-primary)",
+          }}
         />
+        <p className="mt-3" style={{ color: "var(--brand-primary)" }}>
+          Memuat halaman seller...
+        </p>
       </Container>
     );
   }
@@ -157,7 +155,6 @@ function SellerPage() {
     return (
       <Container className="mt-5 text-center">
         {" "}
-        {/* Container non-fluid untuk pesan error */}
         <Alert variant="danger" className="py-4">
           <Alert.Heading>
             <ExclamationCircleFill size={24} className="me-2" /> Gagal Memuat
@@ -172,25 +169,16 @@ function SellerPage() {
     );
   }
 
-  // Hanya render layout dashboard jika userRole sudah ditentukan
   if (userRole) {
     return (
-      // 👇 Ganti Container fluid menjadi Container non-fluid
-      // Tambahkan juga margin atas dan bawah (misalnya mt-4 mb-5) jika diinginkan
       <Container className="seller-page-container mt-4 mb-5">
         <Row className="g-0">
           {" "}
-          {/* g-0 untuk menghilangkan gutter antar kolom sidebar dan konten */}
           <Col md={3} lg={2} className="seller-sidebar-col p-0 border-end">
             {" "}
-            {/* p-0 jika sidebar mengatur padding internalnya, tambahkan border jika perlu */}
             <SellerSidebar shopName={shopData?.shopName} />
           </Col>
-          <Col
-            md={9}
-            lg={10}
-            className="seller-content-col p-4" // bg-body-tertiary bisa dihapus jika ingin default atau styling sendiri
-          >
+          <Col md={9} lg={10} className="seller-content-col p-4">
             <Outlet
               context={{
                 currentUserProfile,
@@ -207,14 +195,15 @@ function SellerPage() {
     );
   }
 
-  // Fallback jika userRole belum ter-set (setelah loading utama selesai)
   return (
     <Container
-      fluid // Ini bisa tetap fluid untuk loading awal peran
+      fluid
       className="d-flex justify-content-center align-items-center vh-100"
     >
-      <Spinner animation="border" variant="secondary" />
-      <p className="ms-2">Memeriksa status penjual...</p>
+      <Spinner animation="border" style={{ color: "var(--brand-primary)" }} />
+      <p className="ms-2" style={{ color: "var(--brand-primary)" }}>
+        Memeriksa status penjual...
+      </p>
     </Container>
   );
 }

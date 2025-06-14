@@ -135,6 +135,25 @@ const getShopDetailById = async (shopId) => {
   }
 };
 
+const getMyShopStatistics = async (params = {}) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/shop/my-shop/statistics`, {
+      params,
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        success: false,
+        message:
+          "Terjadi kesalahan pada server saat mengambil statistik toko Anda.",
+        statusCode: error.response?.status || 500,
+      }
+    );
+  }
+};
+
 export {
   createShop,
   getMyShop,
@@ -142,4 +161,5 @@ export {
   deleteMyShop,
   getAllShops,
   getShopDetailById,
+  getMyShopStatistics,
 };

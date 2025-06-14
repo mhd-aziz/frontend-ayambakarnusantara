@@ -1,4 +1,3 @@
-// src/pages/Seller/SellerShopInfo.js
 import React, { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
@@ -25,10 +24,12 @@ import {
   CheckCircleFill,
   XCircleFill,
   ExclamationTriangleFill,
+  CalendarCheck,
+  ClockHistory,
 } from "react-bootstrap-icons";
 import CreateSellerForm from "../../components/Seller/CreateSellerForm";
 import { updateMyShop, deleteMyShop } from "../../services/ShopService";
-import "../../css/Seller.css";
+import "../../css/SellerShopInfo.css";
 const ICON_COLOR = "#C07722";
 
 function SellerShopInfo() {
@@ -144,7 +145,7 @@ function SellerShopInfo() {
     setIsDeletingShop(true);
     try {
       const response = await deleteMyShop();
-      alert(response.message || "Toko berhasil dihapus."); // Ganti dengan notifikasi yang lebih baik jika perlu
+      alert(response.message || "Toko berhasil dihapus.");
       closeDeleteModal();
       if (loadInitialData) await loadInitialData();
     } catch (err) {
@@ -156,10 +157,18 @@ function SellerShopInfo() {
     }
   };
 
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    const shopName = initialShopData?.shopName || "Toko";
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      shopName
+    )}&size=1200&background=efefef&color=757575&font-size=0.2&bold=true`;
+  };
+
   if (!outletContext) {
     return (
       <Container className="d-flex justify-content-center align-items-center vh-100">
-        <Spinner animation="border" variant="primary" />
+        <Spinner animation="border" style={{ color: "var(--brand-primary)" }} />
       </Container>
     );
   }
@@ -170,8 +179,6 @@ function SellerShopInfo() {
   ) {
     return (
       <Container className="seller-page-content">
-        {" "}
-        {/* Tambahkan kelas wrapper */}
         <Row className="justify-content-center">
           <Col md={10} lg={8}>
             {userRole === "customer" && (
@@ -187,7 +194,6 @@ function SellerShopInfo() {
                 Data toko tidak ditemukan. Silakan buat toko Anda.
               </Alert>
             )}
-            {/* CreateSellerForm mungkin juga bisa menggunakan kelas .seller-form dari Seller.css */}
             <div className="seller-form">
               <CreateSellerForm onShopCreated={handleShopCreated} />
             </div>
@@ -201,8 +207,6 @@ function SellerShopInfo() {
   if (isEditing && userRole === "seller" && hasShop) {
     return (
       <div className="seller-page-content">
-        {" "}
-        {/* Tambahkan kelas wrapper */}
         <h2 className="seller-page-title">Edit Informasi Toko</h2>
         {error && (
           <Alert
@@ -225,8 +229,6 @@ function SellerShopInfo() {
           </Alert>
         )}
         <Form onSubmit={handleUpdateSubmit} className="seller-form">
-          {" "}
-          {/* Terapkan kelas seller-form */}
           <Form.Group
             as={Row}
             className="mb-3 align-items-center"
@@ -357,11 +359,14 @@ function SellerShopInfo() {
 
   // Tampilan Informasi Toko (Mode Baca)
   if (userRole === "seller" && hasShop && initialShopData) {
+    const bannerSrc =
+      initialShopData.bannerImageURL ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        initialShopData.shopName || "Toko"
+      )}&size=1200&background=efefef&color=757575&font-size=0.2&bold=true`;
     return (
       <>
         <div className="seller-page-content">
-          {" "}
-          {/* Tambahkan kelas wrapper */}
           <div className="seller-page-header">
             <h2 className="seller-page-title">Informasi Toko</h2>
             <div className="seller-header-actions">
@@ -403,60 +408,121 @@ function SellerShopInfo() {
               <CheckCircleFill className="me-2" /> {success}
             </Alert>
           )}
-          <Card className="seller-card">
-            {initialShopData?.bannerImageURL && (
-              <Card.Img
-                variant="top"
-                src={initialShopData.bannerImageURL}
+
+          <Card className="seller-card shadow-sm overflow-hidden">
+            <Card.Header className="p-0">
+              <Image
+                src={bannerSrc}
                 alt={`Banner ${initialShopData.shopName}`}
-                style={{ maxHeight: "300px", objectFit: "contain" }}
+                onError={handleImageError}
+                style={{
+                  width: "100%",
+                  height: "20rem",
+                  objectFit: "contain",
+                  backgroundColor: "#f0f2f5",
+                }}
               />
-            )}
+            </Card.Header>
             <Card.Body>
-              <Card.Title as="h4">
-                {initialShopData?.shopName || "Nama Toko Belum Ada"}
-              </Card.Title>
-              <hr />
-              <ListGroup variant="flush" className="seller-info-list">
-                <ListGroup.Item>
-                  <strong>Pemilik</strong>
-                  <span>
-                    {currentUserProfile?.displayName || "Tidak Diketahui"}
-                  </span>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Deskripsi</strong>
-                  <p className="mb-0">
+              <Row>
+                <Col lg={8}>
+                  <Card.Title as="h3" className="mb-2">
+                    {initialShopData?.shopName || "Nama Toko Belum Ada"}
+                  </Card.Title>
+                  <Card.Text className="text-muted mb-4">
                     {initialShopData?.description || "Belum ada deskripsi."}
-                  </p>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Alamat Toko</strong>
-                  <span>{initialShopData?.shopAddress || "Belum diatur"}</span>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Bergabung Sejak</strong>
-                  <span>
-                    {initialShopData?.createdAt
-                      ? new Date(initialShopData.createdAt).toLocaleDateString(
-                          "id-ID",
-                          { day: "2-digit", month: "long", year: "numeric" }
-                        )
-                      : "-"}
-                  </span>
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Terakhir Diperbarui</strong>
-                  <span>
-                    {initialShopData?.updatedAt
-                      ? new Date(initialShopData.updatedAt).toLocaleDateString(
-                          "id-ID",
-                          { day: "2-digit", month: "long", year: "numeric" }
-                        )
-                      : "-"}
-                  </span>
-                </ListGroup.Item>
-              </ListGroup>
+                  </Card.Text>
+
+                  <ListGroup variant="flush" className="seller-info-list">
+                    <ListGroup.Item className="px-0 d-flex align-items-start">
+                      <AddressIcon
+                        size={20}
+                        className="me-3 mt-1"
+                        style={{ color: ICON_COLOR }}
+                      />
+                      <div>
+                        <strong>Alamat Toko</strong>
+                        <p className="mb-0 text-muted">
+                          {initialShopData?.shopAddress || "Belum diatur"}
+                        </p>
+                      </div>
+                    </ListGroup.Item>
+                    <ListGroup.Item className="px-0 d-flex align-items-start">
+                      <CalendarCheck
+                        size={20}
+                        className="me-3 mt-1"
+                        style={{ color: ICON_COLOR }}
+                      />
+                      <div>
+                        <strong>Bergabung Sejak</strong>
+                        <p className="mb-0 text-muted">
+                          {initialShopData?.createdAt
+                            ? new Date(
+                                initialShopData.createdAt
+                              ).toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "-"}
+                        </p>
+                      </div>
+                    </ListGroup.Item>
+                    <ListGroup.Item className="px-0 d-flex align-items-start">
+                      <ClockHistory
+                        size={20}
+                        className="me-3 mt-1"
+                        style={{ color: ICON_COLOR }}
+                      />
+                      <div>
+                        <strong>Terakhir Diperbarui</strong>
+                        <p className="mb-0 text-muted">
+                          {initialShopData?.updatedAt
+                            ? new Date(
+                                initialShopData.updatedAt
+                              ).toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "-"}
+                        </p>
+                      </div>
+                    </ListGroup.Item>
+                  </ListGroup>
+                </Col>
+
+                <Col lg={4} className="mt-4 mt-lg-0">
+                  <Card bg="light" className="h-100">
+                    <Card.Body className="text-center">
+                      <h6 className="text-muted">PEMILIK TOKO</h6>
+                      <Image
+                        src={
+                          currentUserProfile?.photoURL ||
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            currentUserProfile?.displayName || "P"
+                          )}&background=C07722&color=fff&size=80`
+                        }
+                        roundedCircle
+                        style={{
+                          width: "80px",
+                          height: "80px",
+                          objectFit: "cover",
+                          border: "3px solid white",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        }}
+                        className="mb-2"
+                      />
+                      <p className="fw-bold mb-0 mt-2">
+                        {currentUserProfile?.displayName || "Tidak Diketahui"}
+                      </p>
+                      <p className="text-muted small">
+                        {currentUserProfile?.email}
+                      </p>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
         </div>
@@ -471,8 +537,6 @@ function SellerShopInfo() {
             closeButton={!isDeletingShop}
             className="modal-header-danger"
           >
-            {" "}
-            {/* Kelas khusus untuk header modal bahaya */}
             <Modal.Title>
               <ExclamationTriangleFill className="me-2" /> Konfirmasi Hapus Toko
             </Modal.Title>
@@ -546,8 +610,6 @@ function SellerShopInfo() {
 
   return (
     <Container className="text-center mt-4 seller-page-content">
-      {" "}
-      {/* Tambahkan kelas wrapper */}
       <Alert variant="light" className="shadow-sm">
         Memuat informasi toko atau tidak ada data untuk ditampilkan.
       </Alert>
