@@ -28,7 +28,6 @@ import * as ChatService from "../../services/ChatService";
 import ChatbotPane from "./ChatbotPane";
 import "../../css/GlobalChat.css";
 
-// ... (fungsi firestoreTimestampToDate, ConfirmationModal, ConversationItem, MessageBubble tetap sama) ...
 const MAPS_API_KEY = process.env.REACT_APP_Maps_API_KEY || "YOUR_Maps_API_KEY";
 
 function firestoreTimestampToDate(tsObject) {
@@ -162,7 +161,7 @@ const MessageBubble = ({ message, isSender }) => {
   const renderLocation = () => {
     if (!message.location) return null;
     const { latitude, longitude } = message.location;
-    const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=$${latitude},${longitude}`;
 
     if (MAPS_API_KEY === "YOUR_Maps_API_KEY") {
       return (
@@ -235,6 +234,7 @@ function GlobalChat({
   onRequestClose,
 }) {
   const { user: currentUser, isLoggedIn } = useAuth();
+  // PENJELASAN: Mode default adalah 'chatbot' untuk menjaga prioritas.
   const [chatMode, setChatMode] = useState("chatbot");
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -260,7 +260,6 @@ function GlobalChat({
   const currentUserUID = currentUser?.uid;
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -278,6 +277,14 @@ function GlobalChat({
       scrollToBottom();
     }
   }, [messages, scrollToBottom]);
+
+  // PERBAIKAN: Hook ini secara spesifik menangani props yang masuk
+  // untuk membuka chat tertentu, memastikan `chatMode` diubah ke 'seller'.
+  useEffect(() => {
+    if (conversationToLoad || recipientToInitiateChat) {
+      setChatMode("seller");
+    }
+  }, [conversationToLoad, recipientToInitiateChat]);
 
   const sortConversations = (convos) => {
     return [...convos].sort((a, b) => {
@@ -313,29 +320,29 @@ function GlobalChat({
     }
   }, [isLoggedIn, currentUserUID]);
 
+  // PENJELASAN: Hook ini akan berjalan ketika `chatMode` berubah menjadi 'seller'.
   useEffect(() => {
-    if (isLoggedIn && chatMode === "seller" && !recipientToInitiateChat) {
+    if (isLoggedIn && chatMode === "seller") {
       loadConversations();
     } else if (!isLoggedIn) {
       setConversations([]);
       setSelectedConversation(null);
       setMessages([]);
     }
-  }, [isLoggedIn, chatMode, recipientToInitiateChat, loadConversations]);
+  }, [isLoggedIn, chatMode, loadConversations]);
 
+  // PENJELASAN: Hook ini sekarang akan berjalan setelah `conversations` terisi,
+  // lalu memilih percakapan yang benar berdasarkan `conversationToLoad`.
   useEffect(() => {
     if (conversationToLoad && conversations.length > 0) {
       const targetConversation = conversations.find(
         (c) => c._id === conversationToLoad
       );
-
-      // Jika percakapan ditemukan di dalam daftar
       if (targetConversation) {
-        setChatMode("seller"); 
-        setSelectedConversation(targetConversation); 
+        setSelectedConversation(targetConversation);
       }
     }
-  }, [conversationToLoad, conversations]); 
+  }, [conversationToLoad, conversations]);
 
   const loadMessages = useCallback(
     async (conversationId, loadMore = false, currentMessagesState = []) => {
@@ -382,10 +389,8 @@ function GlobalChat({
     if (chatMode === "seller" && selectedConversation?._id) {
       setMessages([]);
       loadMessages(selectedConversation._id, false, []);
-    } else if (chatMode === "chatbot") {
-      setMessages([]);
-      setSelectedConversation(null);
     } else {
+      // Membersihkan pesan jika tidak ada percakapan yang dipilih atau mode bukan seller
       setMessages([]);
     }
   }, [selectedConversation?._id, chatMode, loadMessages]);
@@ -399,12 +404,10 @@ function GlobalChat({
         selectedConversation.participantUIDs.includes(targetUID) &&
         selectedConversation.participantUIDs.includes(currentUserUID)
       ) {
-        if (chatMode !== "seller") setChatMode("seller");
         if (onChatInitiated) onChatInitiated(selectedConversation);
         return;
       }
       setIsInitiatingChat(true);
-      if (chatMode !== "seller") setChatMode("seller");
       setErrorInitiating("");
       try {
         const response = await ChatService.startOrGetConversation(targetUID);
@@ -449,11 +452,9 @@ function GlobalChat({
     isLoggedIn,
     currentUserUID,
     onChatInitiated,
-    chatMode,
     selectedConversation,
   ]);
 
-  // ... (sisa dari semua fungsi handler seperti handleSelectConversation, handleSendMessage, dll, tetap sama)
   const handleSelectConversation = (conversation) => {
     if (
       chatMode === "seller" &&
@@ -636,9 +637,6 @@ function GlobalChat({
       setMessages([]);
       setErrorMessages("");
       setErrorSending("");
-      if (mode === "seller" && !recipientToInitiateChat) {
-        loadConversations();
-      }
     }
   };
 
@@ -654,7 +652,6 @@ function GlobalChat({
   const showMessagePanel =
     chatMode === "chatbot" || (chatMode === "seller" && selectedConversation);
 
-  // ... (return JSX tetap sama)
   return (
     <>
       <ConfirmationModal
