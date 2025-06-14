@@ -208,7 +208,7 @@ function SellerProductManagement() {
 
   return (
     <div className="seller-page-content product-management-page">
-      <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-2">
         <h3 className="mb-0">Kelola Produk Toko: {shopData?.shopName}</h3>
         <Button
           variant="primary"

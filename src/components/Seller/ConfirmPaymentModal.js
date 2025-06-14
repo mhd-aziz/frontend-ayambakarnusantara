@@ -88,7 +88,7 @@ function ConfirmPaymentModal({ show, onHide, order, onPaymentConfirmed }) {
       <Modal.Header closeButton>
         <Modal.Title>
           Konfirmasi Pembayaran & Unggah Bukti (Order #
-          {order?.orderId.substring(0, 8)})
+          {order?.orderId.substring(0, 8)}...)
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>

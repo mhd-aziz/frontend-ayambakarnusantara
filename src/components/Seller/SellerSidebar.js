@@ -1,4 +1,3 @@
-// src/components/Seller/SellerSidebar.js
 import React from "react";
 import { Nav } from "react-bootstrap";
 import { Link, useLocation } from "react-router-dom";
@@ -9,20 +8,16 @@ import {
   ClipboardCheck,
   InfoCircleFill,
 } from "react-bootstrap-icons";
-import { useAuth } from "../../context/AuthContext";
 import "../../css/SellerSidebar.css";
 
 function SellerSidebar({ shopName }) {
-  const { user: authUser } = useAuth();
   const location = useLocation();
 
   const isActive = (path, isEnd = false) => {
     if (isEnd) {
       return location.pathname === path;
     }
-    return path === "/toko-saya"
-      ? location.pathname === path
-      : location.pathname.startsWith(path);
+    return location.pathname.startsWith(path);
   };
 
   const navLinks = [
@@ -34,17 +29,13 @@ function SellerSidebar({ shopName }) {
 
   return (
     <div className="seller-sidebar-wrapper">
-      <div className="seller-sidebar-header text-center py-3 mb-3">
+      <div className="seller-sidebar-header">
         <div className="shop-icon-wrapper">
-          {" "}
-          {/* Tambahkan wrapper ini untuk styling ikon */}
-          <ShopIcon size={24} /> {/* Sesuaikan ukuran jika perlu */}
+          <ShopIcon size={28} />
         </div>
-        <h5 className="mb-0">{shopName || "Toko Saya"}</h5>
-        {authUser?.displayName && (
-          <small className="text-muted">{authUser.displayName}</small>
-        )}
+        <h5 className="mb-0 text-truncate">{shopName || "Toko Saya"}</h5>
       </div>
+
       <Nav variant="pills" className="flex-column sidebar-nav">
         {navLinks.map((linkItem) => {
           const IconComponent = linkItem.icon;
@@ -58,7 +49,8 @@ function SellerSidebar({ shopName }) {
                   isActive(linkItem.path, linkItem.exact) ? "active" : ""
                 }`}
               >
-                <IconComponent size={18} className="me-2" /> {linkItem.text}
+                <IconComponent size={18} />
+                <span>{linkItem.text}</span>
               </Nav.Link>
             </Nav.Item>
           );

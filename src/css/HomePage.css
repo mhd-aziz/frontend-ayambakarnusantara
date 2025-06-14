@@ -75,9 +75,17 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+.section-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333!important;
+  margin-bottom: 2.5rem !important;
+  text-align: center;
+}
+
 .other-content-section h2,
 .testimonials-section h2 {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 600;
   color: #333;
   margin-bottom: 2.5rem;
@@ -91,7 +99,7 @@
 .other-content-section h2,
 .testimonials-section h2 {
   color: #000000 !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .testimonials-section h2 {

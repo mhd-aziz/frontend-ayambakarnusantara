@@ -20,15 +20,14 @@ import {
   Image as ImageIcon,
 } from "react-bootstrap-icons";
 
-const ICON_COLOR = "#C07722"; // Atau warna brand Anda
+const ICON_COLOR = "#C07722"; 
 
-// Pindahkan initialFormState ke luar lingkup komponen
 const initialFormState = {
   name: "",
   description: "",
   price: "",
   stock: "",
-  category: "Makanan", // Default kategori
+  category: "Makanan",
   productImage: null,
   removeProductImage: false,
 };
@@ -42,8 +41,6 @@ function ProductForm({
   serverError,
   serverSuccess,
 }) {
-  // Hapus definisi initialFormState dari sini
-
   const [formData, setFormData] = useState(initialFormState);
   const [imagePreview, setImagePreview] = useState(null);
   const [formErrors, setFormErrors] = useState({});
@@ -61,12 +58,11 @@ function ProductForm({
       });
       setImagePreview(productToEdit.productImageURL || null);
     } else {
-      // Saat membuat produk baru atau modal ditutup lalu dibuka lagi untuk produk baru
-      setFormData(initialFormState); // Gunakan konstanta yang sudah didefinisikan di luar
+      setFormData(initialFormState);
       setImagePreview(null);
     }
-    setFormErrors({}); // Reset errors on open or product change
-  }, [productToEdit, show]); // initialFormState tidak lagi menjadi dependensi karena stabil
+    setFormErrors({});
+  }, [productToEdit, show]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -98,7 +94,6 @@ function ProductForm({
       if (!productToEdit?.productImageURL) {
         setImagePreview(null);
       } else {
-        // Jika batal memilih file saat edit, kembalikan preview ke gambar yang ada
         setImagePreview(productToEdit.productImageURL);
       }
     }
@@ -155,12 +150,15 @@ function ProductForm({
     );
   };
 
+  // PERUBAHAN: Mengganti URL placeholder dengan ui-avatars
   const currentImageSrc =
     imagePreview ||
     (productToEdit && !formData.removeProductImage
       ? productToEdit.productImageURL
       : null) ||
-    `https://via.placeholder.com/150x150.png?text=Upload+Gambar`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      formData.name || "Produk"
+    )}&size=150&background=EFEFEF&color=AAAAAA`;
 
   return (
     <Modal
@@ -178,13 +176,7 @@ function ProductForm({
       </Modal.Header>
       <Modal.Body>
         {serverError && (
-          <Alert
-            variant="danger"
-            onClose={() => {
-              /* Anda bisa menambahkan fungsi untuk clear serverError dari parent jika diperlukan */
-            }}
-            dismissible
-          >
+          <Alert variant="danger" onClose={() => {}} dismissible>
             <XCircleFill className="me-2" />
             {serverError}
           </Alert>
@@ -297,7 +289,6 @@ function ProductForm({
                   <option value="Makanan">Makanan</option>
                   <option value="Minuman">Minuman</option>
                   <option value="Camilan">Camilan</option>
-                  {/* Tambahkan kategori lain jika perlu */}
                 </Form.Select>
                 <Form.Control.Feedback type="invalid">
                   {formErrors.category}

@@ -1,4 +1,3 @@
-// src/components/Seller/ProductListItem.js
 import React from "react";
 import { Card, Button, Col, Badge, Image, Row } from "react-bootstrap";
 import { PencilSquare, TrashFill, Eye } from "react-bootstrap-icons";
@@ -7,9 +6,9 @@ import { Link } from "react-router-dom";
 function ProductListItem({ product, onEdit, onDelete }) {
   const handleImageError = (e) => {
     e.target.onerror = null;
-    e.target.src = `https://placehold.co/100x100/EFEFEF/AAAAAA?text=${encodeURIComponent(
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
       product.name || "Produk"
-    )}`;
+    )}&background=EFEFEF&color=AAAAAA&size=100`;
   };
 
   return (
@@ -23,13 +22,12 @@ function ProductListItem({ product, onEdit, onDelete }) {
             <Image
               src={
                 product.productImageURL ||
-                // Fallback ke placehold.co
-                `https://placehold.co/100x100/EFEFEF/AAAAAA?text=${encodeURIComponent(
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
                   product.name || "Produk"
-                )}`
+                )}&background=EFEFEF&color=AAAAAA&size=100`
               }
               alt={product.name || "Gambar Produk"}
-              className="product-list-image" 
+              className="product-list-image"
               onError={handleImageError}
             />
           </Col>

@@ -41,43 +41,54 @@ const StarRatingDisplay = ({ rating, size = 16 }) => {
   );
 };
 
-const RatingCard = ({ rating }) => (
-  <div className="rating-card-wrapper">
-    <Card className="w-100 h-100 text-center p-3 testimonial-card shadow-sm">
-      <Card.Img
-        variant="top"
-        src={
-          rating.userPhotoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            rating.userDisplayName || "U"
-          )}&background=C07722&color=fff&size=80`
-        }
-        alt={rating.userDisplayName}
-        className="rounded-circle mx-auto mb-3"
-        style={{
-          width: "80px",
-          height: "80px",
-          objectFit: "cover",
-          border: "3px solid #C07722",
-        }}
-      />
-      <Card.Body className="d-flex flex-column">
-        <Card.Title as="h5" className="h6 mb-1">
-          {rating.userDisplayName}
-        </Card.Title>
-        <div className="mb-2">
-          <StarRatingDisplay rating={rating.ratingValue} size={18} />
-        </div>
-        <blockquote className="blockquote mb-0 flex-grow-1 d-flex align-items-center justify-content-center">
-          <p className="small fst-italic mb-0">
-            "{rating.reviewText || "Pengguna ini tidak memberikan ulasan teks."}
-            "
-          </p>
-        </blockquote>
-      </Card.Body>
-    </Card>
-  </div>
-);
+// PERUBAHAN: Menambahkan fungsi onError ke RatingCard
+const RatingCard = ({ rating }) => {
+  const nameForAvatar = rating.userDisplayName || "U";
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    nameForAvatar
+  )}&background=C07722&color=fff&size=80`;
+
+  const handleAvatarError = (e) => {
+    e.target.onerror = null; // Mencegah loop error
+    e.target.src = avatarUrl; // Fallback ke ui-avatars jika URL asli gagal
+  };
+
+  return (
+    <div className="rating-card-wrapper">
+      <Card className="w-100 h-100 text-center p-3 testimonial-card shadow-sm">
+        <Card.Img
+          variant="top"
+          src={rating.userPhotoURL || avatarUrl}
+          alt={rating.userDisplayName || "Pengguna"}
+          className="rounded-circle mx-auto mb-3"
+          style={{
+            width: "80px",
+            height: "80px",
+            objectFit: "cover",
+            border: "3px solid #C07722",
+          }}
+          onError={handleAvatarError} // Menambahkan event handler onError
+        />
+        <Card.Body className="d-flex flex-column">
+          <Card.Title as="h5" className="h6 mb-1">
+            {rating.userDisplayName || "Pengguna Anonim"}
+          </Card.Title>
+          <div className="mb-2">
+            <StarRatingDisplay rating={rating.ratingValue} size={18} />
+          </div>
+          <blockquote className="blockquote mb-0 flex-grow-1 d-flex align-items-center justify-content-center">
+            <p className="small fst-italic mb-0">
+              "
+              {rating.reviewText ||
+                "Pengguna ini tidak memberikan ulasan teks."}
+              "
+            </p>
+          </blockquote>
+        </Card.Body>
+      </Card>
+    </div>
+  );
+};
 
 function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -355,7 +366,9 @@ function HomePage() {
       <Container className="mt-5 pt-5 pb-4">
         {recommendedProducts.length > 0 && !isRecommendationsLoading && (
           <>
-            <h2 className="text-center mb-5">REKOMENDASI UNTUK ANDA</h2>
+            <h2 className="text-center mb-5 section-title">
+              REKOMENDASI UNTUK ANDA
+            </h2>
             {renderProductSection(
               isRecommendationsLoading,
               recommendationsError,
@@ -367,7 +380,7 @@ function HomePage() {
       </Container>
 
       <Container className="pt-2 pb-5">
-        <h2 className="text-center mb-5">MENU UNGGULAN KAMI</h2>
+        <h2 className="text-center mb-5 section-title">MENU UNGGULAN KAMI</h2>
         {renderProductSection(isLoading, error, featuredProducts, false)}
         <div className="text-center mt-5">
           <Button
@@ -385,7 +398,9 @@ function HomePage() {
       {ratings.length > 0 && !isRatingsLoading && (
         <div className="testimonials-section py-5">
           <Container>
-            <h2 className="text-center mb-5">APA KATA PELANGGAN KAMI?</h2>
+            <h2 className="text-center mb-5 section-title">
+              APA KATA PELANGGAN KAMI?
+            </h2>
             {renderRatingsSection(isRatingsLoading, ratingsError, ratings)}
           </Container>
         </div>
