@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-// 1. Ubah 'Link' menjadi 'NavLink'
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Navbar,
@@ -24,7 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { getMyNotifications } from "../../services/NotificationService";
 
-function NavigationBar() {
+function NavigationBar({ isAuthModalOpen }) {
   const { isLoggedIn, user, logout: contextLogout } = useAuth();
   const { cartItemCount } = useCart();
   const location = useLocation();
@@ -55,12 +54,11 @@ function NavigationBar() {
     }
   }, [isLoggedIn, fetchNotifications]);
 
-  // KODE DIKEMBALIKAN KE SEMULA SESUAI PERMINTAAN ANDA
   useEffect(() => {
     const handleScroll = () => {
       const isSolid = window.scrollY > window.innerHeight;
-      const isHomePage = location.pathname === "/";
-      if (isHomePage) {
+      const isVisuallyOnHomePage = location.pathname === "/" || isAuthModalOpen;
+      if (isVisuallyOnHomePage) {
         setIsNavbarSolid(isSolid);
       } else {
         setIsNavbarSolid(true);
@@ -71,7 +69,7 @@ function NavigationBar() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [location.pathname]);
+  }, [location.pathname, isAuthModalOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -173,7 +171,6 @@ function NavigationBar() {
         </Navbar.Brand>
 
         <div className="mobile-icons-group d-flex align-items-center d-xl-none">
-          {/* 2. Ganti semua 'as={Link}' menjadi 'as={NavLink}' */}
           {isLoggedIn && (
             <Nav.Link
               as={NavLink}
@@ -248,7 +245,6 @@ function NavigationBar() {
           className="justify-content-xl-end"
         >
           <Nav className="nav-links-desktop ms-xl-4 me-xl-auto">
-            {/* 3. Tambahkan 'end' prop untuk link Beranda */}
             <Nav.Link as={NavLink} to="/" className="nav-link-custom" end>
               Beranda
             </Nav.Link>

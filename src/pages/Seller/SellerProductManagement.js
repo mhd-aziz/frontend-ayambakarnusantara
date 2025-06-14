@@ -19,7 +19,7 @@ import CreateSellerForm from "../../components/Seller/CreateSellerForm";
 import ProductListItem from "../../components/Seller/ProductListItem";
 import ProductForm from "../../components/Seller/ProductForm";
 import {
-  getMyProducts, // Mengganti getProducts dengan getMyProducts
+  getMyProducts,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -30,7 +30,7 @@ function SellerProductManagement() {
   const outletContext = useOutletContext();
   const {
     userRole,
-    shopData, // shopData mungkin tidak lagi diperlukan untuk fetch produk jika getMyProducts tidak butuh shopId
+    shopData,
     hasShop,
     handleShopCreated,
     loadInitialData: loadSellerPageData,
