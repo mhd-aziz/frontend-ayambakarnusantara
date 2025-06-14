@@ -79,8 +79,6 @@
   text-overflow: ellipsis;
 }
 
-
-
 .shop-card-owner {
   font-size: 0.8rem;
   color: var(--text-muted-custom) !important;
@@ -98,6 +96,34 @@
 .shop-card .btn-brand:hover {
   background-color: var(--brand-secondary) !important;
   border-color: var(--brand-secondary) !important;
+}
+
+.shop-pagination .page-item.active .page-link {
+  background-color: var(--brand-primary, #c07722);
+  border-color: var(--brand-primary, #c07722);
+  color: white;
+  z-index: 3;
+}
+
+.shop-pagination .page-link {
+  color: var(--brand-primary, #c07722);
+}
+
+.shop-pagination .page-link:hover {
+  color: var(--brand-secondary, #a56317);
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.shop-pagination .page-link:focus {
+  box-shadow: 0 0 0 0.25rem rgba(192, 119, 34, 0.25);
+}
+
+.shop-pagination .page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
 }
 
 @media (max-width: 991.98px) {
@@ -127,7 +153,7 @@
   }
   .shop-card-description {
     font-size: 0.85rem;
-    min-height: 3.9em; /* Sesuaikan jika line-clamp diubah untuk breakpoint ini */
+    min-height: 3.9em; 
     -webkit-line-clamp: 3;
     line-clamp: 3;
   }

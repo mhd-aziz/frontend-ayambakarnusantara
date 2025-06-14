@@ -51,9 +51,12 @@ function ViewPaymentProofsModal({ show, onHide, orderId }) {
       </Modal.Header>
       <Modal.Body>
         {isLoading && (
-          <div className="text-center">
-            <Spinner animation="border" />
-            <p>Memuat bukti...</p>
+          <div className="text-center py-5">
+            <Spinner
+              animation="border"
+              style={{ color: "var(--brand-primary)" }}
+            />
+            <p className="mt-2 text-muted">Memuat bukti...</p>
           </div>
         )}
         {error && <Alert variant="danger">{error}</Alert>}

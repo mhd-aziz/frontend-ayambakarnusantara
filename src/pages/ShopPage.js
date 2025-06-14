@@ -71,7 +71,7 @@ function ShopPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchShops(currentPage, searchTerm);
-    }, 300); // Debounce untuk mengurangi frekuensi pemanggilan API saat mengetik
+    }, 300);
 
     return () => {
       clearTimeout(handler);
@@ -80,7 +80,7 @@ function ShopPage() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset ke halaman pertama setiap kali ada pencarian baru
+    setCurrentPage(1);
   };
 
   const handlePageChange = (pageNumber) => {
@@ -309,7 +309,9 @@ function ShopPage() {
 
             {totalPages > 1 && (
               <div className="d-flex justify-content-center mt-5">
-                <Pagination>{paginationItems}</Pagination>
+                <Pagination className="shop-pagination">
+                  {paginationItems}
+                </Pagination>
               </div>
             )}
           </>

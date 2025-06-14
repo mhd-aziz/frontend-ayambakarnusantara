@@ -13,6 +13,19 @@ function UpdateOrderStatusModal({
   getStatusBadgeVariant,
   getAvailableNextStatuses,
 }) {
+  const formatOrderStatus = (status) => {
+    const statusMap = {
+      PENDING_CONFIRMATION: "Menunggu Konfirmasi",
+      AWAITING_PAYMENT: "Menunggu Pembayaran",
+      CONFIRMED: "Dikonfirmasi",
+      PROCESSING: "Sedang Diproses",
+      READY_FOR_PICKUP: "Siap Diambil",
+      COMPLETED: "Selesai",
+      CANCELLED: "Dibatalkan",
+    };
+    return statusMap[status] || status.replace(/_/g, " ");
+  };
+
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton className="modal-header-primary">
@@ -27,7 +40,7 @@ function UpdateOrderStatusModal({
           <p>
             Status saat ini:{" "}
             <Badge bg={getStatusBadgeVariant(orderToUpdate.orderStatus)}>
-              {orderToUpdate.orderStatus.replace(/_/g, " ")}
+              {formatOrderStatus(orderToUpdate.orderStatus)}
             </Badge>
           </p>
         )}
@@ -45,7 +58,8 @@ function UpdateOrderStatusModal({
               getAvailableNextStatuses(orderToUpdate.orderStatus).map(
                 (statusOption) => (
                   <option key={statusOption} value={statusOption}>
-                    {statusOption.replace(/_/g, " ")}
+                    {/* Menggunakan fungsi formatOrderStatus untuk menampilkan opsi status */}
+                    {formatOrderStatus(statusOption)}
                   </option>
                 )
               )}

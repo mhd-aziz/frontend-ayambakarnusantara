@@ -1,4 +1,3 @@
-// src/components/Seller/CreateSellerForm.js
 import React, { useState } from "react";
 import {
   Form,
@@ -17,7 +16,7 @@ import {
 } from "react-bootstrap-icons";
 import { createShop } from "../../services/ShopService";
 
-const ICON_COLOR = "#C07722"; // Atau warna brand Anda
+const ICON_COLOR = "#C07722"; 
 
 function CreateSellerForm({ onShopCreated }) {
   const [description, setDescription] = useState("");
@@ -57,7 +56,7 @@ function CreateSellerForm({ onShopCreated }) {
       ) {
         setSuccess(response.message || "Toko berhasil dibuat!");
         if (onShopCreated) {
-          onShopCreated(response.data); // Kirim data toko baru ke parent
+          onShopCreated(response.data);
         }
         // Reset form
         setDescription("");

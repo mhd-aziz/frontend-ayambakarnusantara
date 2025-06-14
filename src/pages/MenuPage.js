@@ -33,13 +33,11 @@ function MenuPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // FIX: Menginisialisasi state filter langsung dari parameter URL 'q'
-  // Ini memastikan pencarian diterapkan pada pemuatan pertama halaman.
   const [filterParams, setFilterParams] = useState(() => {
     const queryParams = new URLSearchParams(location.search);
     return {
       page: 1,
-      limit: 8,
+      limit: 10,
       category: "",
       sortBy: "createdAt",
       order: "desc",
@@ -51,7 +49,6 @@ function MenuPage() {
     setIsLoadingProducts(true);
     setError(null);
     try {
-      // Pastikan parameter searchByName tidak dikirim jika kosong
       const paramsToSend = { ...filterParams };
       if (!paramsToSend.searchByName) {
         delete paramsToSend.searchByName;
@@ -93,8 +90,6 @@ function MenuPage() {
     }
   }, [filterParams]);
 
-  // Effect ini tetap berguna untuk menangani pencarian berikutnya
-  // saat pengguna sudah berada di halaman Menu.
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const searchQuery = queryParams.get("q") || "";
@@ -469,7 +464,10 @@ function MenuPage() {
 
             {productsData.totalPages > 1 && (
               <div className="d-flex justify-content-center mt-5">
-                <Pagination>{paginationItems}</Pagination>
+                {/* PERUBAHAN: Menambahkan className */}
+                <Pagination className="menu-pagination">
+                  {paginationItems}
+                </Pagination>
               </div>
             )}
           </>
