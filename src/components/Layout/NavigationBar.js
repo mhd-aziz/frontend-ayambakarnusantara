@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+// 1. Ubah 'Link' menjadi 'NavLink'
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Navbar,
   Nav,
@@ -54,6 +55,7 @@ function NavigationBar() {
     }
   }, [isLoggedIn, fetchNotifications]);
 
+  // KODE DIKEMBALIKAN KE SEMULA SESUAI PERMINTAAN ANDA
   useEffect(() => {
     const handleScroll = () => {
       const isSolid = window.scrollY > window.innerHeight;
@@ -83,9 +85,6 @@ function NavigationBar() {
     };
   }, [navRef]);
 
-  // DIPERBAIKI: Menghapus `searchQuery` dari dependency array.
-  // Hook ini sekarang HANYA akan berjalan ketika URL berubah (misalnya saat navigasi back/forward),
-  // bukan saat pengguna mengetik.
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const qParam = queryParams.get("q") || "";
@@ -95,10 +94,7 @@ function NavigationBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  // DIPERBAIKI: Logika navigasi dipisahkan agar tidak konflik.
   useEffect(() => {
-    // Jangan lakukan navigasi jika kita tidak berada di halaman menu
-    // dan inputnya kosong. Ini mencegah navigasi yang tidak diinginkan dari halaman lain.
     if (location.pathname !== "/menu" && searchQuery.trim() === "") {
       return;
     }
@@ -107,17 +103,14 @@ function NavigationBar() {
     const queryParams = new URLSearchParams(location.search);
     const qParam = queryParams.get("q") || "";
 
-    // Hanya lakukan navigasi jika query yang diketik berbeda dengan query di URL
     if (trimmedQuery === qParam) {
       return;
     }
 
-    // Debounce untuk menunda navigasi saat pengguna masih mengetik
     const handler = setTimeout(() => {
       if (trimmedQuery) {
         navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
       } else {
-        // Jika input dikosongkan, kembali ke halaman menu utama
         navigate("/menu");
       }
     }, 500);
@@ -139,7 +132,6 @@ function NavigationBar() {
     const trimmedQuery = searchQuery.trim();
     const queryParams = new URLSearchParams(location.search);
 
-    // Hanya navigasi jika query-nya berbeda dari yang sudah ada di URL
     if (trimmedQuery !== (queryParams.get("q") || "")) {
       if (trimmedQuery) {
         navigate(`/menu?q=${encodeURIComponent(trimmedQuery)}`);
@@ -166,7 +158,7 @@ function NavigationBar() {
           className="navbar-toggler-mobile"
         />
         <Navbar.Brand
-          as={Link}
+          as={NavLink}
           to="/"
           className="navbar-brand-desktop d-none d-xl-flex align-items-center"
         >
@@ -181,9 +173,10 @@ function NavigationBar() {
         </Navbar.Brand>
 
         <div className="mobile-icons-group d-flex align-items-center d-xl-none">
+          {/* 2. Ganti semua 'as={Link}' menjadi 'as={NavLink}' */}
           {isLoggedIn && (
             <Nav.Link
-              as={Link}
+              as={NavLink}
               to="/toko-saya"
               className="nav-link-icon-mobile p-1 me-1"
               title="Toko Saya"
@@ -192,7 +185,7 @@ function NavigationBar() {
             </Nav.Link>
           )}
           <Nav.Link
-            as={Link}
+            as={NavLink}
             to="/keranjang"
             className="nav-link-icon-mobile p-1 me-1 position-relative"
             title="Keranjang"
@@ -211,7 +204,7 @@ function NavigationBar() {
           </Nav.Link>
           {isLoggedIn && (
             <Nav.Link
-              as={Link}
+              as={NavLink}
               to="/notifikasi"
               className="nav-link-icon-mobile p-1 me-1 position-relative"
               title="Notifikasi"
@@ -231,7 +224,7 @@ function NavigationBar() {
           )}
           {isLoggedIn ? (
             <Nav.Link
-              as={Link}
+              as={NavLink}
               to="/profile"
               className="nav-link-icon-mobile p-1"
               title={user ? user.displayName || user.email : "Profil"}
@@ -240,7 +233,7 @@ function NavigationBar() {
             </Nav.Link>
           ) : (
             <Nav.Link
-              as={Link}
+              as={NavLink}
               to="/login"
               className="nav-link-icon-mobile p-1"
               title="Login/Register"
@@ -255,17 +248,18 @@ function NavigationBar() {
           className="justify-content-xl-end"
         >
           <Nav className="nav-links-desktop ms-xl-4 me-xl-auto">
-            <Nav.Link as={Link} to="/" className="nav-link-custom">
+            {/* 3. Tambahkan 'end' prop untuk link Beranda */}
+            <Nav.Link as={NavLink} to="/" className="nav-link-custom" end>
               Beranda
             </Nav.Link>
-            <Nav.Link as={Link} to="/menu" className="nav-link-custom">
+            <Nav.Link as={NavLink} to="/menu" className="nav-link-custom">
               Menu
             </Nav.Link>
-            <Nav.Link as={Link} to="/toko" className="nav-link-custom">
+            <Nav.Link as={NavLink} to="/toko" className="nav-link-custom">
               Toko
             </Nav.Link>
             {isLoggedIn && (
-              <Nav.Link as={Link} to="/pesanan" className="nav-link-custom">
+              <Nav.Link as={NavLink} to="/pesanan" className="nav-link-custom">
                 Pesanan
               </Nav.Link>
             )}
@@ -297,7 +291,7 @@ function NavigationBar() {
           <Nav className="nav-actions-desktop align-items-center">
             {isLoggedIn && (
               <Nav.Link
-                as={Link}
+                as={NavLink}
                 to="/toko-saya"
                 className="nav-link-icon-custom d-none d-xl-flex me-2"
                 title="Toko Saya"
@@ -306,7 +300,7 @@ function NavigationBar() {
               </Nav.Link>
             )}
             <Nav.Link
-              as={Link}
+              as={NavLink}
               to="/keranjang"
               className="nav-link-icon-custom d-none d-xl-flex me-2 position-relative"
               title="Keranjang"
@@ -330,7 +324,7 @@ function NavigationBar() {
 
             {isLoggedIn && (
               <Nav.Link
-                as={Link}
+                as={NavLink}
                 to="/notifikasi"
                 className="nav-link-icon-custom d-none d-xl-flex me-2"
                 title="Notifikasi"
@@ -358,7 +352,7 @@ function NavigationBar() {
             {isLoggedIn ? (
               <>
                 <Nav.Link
-                  as={Link}
+                  as={NavLink}
                   to="/profile"
                   className="nav-link-icon-custom d-none d-xl-flex me-2"
                   title={user ? user.displayName || user.email : "Profil"}
@@ -385,14 +379,14 @@ function NavigationBar() {
             ) : (
               <>
                 <Nav.Link
-                  as={Link}
+                  as={NavLink}
                   to="/login"
                   className="nav-link-custom login-link-custom d-none d-xl-block"
                 >
                   Login
                 </Nav.Link>
                 <Button
-                  as={Link}
+                  as={NavLink}
                   to="/register"
                   variant="primary-custom"
                   size="sm"
@@ -401,14 +395,14 @@ function NavigationBar() {
                   Register
                 </Button>
                 <Nav.Link
-                  as={Link}
+                  as={NavLink}
                   to="/login"
                   className="btn btn-outline-light btn-sm w-100 mb-2 mt-2 d-xl-none"
                 >
                   Login
                 </Nav.Link>
                 <Nav.Link
-                  as={Link}
+                  as={NavLink}
                   to="/register"
                   className="btn btn-light btn-sm w-100 d-xl-none"
                 >

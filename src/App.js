@@ -315,6 +315,7 @@ function App() {
               className="global-chat-app-toggle-button btn-brand shadow"
               onClick={() => {
                 setRecipientForChat(null);
+                setConversationToOpen(null);
                 setShowGlobalChatModal(true);
               }}
               title="Buka Chat"
