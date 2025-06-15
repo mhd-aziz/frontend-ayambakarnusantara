@@ -1,9 +1,8 @@
-/* src/css/SellerSidebar.css */
-
 .seller-sidebar-wrapper {
   background-color: #f8f9fa;
   padding: 1rem 0;
-  height: calc(50vh);
+  height: 70vh;
+  max-height: calc(100vh - 90px);
   display: flex;
   flex-direction: column;
   position: sticky;
@@ -40,6 +39,8 @@
   color: #343a40;
   font-size: 1.1rem;
   margin-bottom: 0.1rem;
+  word-break: break-word;
+  text-align: center;
 }
 
 .sidebar-nav {
@@ -81,10 +82,11 @@
   color: white;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 767px) {
   .seller-sidebar-wrapper {
     position: static;
     height: auto;
+    max-height: none;
     border-right: none;
     border-bottom: 1px solid #dee2e6;
   }
@@ -92,7 +94,6 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    /* PERUBAHAN: Menambahkan justify-content untuk menengahkan */
     justify-content: center;
     padding: 0.75rem 1rem;
   }
@@ -107,16 +108,14 @@
   }
   .seller-sidebar-header h5 {
     font-size: 1rem;
+    text-align: left;
   }
   .sidebar-nav {
     display: flex;
     flex-direction: row;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    justify-content: center;
     padding: 0.5rem 0.75rem;
-    scrollbar-width: none;
-  }
-  .sidebar-nav::-webkit-scrollbar {
-    display: none;
   }
   .sidebar-nav .nav-item {
     flex: 0 0 auto;
@@ -124,7 +123,6 @@
   }
   .sidebar-nav .nav-link.sidebar-link {
     padding: 0.6rem 0.8rem;
-    white-space: nowrap;
   }
 }
 

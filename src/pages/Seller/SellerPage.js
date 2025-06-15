@@ -30,9 +30,9 @@ function SellerPage() {
     }
     setIsLoadingPage(true);
     setPageError("");
-    setUserRole(null); 
-    setHasShop(false); 
-    setShopData(null); 
+    setUserRole(null);
+    setHasShop(false);
+    setShopData(null);
     setCurrentUserProfile(null);
 
     try {
@@ -174,11 +174,11 @@ function SellerPage() {
       <Container className="seller-page-container mt-4 mb-5">
         <Row className="g-0">
           {" "}
-          <Col md={3} lg={2} className="seller-sidebar-col p-0 border-end">
+          <Col md={4} lg={3} className="seller-sidebar-col p-0 border-end">
             {" "}
             <SellerSidebar shopName={shopData?.shopName} />
           </Col>
-          <Col md={9} lg={10} className="seller-content-col p-4">
+          <Col md={8} lg={9} className="seller-content-col p-4">
             <Outlet
               context={{
                 currentUserProfile,
