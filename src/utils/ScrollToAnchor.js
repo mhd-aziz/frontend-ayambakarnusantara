@@ -17,11 +17,11 @@ function ScrollToAnchor() {
           element.scrollIntoView({ behavior: "smooth", block: "start" });
           lastHash.current = "";
         }
-      },); 
+      }, 1000);
     }
   }, [location]);
 
-  return null; 
+  return null;
 }
 
 export default ScrollToAnchor;
