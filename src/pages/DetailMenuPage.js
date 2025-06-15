@@ -16,6 +16,7 @@ import {
   Nav,
 } from "react-bootstrap";
 import { getProductById, getProducts } from "../services/MenuService";
+import { getShopDetailById } from "../services/ShopService";
 import {
   getProductRatings,
   updateRating,
@@ -38,6 +39,7 @@ import {
   CartPlusFill,
   XCircleFill,
   ArrowLeft,
+  Shop,
 } from "react-bootstrap-icons";
 import "../css/DetailMenuPage.css";
 import "../css/ShopDetailPage.css";
@@ -74,7 +76,6 @@ const RelatedProducts = ({ products, isLoading, error }) => {
     );
   }
 
-  // Mengembalikan ke layout grid
   return (
     <Row xs={1} sm={2} md={2} lg={4} className="g-4">
       {products.map((product) => (
@@ -143,6 +144,7 @@ function DetailMenuPage() {
   const { addItem: addItemToCartContext, isLoading: isCartLoading } = useCart();
 
   const [menuItem, setMenuItem] = useState(null);
+  const [shopInfo, setShopInfo] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -213,10 +215,12 @@ function DetailMenuPage() {
         throw productError;
       }
 
-      const [ratingsResponse, relatedProductsResponse] = await Promise.all([
-        getProductRatings(productId),
-        getProducts({ limit: 5, shopId: fetchedProduct.shopId }),
-      ]);
+      const [ratingsResponse, relatedProductsResponse, shopResponse] =
+        await Promise.all([
+          getProductRatings(productId),
+          getProducts({ limit: 5, shopId: fetchedProduct.shopId }),
+          getShopDetailById(fetchedProduct.shopId),
+        ]);
 
       if (ratingsResponse && ratingsResponse.success) {
         setRatingsData(ratingsResponse.data);
@@ -230,6 +234,12 @@ function DetailMenuPage() {
         setErrorRatings(
           ratingsResponse?.message || "Gagal mengambil data rating."
         );
+      }
+
+      if (shopResponse && shopResponse.success && shopResponse.data) {
+        setShopInfo(shopResponse.data.shop);
+      } else {
+        console.warn("Gagal memuat informasi toko:", shopResponse?.message);
       }
 
       setMenuItem(fetchedProduct);
@@ -504,6 +514,20 @@ function DetailMenuPage() {
                 <p className="detail-menu-description lead text-muted mb-3">
                   {menuItem.description || "Deskripsi produk tidak tersedia."}
                 </p>
+                {shopInfo && (
+                  <div className="mb-3">
+                    <span className="text-muted">
+                      <Shop className="me-2" />
+                      Toko{" "}
+                    </span>
+                    <Link
+                      to={`/toko/${menuItem.shopId}`}
+                      className="fw-bold link-dark text-decoration-none"
+                    >
+                      {shopInfo.shopName}
+                    </Link>
+                  </div>
+                )}
                 <div className="mb-3 detail-menu-stock-info">
                   {menuItem.stock > 0 ? (
                     <Badge
