@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import logoImage from "../../assets/logo.jpg";
 import "../../css/Footer.css";
 
-function Footer() {
+function Footer({ onOpenChatbot }) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -53,8 +53,12 @@ function Footer() {
           <Col lg={4} md={3} xs={6}>
             <h5 className="footer-heading">Bantuan & Kebijakan</h5>
             <Nav className="flex-column footer-nav">
-              <Nav.Link as={Link} to="/faq" className="footer-link">
-                FAQ
+              <Nav.Link
+                as="button"
+                onClick={onOpenChatbot}
+                className="footer-link-button"
+              >
+                Chatbot
               </Nav.Link>
               <Nav.Link as={Link} to="/#hubungi-kami" className="footer-link">
                 Hubungi Kami

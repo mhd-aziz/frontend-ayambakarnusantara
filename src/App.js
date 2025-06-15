@@ -36,6 +36,8 @@ import { registerFCMToken } from "./services/ProfileService";
 import { getFCMToken } from "./firebase-config";
 import NotificationPage from "./pages/NotificationPage";
 import ScrollToAnchor from "./utils/ScrollToAnchor";
+import TermsConditionsPage from "./pages/TermsConditionsPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 
 function App() {
   const { isLoggedIn, isLoading, user } = useAuth();
@@ -273,11 +275,13 @@ function App() {
               )
             }
           />
+          <Route path="/syarat-ketentuan" element={<TermsConditionsPage />} />
+          <Route path="/kebijakan-privasi" element={<PrivacyPolicyPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Container>
 
-      {shouldShowFooter && <Footer />}
+      {shouldShowFooter && <Footer onOpenChatbot={handleOpenChatbot} />}
 
       <Modal show={showLoginModal} onHide={handleLoginModalClose} centered>
         <Modal.Header closeButton>
