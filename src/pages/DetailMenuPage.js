@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
@@ -8,13 +8,12 @@ import {
   Spinner,
   Alert,
   Button,
-  Badge,
+  Card,
   Breadcrumb,
+  Badge,
   Form,
   InputGroup,
-  Card,
-  ListGroup,
-  Modal,
+  Nav,
 } from "react-bootstrap";
 import { getProductById, getProducts } from "../services/MenuService";
 import {
@@ -24,6 +23,11 @@ import {
 } from "../services/RatingService";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import StarRatingDisplay from "../components/Menu/StarRatingDisplay";
+import ProductRatings from "../components/Menu/ProductRatings";
+import RatingModal from "../components/Menu/RatingModal";
+import DeleteRatingModal from "../components/Menu/DeleteRatingModal";
+
 import {
   CheckCircleFill,
   ExclamationTriangleFill,
@@ -34,190 +38,95 @@ import {
   CartPlusFill,
   XCircleFill,
   ArrowLeft,
-  Star,
-  StarFill,
-  StarHalf,
-  PencilFill,
-  TrashFill,
 } from "react-bootstrap-icons";
 import "../css/DetailMenuPage.css";
-
-const StarRatingDisplay = ({ rating, size = 16 }) => {
-  const fullStars = Math.floor(rating);
-  const halfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
-  return (
-    <div className="d-inline-block" style={{ color: "#ffc107" }}>
-      {[...Array(fullStars)].map((_, i) => (
-        <StarFill key={`full-${i}`} size={size} className="me-1" />
-      ))}
-      {halfStar && <StarHalf key="half" size={size} className="me-1" />}
-      {[...Array(emptyStars)].map((_, i) => (
-        <Star key={`empty-${i}`} size={size} className="me-1" />
-      ))}
-    </div>
-  );
-};
-
-const StarRatingInput = ({ rating, setRating, size = 24 }) => {
-  return (
-    <div
-      className="d-inline-block"
-      style={{ color: "#ffc107", cursor: "pointer" }}
-    >
-      {[...Array(5)].map((_, index) => {
-        const starValue = index + 1;
-        return (
-          <span
-            key={starValue}
-            onClick={() => setRating(starValue)}
-            style={{ marginRight: "5px" }}
-          >
-            {starValue <= rating ? (
-              <StarFill size={size} />
-            ) : (
-              <Star size={size} />
-            )}
-          </span>
-        );
-      })}
-    </div>
-  );
-};
-
-const ProductRatings = ({
-  ratingsData,
-  isLoading,
-  error,
-  currentUser,
-  onEdit,
-  onDelete,
-}) => {
-  if (isLoading) {
-    return (
-      <div className="text-center">
-        <Spinner animation="border" size="sm" /> Memuat ulasan...
-      </div>
-    );
-  }
-
-  if (error) {
-    return <Alert variant="warning">Tidak dapat memuat ulasan saat ini.</Alert>;
-  }
-
-  if (
-    !ratingsData ||
-    !ratingsData.ratings ||
-    ratingsData.ratings.length === 0
-  ) {
-    return <p className="text-muted">Belum ada ulasan untuk produk ini.</p>;
-  }
-
-  return (
-    <ListGroup variant="flush">
-      {ratingsData.ratings.map((rating) => (
-        <ListGroup.Item key={rating.ratingId} className="px-0 py-3">
-          <Row>
-            <Col xs="auto">
-              <Image
-                src={
-                  rating.userPhotoURL ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    rating.userDisplayName || "U"
-                  )}&background=C07722&color=fff&size=40`
-                }
-                roundedCircle
-                width="40"
-                height="40"
-              />
-            </Col>
-            <Col>
-              <div className="d-flex justify-content-between">
-                <strong className="mb-1">{rating.userDisplayName}</strong>
-                <small className="text-muted">
-                  {new Date(rating.createdAt).toLocaleDateString("id-ID")}
-                </small>
-              </div>
-              <div>
-                <StarRatingDisplay rating={rating.ratingValue} size={14} />
-              </div>
-              <p className="mb-0 mt-2">{rating.reviewText}</p>
-              {currentUser?.uid === rating.userId && (
-                <div className="mt-2 text-end">
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => onEdit(rating)}
-                  >
-                    <PencilFill /> Edit
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => onDelete(rating.ratingId)}
-                  >
-                    <TrashFill /> Hapus
-                  </Button>
-                </div>
-              )}
-            </Col>
-          </Row>
-        </ListGroup.Item>
-      ))}
-    </ListGroup>
-  );
-};
+import "../css/ShopDetailPage.css";
+import "../css/ShopPage.css";
 
 const RelatedProducts = ({ products, isLoading, error }) => {
+  const handleProductImageError = (e, productName) => {
+    e.target.onerror = null;
+    const nameForAvatar = productName || "Produk";
+    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      nameForAvatar
+    )}&size=300&background=efefef&color=757575&font-size=0.33&length=2`;
+  };
+
   if (isLoading) {
     return (
-      <div className="text-center">
-        <Spinner animation="border" size="sm" /> Memuat produk terkait...
+      <div className="text-center py-5">
+        <Spinner animation="border" size="sm" />
       </div>
     );
   }
-
   if (error) {
     return (
-      <Alert variant="info">Tidak dapat memuat produk terkait saat ini.</Alert>
+      <Alert variant="info" className="text-center">
+        Tidak dapat memuat produk terkait saat ini.
+      </Alert>
+    );
+  }
+  if (!products || products.length === 0) {
+    return (
+      <p className="text-muted text-center py-5">
+        Tidak ada produk lain dari toko ini.
+      </p>
     );
   }
 
-  if (!products || products.length === 0) {
-    return <p className="text-muted">Tidak ada produk lain dari toko ini.</p>;
-  }
-
+  // Mengembalikan ke layout grid
   return (
-    <Row xs={1} sm={2} lg={3} xl={4} className="g-4">
+    <Row xs={1} sm={2} md={2} lg={4} className="g-4">
       {products.map((product) => (
-        <Col key={product._id}>
-          <Card
-            as={Link}
-            to={`/menu/${product._id}`}
-            className="h-100 text-decoration-none product-card-related shadow-sm"
-          >
-            <Card.Img
-              variant="top"
-              src={
-                product.productImageURL ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  product.name
-                )}&background=EFEFEF&color=AAAAAA&size=250`
-              }
-              style={{
-                height: "150px",
-                objectFit: "cover",
-              }}
-            />
-            <Card.Body>
-              <Card.Title className="product-card-title-related">
+        <Col key={product._id} className="d-flex align-items-stretch">
+          <Card className="w-100 h-100 product-list-card shop-card shadow-sm">
+            <div className="shop-card-img-wrapper">
+              <Card.Img
+                variant="top"
+                className="shop-card-img"
+                src={
+                  product.productImageURL ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    product.name || "Produk"
+                  )}&size=300&background=efefef&color=757575&font-size=0.33&length=2`
+                }
+                onError={(e) => handleProductImageError(e, product.name)}
+                alt={product.name}
+              />
+            </div>
+            <Card.Body className="d-flex flex-column p-3">
+              {product.category && (
+                <Badge
+                  pill
+                  bg="light"
+                  text="dark"
+                  className="mb-2 product-category-badge align-self-start shadow-sm"
+                >
+                  {product.category}
+                </Badge>
+              )}
+              <Card.Title
+                as="h5"
+                className="product-list-card-title shop-card-title flex-grow-1"
+              >
                 {product.name}
               </Card.Title>
-              <Card.Text className="product-card-price-related fw-bold">
-                Rp {product.price.toLocaleString("id-ID")}
-              </Card.Text>
+              <div className="mt-auto">
+                <p
+                  className="product-list-card-price h5 mb-2"
+                  style={{ color: "var(--brand-primary)" }}
+                >
+                  Rp {product.price.toLocaleString("id-ID")}
+                </p>
+                <Button
+                  variant="primary"
+                  className="btn-brand w-100 mt-1"
+                  as={Link}
+                  to={`/menu/${product._id}`}
+                >
+                  Lihat Detail
+                </Button>
+              </div>
             </Card.Body>
           </Card>
         </Col>
@@ -250,14 +159,34 @@ function DetailMenuPage() {
 
   const [showEditRatingModal, setShowEditRatingModal] = useState(false);
   const [ratingToEdit, setRatingToEdit] = useState(null);
-  const [editRatingValue, setEditRatingValue] = useState(0);
-  const [editReviewText, setEditReviewText] = useState("");
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
   const [editError, setEditError] = useState("");
 
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [ratingToDeleteId, setRatingToDeleteId] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("reviews");
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 75) {
+      if (activeTab === "reviews") setActiveTab("related");
+    }
+    if (touchStartX.current - touchEndX.current < -75) {
+      if (activeTab === "related") setActiveTab("reviews");
+    }
+  };
 
   const fetchPageData = useCallback(async () => {
     if (!productId) {
@@ -273,44 +202,40 @@ function DetailMenuPage() {
     setErrorRelated(null);
 
     try {
-      const [productResponse, ratingsResponse, allProductsResponse] =
-        await Promise.all([
-          getProductById(productId),
-          getProductRatings(productId),
-          getProducts({ limit: 5 }),
-        ]);
-
+      const productResponse = await getProductById(productId);
+      let fetchedProduct;
       if (productResponse && productResponse.data) {
-        let finalProductData = productResponse.data;
-        if (
-          ratingsResponse &&
-          ratingsResponse.success &&
-          ratingsResponse.data.productDetails
-        ) {
-          finalProductData = {
-            ...finalProductData,
-            ...ratingsResponse.data.productDetails,
-          };
-        }
-        setMenuItem(finalProductData);
+        fetchedProduct = productResponse.data;
       } else {
         const productError = new Error(
           productResponse?.message || "Produk tidak ditemukan."
         );
-        productError.response = productResponse;
         throw productError;
       }
 
+      const [ratingsResponse, relatedProductsResponse] = await Promise.all([
+        getProductRatings(productId),
+        getProducts({ limit: 5, shopId: fetchedProduct.shopId }),
+      ]);
+
       if (ratingsResponse && ratingsResponse.success) {
         setRatingsData(ratingsResponse.data);
+        if (ratingsResponse.data.productDetails) {
+          fetchedProduct = {
+            ...fetchedProduct,
+            ...ratingsResponse.data.productDetails,
+          };
+        }
       } else {
         setErrorRatings(
           ratingsResponse?.message || "Gagal mengambil data rating."
         );
       }
 
-      if (allProductsResponse && allProductsResponse.data) {
-        const filteredProducts = allProductsResponse.data.products
+      setMenuItem(fetchedProduct);
+
+      if (relatedProductsResponse && relatedProductsResponse.data) {
+        const filteredProducts = relatedProductsResponse.data.products
           .filter((p) => p._id !== productId)
           .slice(0, 4);
         setRelatedProducts(filteredProducts);
@@ -327,35 +252,29 @@ function DetailMenuPage() {
   }, [productId]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchPageData();
   }, [productId, fetchPageData]);
 
   const handleShowEditModal = (rating) => {
     setRatingToEdit(rating);
-    setEditRatingValue(rating.ratingValue);
-    setEditReviewText(rating.reviewText);
     setEditError("");
     setShowEditRatingModal(true);
   };
-
   const handleCloseEditModal = () => {
     setShowEditRatingModal(false);
     setRatingToEdit(null);
   };
-
-  const handleUpdateRating = async () => {
+  const handleUpdateRating = async (ratingValue, reviewText) => {
     if (!ratingToEdit) return;
-    if (editRatingValue === 0) {
+    if (ratingValue === 0) {
       setEditError("Rating bintang wajib diisi.");
       return;
     }
     setIsSubmittingEdit(true);
     setEditError("");
     try {
-      await updateRating(ratingToEdit.ratingId, {
-        ratingValue: editRatingValue,
-        reviewText: editReviewText,
-      });
+      await updateRating(ratingToEdit.ratingId, { ratingValue, reviewText });
       handleCloseEditModal();
       fetchPageData();
     } catch (err) {
@@ -369,12 +288,10 @@ function DetailMenuPage() {
     setRatingToDeleteId(id);
     setShowDeleteConfirmModal(true);
   };
-
   const handleCloseDeleteModal = () => {
     setShowDeleteConfirmModal(false);
     setRatingToDeleteId(null);
   };
-
   const handleConfirmDelete = async () => {
     if (!ratingToDeleteId) return;
     setIsDeleting(true);
@@ -411,9 +328,6 @@ function DetailMenuPage() {
       return;
     }
     if (!isLoggedIn) {
-      alert(
-        "Anda harus login terlebih dahulu untuk menambahkan item ke keranjang."
-      );
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
@@ -485,16 +399,13 @@ function DetailMenuPage() {
     );
   }
 
-  const pageError = error && !addToCartSuccessMessage;
-
-  if (pageError && !menuItem) {
+  if (error && !menuItem) {
     return (
       <Container fluid className="py-5 detail-menu-page-container-fluid">
         <Container>
           <Alert variant="danger" className="text-center lead py-4 shadow-sm">
             <Alert.Heading as="h3">
-              <ExclamationTriangleFill className="me-2" />
-              Gagal Memuat Data
+              <ExclamationTriangleFill className="me-2" /> Gagal Memuat Data
             </Alert.Heading>
             <p>{error}</p>
             <Button
@@ -503,8 +414,7 @@ function DetailMenuPage() {
               variant="outline-primary"
               className="fw-semibold"
             >
-              <ArrowLeftCircleFill className="me-2" />
-              Kembali ke Menu
+              <ArrowLeftCircleFill className="me-2" /> Kembali ke Menu
             </Button>
           </Alert>
         </Container>
@@ -512,16 +422,13 @@ function DetailMenuPage() {
     );
   }
 
-  const currentProduct = menuItem;
-
-  if (!currentProduct || Object.keys(currentProduct).length === 0) {
+  if (!menuItem) {
     return (
       <Container fluid className="py-5 detail-menu-page-container-fluid">
         <Container>
           <Alert variant="warning" className="text-center lead py-4 shadow-sm">
             <Alert.Heading as="h3">
-              <Search className="me-2" />
-              Produk Tidak Ditemukan
+              <Search className="me-2" /> Produk Tidak Ditemukan
             </Alert.Heading>
             <p>Detail untuk produk ini tidak dapat ditemukan.</p>
             <Button
@@ -530,8 +437,7 @@ function DetailMenuPage() {
               variant="outline-primary"
               className="fw-semibold"
             >
-              <ArrowLeftCircleFill className="me-2" />
-              Kembali ke Menu
+              <ArrowLeftCircleFill className="me-2" /> Kembali ke Menu
             </Button>
           </Alert>
         </Container>
@@ -561,7 +467,7 @@ function DetailMenuPage() {
           <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/menu" }}>
             Menu
           </Breadcrumb.Item>
-          <Breadcrumb.Item active>{currentProduct.name}</Breadcrumb.Item>
+          <Breadcrumb.Item active>{menuItem.name}</Breadcrumb.Item>
         </Breadcrumb>
         <Card className="border-0 shadow-sm detail-menu-card-wrapper mb-4">
           <Card.Body>
@@ -569,12 +475,12 @@ function DetailMenuPage() {
               <Col lg={6} md={5} className="mb-4 mb-md-0 detail-menu-image-col">
                 <Image
                   src={
-                    currentProduct.productImageURL ||
+                    menuItem.productImageURL ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      currentProduct.name || "Produk"
+                      menuItem.name || "Produk"
                     )}&background=EFEFEF&color=AAAAAA&size=600`
                   }
-                  alt={currentProduct.name}
+                  alt={menuItem.name}
                   className="detail-menu-image rounded"
                   onError={handleImageError}
                   fluid
@@ -586,33 +492,28 @@ function DetailMenuPage() {
                   text="dark"
                   className="mb-2 px-2 py-1 category-badge shadow-sm"
                 >
-                  {currentProduct.category}
+                  {menuItem.category}
                 </Badge>
-                <h1 className="h2 detail-menu-title mb-3">
-                  {currentProduct.name}
-                </h1>
+                <h1 className="h2 detail-menu-title mb-3">{menuItem.name}</h1>
                 <div className="mb-3">
-                  <StarRatingDisplay
-                    rating={currentProduct.averageRating || 0}
-                  />
+                  <StarRatingDisplay rating={menuItem.averageRating || 0} />
                   <span className="ms-2 text-muted">
-                    ({currentProduct.ratingCount || 0} ulasan)
+                    ({menuItem.ratingCount || 0} ulasan)
                   </span>
                 </div>
                 <p className="detail-menu-description lead text-muted mb-3">
-                  {currentProduct.description ||
-                    "Deskripsi produk tidak tersedia."}
+                  {menuItem.description || "Deskripsi produk tidak tersedia."}
                 </p>
                 <div className="mb-3 detail-menu-stock-info">
-                  {currentProduct.stock > 0 ? (
+                  {menuItem.stock > 0 ? (
                     <Badge
                       bg="success-light"
                       text="success"
                       pill
                       className="stock-badge px-3 py-2"
                     >
-                      <CheckCircleFill className="me-1" />
-                      Stok Tersedia: {currentProduct.stock}
+                      <CheckCircleFill className="me-1" /> Stok Tersedia:{" "}
+                      {menuItem.stock}
                     </Badge>
                   ) : (
                     <Badge
@@ -621,8 +522,7 @@ function DetailMenuPage() {
                       pill
                       className="stock-badge px-3 py-2"
                     >
-                      <XCircleFill className="me-1" />
-                      Stok Habis
+                      <XCircleFill className="me-1" /> Stok Habis
                     </Badge>
                   )}
                 </div>
@@ -630,9 +530,9 @@ function DetailMenuPage() {
                   className="detail-menu-price h3 mb-3 fw-bold"
                   style={{ color: "var(--brand-primary, #c0392b)" }}
                 >
-                  Rp {currentProduct.price.toLocaleString("id-ID")}
+                  Rp {menuItem.price.toLocaleString("id-ID")}
                 </div>
-                {currentProduct.stock > 0 && (
+                {menuItem.stock > 0 && (
                   <>
                     <Row className="align-items-center mb-3 gx-2">
                       <Col xs="auto">
@@ -671,7 +571,7 @@ function DetailMenuPage() {
                             variant="outline-secondary"
                             className="rounded-end"
                             onClick={() => handleQuantityChange(1)}
-                            disabled={quantity >= currentProduct.stock}
+                            disabled={quantity >= menuItem.stock}
                           >
                             <PlusLg />
                           </Button>
@@ -685,8 +585,7 @@ function DetailMenuPage() {
                           onClick={() => navigate(-1)}
                           className="btn-action shadow-sm"
                         >
-                          <ArrowLeft className="me-1" />
-                          Kembali
+                          <ArrowLeft className="me-1" /> Kembali
                         </Button>
                       </Col>
                       <Col xs={12} sm={6} className="d-grid">
@@ -704,8 +603,7 @@ function DetailMenuPage() {
                             <Spinner as="span" animation="border" size="sm" />
                           ) : (
                             <>
-                              {" "}
-                              <CartPlusFill className="me-2" /> Tambah Keranjang{" "}
+                              <CartPlusFill className="me-2" /> Tambah Keranjang
                             </>
                           )}
                         </Button>
@@ -718,95 +616,72 @@ function DetailMenuPage() {
           </Card.Body>
         </Card>
 
-        <Card className="mt-4 border-0 shadow-sm">
-          <Card.Header as="h5">Ulasan Produk</Card.Header>
-          <Card.Body>
-            <ProductRatings
-              ratingsData={ratingsData}
-              isLoading={isLoadingRatings}
-              error={errorRatings}
-              currentUser={currentUser}
-              onEdit={handleShowEditModal}
-              onDelete={handleShowDeleteModal}
-            />
-          </Card.Body>
-        </Card>
-
-        <Card className="mt-4 border-0 bg-transparent shadow-sm">
-          <Card.Header as="h5" className="bg-transparent border-bottom-0">
-            Mungkin Anda Suka
-          </Card.Header>
-          <Card.Body>
-            <RelatedProducts
-              products={relatedProducts}
-              isLoading={isLoadingRelated}
-              error={errorRelated}
-            />
-          </Card.Body>
-        </Card>
-      </Container>
-      <Modal show={showEditRatingModal} onHide={handleCloseEditModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Ulasan</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {editError && <Alert variant="danger">{editError}</Alert>}
-          <Form>
-            <Form.Group className="mb-3 text-center">
-              <Form.Label>Rating Anda</Form.Label>
-              <br />
-              <StarRatingInput
-                rating={editRatingValue}
-                setRating={setEditRatingValue}
-                size={24}
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Ulasan Anda</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={editReviewText}
-                onChange={(e) => setEditReviewText(e.target.value)}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseEditModal}>
-            Batal
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleUpdateRating}
-            disabled={isSubmittingEdit}
+        <div className="product-info-tabs">
+          <Nav
+            variant="tabs"
+            activeKey={activeTab}
+            onSelect={(k) => setActiveTab(k)}
+            justify
           >
-            {isSubmittingEdit ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal
+            <Nav.Item>
+              <Nav.Link eventKey="reviews">{`Ulasan Produk (${
+                menuItem.ratingCount || 0
+              })`}</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="related">Produk Terkait</Nav.Link>
+            </Nav.Item>
+          </Nav>
+          <div
+            className="tab-content"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              className="tab-content-wrapper"
+              style={{
+                transform: `translateX(${
+                  activeTab === "reviews" ? "0%" : "-100%"
+                })`,
+              }}
+            >
+              <div className="tab-pane-wrapper">
+                <ProductRatings
+                  ratingsData={ratingsData}
+                  isLoading={isLoadingRatings}
+                  error={errorRatings}
+                  currentUser={currentUser}
+                  onEdit={handleShowEditModal}
+                  onDelete={handleShowDeleteModal}
+                />
+              </div>
+              <div className="tab-pane-wrapper">
+                <RelatedProducts
+                  products={relatedProducts}
+                  isLoading={isLoadingRelated}
+                  error={errorRelated}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+
+      <RatingModal
+        show={showEditRatingModal}
+        onHide={handleCloseEditModal}
+        ratingToEdit={ratingToEdit}
+        onSubmit={handleUpdateRating}
+        isSubmitting={isSubmittingEdit}
+        error={editError}
+      />
+      <DeleteRatingModal
         show={showDeleteConfirmModal}
         onHide={handleCloseDeleteModal}
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Konfirmasi Hapus</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Anda yakin ingin menghapus ulasan ini?</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseDeleteModal}>
-            Tidak
-          </Button>
-          <Button
-            variant="danger"
-            onClick={handleConfirmDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Menghapus..." : "Ya, Hapus"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </Container>
   );
 }
