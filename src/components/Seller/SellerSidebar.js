@@ -33,7 +33,7 @@ function SellerSidebar({ shopName }) {
         <div className="shop-icon-wrapper">
           <ShopIcon size={28} />
         </div>
-        <h5 className="mb-0 text-truncate">{shopName || "Toko Saya"}</h5>
+        <h5 className="mb-0">{shopName || "Toko Saya"}</h5>
       </div>
 
       <Nav variant="pills" className="flex-column sidebar-nav">

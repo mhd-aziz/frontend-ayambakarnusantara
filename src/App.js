@@ -94,24 +94,15 @@ function App() {
   }, [location.pathname, navigate]);
 
   const handleLoginModalClose = () => {
-    setShowLoginModal(false);
-    if (location.pathname === "/login") {
-      navigate("/", { replace: true });
-    }
+    navigate("/", { replace: true });
   };
 
   const handleRegisterModalClose = () => {
-    setShowRegisterModal(false);
-    if (location.pathname === "/register") {
-      navigate("/", { replace: true });
-    }
+    navigate("/", { replace: true });
   };
 
   const handleForgotPasswordModalClose = () => {
-    setShowForgotPasswordModal(false);
-    if (location.pathname === "/forgot-password") {
-      navigate("/login", { replace: true });
-    }
+    navigate("/login", { replace: true });
   };
 
   const handleInitiateChatWith = (recipientUID) => {
@@ -283,7 +274,12 @@ function App() {
 
       {shouldShowFooter && <Footer onOpenChatbot={handleOpenChatbot} />}
 
-      <Modal show={showLoginModal} onHide={handleLoginModalClose} centered>
+      <Modal
+        show={showLoginModal}
+        onHide={handleLoginModalClose}
+        centered
+        animation={false}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Login</Modal.Title>
         </Modal.Header>
@@ -295,6 +291,7 @@ function App() {
         show={showRegisterModal}
         onHide={handleRegisterModalClose}
         centered
+        animation={false}
       >
         <Modal.Header closeButton>
           <Modal.Title>Register</Modal.Title>
@@ -307,6 +304,7 @@ function App() {
         show={showForgotPasswordModal}
         onHide={handleForgotPasswordModalClose}
         centered
+        animation={false}
       >
         <Modal.Header closeButton>
           <Modal.Title>Lupa Password</Modal.Title>

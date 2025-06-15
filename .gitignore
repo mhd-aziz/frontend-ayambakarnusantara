@@ -4,6 +4,7 @@ setupProxy.js
 .pnp.js
 .env
 Dockerfile
+nginx.conf
 .dockerignore
 /coverage
 /build
