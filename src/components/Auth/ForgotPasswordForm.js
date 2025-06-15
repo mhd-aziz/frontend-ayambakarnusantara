@@ -1,4 +1,3 @@
-// src/components/Auth/ForgotPasswordForm.js
 import React, { useState } from "react";
 import { Form, Button, Alert, Card, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";

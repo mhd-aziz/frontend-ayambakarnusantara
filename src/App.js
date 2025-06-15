@@ -288,7 +288,7 @@ function App() {
           <Modal.Title>Login</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <LoginForm />
+          <LoginForm key={location.key} />
         </Modal.Body>
       </Modal>
       <Modal

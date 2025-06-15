@@ -64,4 +64,21 @@ const registerFCMToken = async (tokenData) => {
   }
 };
 
-export { getProfile, updateProfile, registerFCMToken };
+const deleteAccount = async () => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/auth/account/delete`, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        success: false,
+        message: "Terjadi kesalahan pada server saat menghapus akun.",
+        statusCode: error.response?.status || 500,
+      }
+    );
+  }
+};
+
+export { getProfile, updateProfile, registerFCMToken, deleteAccount };

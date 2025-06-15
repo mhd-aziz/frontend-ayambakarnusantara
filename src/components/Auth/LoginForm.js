@@ -1,4 +1,3 @@
-// src/components/Auth/LoginForm.js
 import React, { useState } from "react";
 import { Form, Button, Alert, Card, InputGroup } from "react-bootstrap";
 import { Link } from "react-router-dom";
@@ -39,29 +38,19 @@ function LoginForm() {
     }
 
     try {
-      const apiResponse = await loginUser(formData); // Panggil service login Anda
-
-      // Ekstrak data pengguna dari respons API
-      // Sesuaikan ini jika struktur respons backend Anda berbeda
+      const apiResponse = await loginUser(formData);
       let userData = null;
       if (apiResponse && apiResponse.data && apiResponse.data.user) {
-        // Jika backend mengembalikan { data: { user: {...} } }
         userData = apiResponse.data.user;
       } else if (apiResponse && apiResponse.user) {
-        // Fallback jika backend mengembalikan { user: {...} } langsung
         userData = apiResponse.user;
       }
-      // Anda mungkin perlu menyesuaikan lagi berdasarkan struktur pasti dari `handleSuccess` di backend
-      // dan apa yang `AuthService.loginUser` kembalikan (misalnya, jika `AuthService` sudah mengambil `apiResponse.data`)
 
-      // Periksa apakah login sukses dan ada data pengguna
-      // Asumsi apiResponse memiliki properti 'success' (boolean) atau 'status' === 'success'
       const isSuccess =
         apiResponse &&
         (apiResponse.success === true || apiResponse.status === "success");
 
       if (isSuccess && userData) {
-        // Panggil fungsi login dari AuthContext dengan opsi navigasi
         login(userData, { navigateAfterLogin: true, navigateTo: "/" });
       } else {
         setError(
@@ -70,7 +59,6 @@ function LoginForm() {
         );
       }
     } catch (err) {
-      // Tangani error dari pemanggilan loginUser atau jika userData tidak valid
       setError(err.message || "Terjadi kesalahan saat login.");
     } finally {
       setLoading(false);
