@@ -732,8 +732,10 @@ function DetailMenuPage() {
           </Card.Body>
         </Card>
 
-        <Card className="mt-4 border-0 shadow-sm">
-          <Card.Header as="h5">Mungkin Anda Suka</Card.Header>
+        <Card className="mt-4 border-0 bg-transparent shadow-sm">
+          <Card.Header as="h5" className="bg-transparent border-bottom-0">
+            Mungkin Anda Suka
+          </Card.Header>
           <Card.Body>
             <RelatedProducts
               products={relatedProducts}

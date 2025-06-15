@@ -1,5 +1,4 @@
-// src/context/AuthContext.js
-import {
+import React, {
   createContext,
   useState,
   useEffect,
@@ -18,7 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
   const logout = useCallback(async () => {
     console.log("AuthContext: Memanggil logout...");
 
@@ -29,14 +27,30 @@ export const AuthProvider = ({ children }) => {
       console.error("AuthContext: Error saat logout dari backend:", error);
     } finally {
       localStorage.removeItem("user");
-      setUser(null);
-      setIsLoggedIn(false);
-      navigate("/login");
+      window.location.href = "/login";
     }
-  }, [navigate]);
+  }, []);
 
+  const login = useCallback(
+    (userData, options = { navigateAfterLogin: false, navigateTo: "/" }) => {
+      if (typeof userData === "object" && userData !== null) {
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        setIsLoggedIn(true);
+      } else {
+        console.error("Login function called with invalid userData:", userData);
+        return;
+      }
+
+      if (options.navigateAfterLogin) {
+        navigate(options.navigateTo);
+      }
+    },
+    [navigate]
+  );
   useEffect(() => {
     const checkAuthStatusFromLocalStorage = () => {
+      setIsLoading(true);
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         try {
@@ -59,65 +73,31 @@ export const AuthProvider = ({ children }) => {
 
     const handleStorageChange = (event) => {
       if (event.key === "user") {
-        if (event.newValue) {
-          try {
-            const newUserData = JSON.parse(event.newValue);
-            setUser(newUserData);
-            setIsLoggedIn(true);
-          } catch (e) {
-            console.error(
-              "Error parsing stored user data on storage event:",
-              e
-            );
-            setUser(null);
-            setIsLoggedIn(false);
-            localStorage.removeItem("user");
-          }
-        } else {
-          setUser(null);
-          setIsLoggedIn(false);
+        if (!event.newValue) {
+          logout();
         }
       }
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // Setup Axios response interceptor
     const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response && error.response.status === 401) {
+      async (error) => {
+        if (error.response?.status === 401) {
           console.log(
             "AuthContext: API mengembalikan 401, sesi habis. Memanggil logout."
           );
-          logout();
+          await logout();
         }
         return Promise.reject(error);
       }
     );
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       axios.interceptors.response.eject(responseInterceptor);
     };
   }, [logout]);
-
-  // Memoize fungsi login menggunakan useCallback
-  const login = useCallback(
-    (userData, options = { navigateAfterLogin: false, navigateTo: "/" }) => {
-      if (typeof userData === "object" && userData !== null) {
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
-        setIsLoggedIn(true);
-      } else {
-        console.error("Login function called with invalid userData:", userData);
-        return;
-      }
-
-      if (options.navigateAfterLogin) {
-        navigate(options.navigateTo);
-      }
-    },
-    [navigate]
-  );
 
   const value = useMemo(
     () => ({
