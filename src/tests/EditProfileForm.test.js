@@ -1,13 +1,11 @@
-// src/components/Profile/EditProfileForm.test.js
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
-import EditProfileForm from "./EditProfileForm";
-import { updateProfile } from "../../services/ProfileService";
+import EditProfileForm from "../components/Profile/EditProfileForm";
+import { updateProfile } from "../services/ProfileService";
 
-// Mock ProfileService
-jest.mock("../../services/ProfileService", () => ({
+jest.mock("../services/ProfileService", () => ({
   updateProfile: jest.fn(),
 }));
 
@@ -22,14 +20,14 @@ const mockCurrentProfile = {
 const mockOnProfileUpdated = jest.fn();
 const mockOnCancel = jest.fn();
 
-describe("EditProfileForm", () => {
+describe("Komponen EditProfileForm", () => {
   beforeEach(() => {
     updateProfile.mockClear();
     mockOnProfileUpdated.mockClear();
     mockOnCancel.mockClear();
   });
 
-  test("renders initial profile data correctly", () => {
+  test("harus merender data profil awal dengan benar", () => {
     render(
       <EditProfileForm
         currentProfile={mockCurrentProfile}
@@ -53,7 +51,7 @@ describe("EditProfileForm", () => {
     );
   });
 
-  test("updates displayName field on change", async () => {
+  test("harus memperbarui kolom nama tampilan saat ada perubahan", async () => {
     render(
       <EditProfileForm
         currentProfile={mockCurrentProfile}
@@ -67,7 +65,7 @@ describe("EditProfileForm", () => {
     expect(displayNameInput).toHaveValue("Jane Doe");
   });
 
-  test("calls onCancel when cancel button is clicked", async () => {
+  test("harus memanggil onCancel saat tombol batal diklik", async () => {
     render(
       <EditProfileForm
         currentProfile={mockCurrentProfile}
@@ -80,7 +78,7 @@ describe("EditProfileForm", () => {
     expect(mockOnCancel).toHaveBeenCalledTimes(1);
   });
 
-  test("handles successful profile update", async () => {
+  test("harus menangani pembaruan profil yang sukses", async () => {
     updateProfile.mockResolvedValueOnce({
       success: true,
       message: "Profil berhasil diperbarui!",
@@ -123,7 +121,7 @@ describe("EditProfileForm", () => {
     });
   });
 
-  test("handles failed profile update", async () => {
+  test("harus menangani pembaruan profil yang gagal", async () => {
     updateProfile.mockResolvedValueOnce({
       success: false,
       message: "Gagal memperbarui profil.",
@@ -153,7 +151,7 @@ describe("EditProfileForm", () => {
     expect(mockOnProfileUpdated).not.toHaveBeenCalled();
   });
 
-  test("handles image selection and preview", async () => {
+  test("harus menangani pemilihan gambar dan menampilkan pratinjau", async () => {
     render(
       <EditProfileForm
         currentProfile={mockCurrentProfile}
@@ -182,7 +180,7 @@ describe("EditProfileForm", () => {
     global.URL.createObjectURL.mockRestore();
   });
 
-  test("handles remove profile photo checkbox", async () => {
+  test("harus menangani checkbox untuk hapus foto profil", async () => {
     render(
       <EditProfileForm
         currentProfile={mockCurrentProfile}
@@ -203,7 +201,7 @@ describe("EditProfileForm", () => {
       "ui-avatars.com"
     );
 
-    await userEvent.click(removeCheckbox); 
+    await userEvent.click(removeCheckbox);
     expect(removeCheckbox).not.toBeChecked();
     expect(screen.getByAltText("Preview Foto Profil")).toHaveAttribute(
       "src",
