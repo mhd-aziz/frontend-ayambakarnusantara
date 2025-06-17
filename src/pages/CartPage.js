@@ -1,3 +1,5 @@
+// src/pages/CartPage.js
+
 import React, { useState, useEffect } from "react";
 import {
   Container,
@@ -470,10 +472,6 @@ function CartPage() {
                       }}
                       disabled={isCreatingOrder}
                       size="sm"
-                      isInvalid={
-                        orderError ===
-                        "Silakan pilih metode pembayaran terlebih dahulu."
-                      }
                     >
                       <option value="" disabled>
                         Pilih metode pembayaran...
@@ -481,11 +479,6 @@ function CartPage() {
                       <option value="PAY_AT_STORE">Bayar di Tempat</option>
                       <option value="ONLINE_PAYMENT">Pembayaran Online</option>
                     </Form.Select>
-                    <Form.Control.Feedback type="invalid">
-                      {orderError ===
-                        "Silakan pilih metode pembayaran terlebih dahulu." &&
-                        orderError}
-                    </Form.Control.Feedback>
                   </Form.Group>
                   <Form.Group className="mb-3" controlId="orderNotesCart">
                     <Form.Label className="fw-semibold">
@@ -503,13 +496,11 @@ function CartPage() {
                   </Form.Group>
                 </Form>
 
-                {orderError &&
-                  orderError !==
-                    "Silakan pilih metode pembayaran terlebih dahulu." && (
-                    <Alert variant="danger" className="mt-3">
-                      {orderError}
-                    </Alert>
-                  )}
+                {orderError && (
+                  <Alert variant="danger" className="mt-3">
+                    {orderError}
+                  </Alert>
+                )}
 
                 <Button
                   variant="primary"
