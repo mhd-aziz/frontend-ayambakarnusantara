@@ -36,6 +36,16 @@
   line-height: 1.6;
 }
 
+@media (max-width: 767.98px) {
+  .product-info-tabs .nav-link {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
 .stock-badge {
   font-size: 0.9rem;
   font-weight: 500;
